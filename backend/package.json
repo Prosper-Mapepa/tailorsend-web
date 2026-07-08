@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "npm run generate && tsc --noEmit",
-    "generate": "prisma generate --schema ../prisma/schema.prisma",
+    "generate": "node scripts/prepare-prisma.mjs && prisma generate --schema prisma/schema.prisma",
     "postinstall": "npm run generate",
     "start": "tsx src/index.ts",
     "test": "tsx src/test-auth.ts"
