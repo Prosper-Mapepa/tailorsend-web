@@ -6,6 +6,7 @@ COPY package.json package-lock.json .npmrc ./
 RUN npm ci --ignore-scripts --no-audit --no-fund
 
 COPY prisma ./prisma
+COPY prisma.config.ts ./
 COPY scripts ./scripts
 COPY src ./src
 COPY tsconfig.json ./
