@@ -1,4 +1,4 @@
-const required = ["DATABASE_URL", "SESSION_SECRET"] as const;
+const required = ["DATABASE_URL", "SESSION_SECRET"];
 
 let missing = false;
 for (const name of required) {
