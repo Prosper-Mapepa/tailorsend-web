@@ -47,6 +47,19 @@ export async function authFetch(
   return fetch(input, { ...init, headers });
 }
 
+async function parseAuthResponse(res: Response): Promise<Record<string, unknown>> {
+  const text = await res.text();
+  try {
+    return JSON.parse(text) as Record<string, unknown>;
+  } catch {
+    throw new Error(
+      res.ok
+        ? "Auth API returned an invalid response."
+        : "Auth API is unreachable. Set NEXT_PUBLIC_API_URL on Netlify to your Railway API URL (e.g. https://….up.railway.app).",
+    );
+  }
+}
+
 export async function registerUser(input: {
   email: string;
   password: string;
@@ -57,9 +70,9 @@ export async function registerUser(input: {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(input),
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error ?? "Registration failed.");
-  return data;
+  const data = await parseAuthResponse(res);
+  if (!res.ok) throw new Error((data.error as string) ?? "Registration failed.");
+  return data as { token: string; user: AuthUser };
 }
 
 export async function loginUser(input: {
@@ -71,9 +84,9 @@ export async function loginUser(input: {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(input),
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error ?? "Sign in failed.");
-  return data;
+  const data = await parseAuthResponse(res);
+  if (!res.ok) throw new Error((data.error as string) ?? "Sign in failed.");
+  return data as { token: string; user: AuthUser };
 }
 
 export async function logoutUser(): Promise<void> {

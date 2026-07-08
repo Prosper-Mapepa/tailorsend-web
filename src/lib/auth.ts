@@ -1,3 +1,4 @@
+import "server-only";
 import { createHash } from "node:crypto";
 import { cookies, headers } from "next/headers";
 import { NextResponse } from "next/server";

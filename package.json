@@ -20,17 +20,18 @@
     "test:usage": "tsx src/lib/billing/usage.test.ts",
     "test:billing": "tsx --env-file=.env src/lib/billing/usage-integration.test.ts",
     "test:resume-import": "tsx src/lib/resume-import.test.ts"
-  }, 
+  },
   "dependencies": {
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
-    "pg": "^8.16.0",
     "mammoth": "^1.12.0",
     "next": "16.2.9",
     "openai": "^6.45.0",
+    "pg": "^8.16.0",
     "playwright": "^1.61.1",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "server-only": "^0.0.1",
     "unpdf": "^1.6.2",
     "zod": "^4.4.3"
   },
