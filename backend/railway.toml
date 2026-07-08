@@ -1,9 +1,15 @@
+# Railway — API (Express auth backend)
+# Create a service with Root Directory = "backend".
+# Attach the Postgres plugin so DATABASE_URL is linked.
+
 [build]
 builder = "nixpacks"
-buildCommand = "npm install"
+buildCommand = "npm ci && npm run generate"
 
 [deploy]
 startCommand = "npm start"
 healthcheckPath = "/health"
 healthcheckTimeout = 30
 restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 5
+# PORT is injected by Railway. Set NODE_ENV=production in the service variables.
