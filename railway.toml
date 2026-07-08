@@ -1,0 +1,16 @@
+# Railway — Web (Next.js frontend)
+# Create a service with Root Directory = "/" (repo root).
+# Attach the same Postgres plugin as the API service.
+
+[build]
+builder = "nixpacks"
+buildCommand = "npm ci && npx prisma generate && npm run build"
+
+[deploy]
+# Migrate before serving so schema stays current on each deploy.
+startCommand = "npx prisma migrate deploy && npm run start"
+healthcheckPath = "/"
+healthcheckTimeout = 100
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 5
+# PORT and NODE_ENV are injected / set in the Railway dashboard.

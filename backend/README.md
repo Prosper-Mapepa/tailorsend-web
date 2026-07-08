@@ -36,36 +36,29 @@ npm run dev
 
 ## Railway deployment
 
-1. Create a Railway project with the **Postgres** plugin.
-2. Deploy the `backend/` service (or set root directory to `backend`).
-3. Link the Postgres `DATABASE_URL` to the backend service.
-4. Set environment variables:
+Full walkthrough: **[../RAILWAY.md](../RAILWAY.md)** (Postgres + API + Web).
+
+Config file for this service: `railway.toml` (Root Directory = `backend`).
 
 | Variable | Value |
 |----------|-------|
-| `DATABASE_URL` | From Railway Postgres plugin (auto-linked) |
-| `SESSION_SECRET` | Long random string (same as Netlify) |
-| `FRONTEND_URL` | Your Netlify URL |
+| `DATABASE_URL` | From Railway Postgres plugin (linked) |
+| `SESSION_SECRET` | Same long random string as the Web service |
+| `FRONTEND_URL` | Public Web URL (`https://….up.railway.app` or custom domain) |
 | `APP_URL` | Same as `FRONTEND_URL` |
 | `SMTP_*` | Optional — password reset emails |
 
-5. Run migrations once from your machine or a Railway one-off:
+Migrations run from the **Web** service on start (`prisma migrate deploy`). One-off:
 
 ```bash
 DATABASE_URL="<railway-postgres-url>" npm run db:migrate
 ```
 
-6. Copy the backend public URL for Netlify.
-
-## Netlify (frontend)
+Point the Web service at this API:
 
 ```
 NEXT_PUBLIC_API_URL=https://your-backend.up.railway.app
-SESSION_SECRET=<same-as-railway>
-DATABASE_URL=<same-railway-postgres-url>
 ```
-
-All three services (Netlify frontend, Railway backend, Railway Postgres) share one database.
 
 ## Test auth
 

@@ -51,14 +51,15 @@ SESSION_SECRET=your-long-random-string
 
 When `NEXT_PUBLIC_API_URL` is unset, Next.js proxies `/api/auth/*` to `http://localhost:4000`.
 
-### Production (Netlify + Railway)
+### Production (Railway)
 
 | Service | Role |
 |---------|------|
-| **Netlify** | Frontend (`NEXT_PUBLIC_API_URL=https://your-api.up.railway.app`) |
-| **Railway** | Backend auth API + **PostgreSQL** plugin |
+| **Web** | Next.js (`railway.toml`, root directory `/`) |
+| **API** | Express auth (`backend/railway.toml`, root directory `backend`) |
+| **Postgres** | Railway plugin — shared `DATABASE_URL` |
 
-Set the **same** `SESSION_SECRET` on both. See `backend/README.md` for Railway env vars.
+Set the **same** `SESSION_SECRET` on Web and API. Full setup: **[RAILWAY.md](./RAILWAY.md)**.
 
 Run auth smoke tests: `npm run backend:test`
 
@@ -106,7 +107,7 @@ postgresql://postgres:Letmein%4099x%21@localhost:5432/tailorsend
 
 (`@` and `!` in the password must be URL-encoded as `%40` and `%21`.)
 
-On **Railway**, add the Postgres plugin and use its `DATABASE_URL` on both the backend service and Netlify.
+On **Railway**, add the Postgres plugin and reference its `DATABASE_URL` on both the Web and API services (see [RAILWAY.md](./RAILWAY.md)).
 
 ### 4. Install the browser for auto-fill
 
