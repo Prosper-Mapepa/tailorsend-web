@@ -4,7 +4,7 @@
 
 [build]
 builder = "nixpacks"
-buildCommand = "npm ci && npm run generate"
+buildCommand = "npm ci --no-audit --no-fund"
 
 [deploy]
 # Regenerate Prisma client at boot — gitignored output may be omitted from the image.
