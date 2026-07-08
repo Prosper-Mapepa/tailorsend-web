@@ -52,5 +52,11 @@ function getPrisma(): PrismaClient {
   return client;
 }
 
-export const prisma =
-  process.env.NODE_ENV === "production" ? getPrisma() : getPrisma();
+// Lazy proxy so Next.js build can import this module without DATABASE_URL.
+export const prisma = new Proxy({} as PrismaClient, {
+  get(_target, prop, receiver) {
+    const client = getPrisma();
+    const value = Reflect.get(client, prop, receiver);
+    return typeof value === "function" ? value.bind(client) : value;
+  },
+});
