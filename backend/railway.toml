@@ -7,9 +7,10 @@ builder = "nixpacks"
 buildCommand = "npm ci && npm run generate"
 
 [deploy]
-startCommand = "npm start"
+# Regenerate Prisma client at boot — gitignored output may be omitted from the image.
+startCommand = "npm run generate && npm start"
 healthcheckPath = "/health"
-healthcheckTimeout = 30
+healthcheckTimeout = 120
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 5
 # PORT is injected by Railway. Set NODE_ENV=production in the service variables.
