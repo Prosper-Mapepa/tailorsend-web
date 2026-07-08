@@ -1,5 +1,6 @@
 [build]
-  command = "npx prisma generate && npx prisma migrate deploy && npm run build"
+  # Migrations run on Railway API startup; build only needs prisma generate.
+  command = "npx prisma generate && npm run build"
   publish = ".next"
 
 # Next.js inlines server env vars into SSR bundles during build. DATABASE_URL is
