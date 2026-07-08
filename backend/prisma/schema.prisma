@@ -1,0 +1,175 @@
+// Prisma schema for the auto-apply job platform.
+// Docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String   @default("")
+  passwordHash String
+  role         String   @default("user")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  profile             Profile?
+  usageAccount        UsageAccount?
+  usageEvents         UsageEvent[]
+  sessions            Session[]
+  passwordResetTokens PasswordResetToken[]
+  applications        Application[]
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+/// Per-user profile / base resume (one row per user).
+model Profile {
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fullName         String   @default("")
+  email            String   @default("")
+  phone            String   @default("")
+  location         String   @default("")
+  linkedin         String   @default("")
+  github           String   @default("")
+  website          String   @default("")
+  baseResume       String   @default("")
+  summary          String   @default("")
+  skills           String   @default("[]")
+  projects         String   @default("[]")
+  workExperience   String   @default("[]")
+  education        String   @default("[]")
+  certifications   String   @default("[]")
+  targetRoles      String   @default("[]")
+  visaStatus       String   @default("")
+  needsSponsorship Boolean  @default(false)
+  // Voluntary EEO / OFCCP disclosures (used by autofill when asked)
+  gender             String @default("")
+  raceEthnicity      String @default("")
+  veteranStatus      String @default("")
+  disabilityStatus   String @default("")
+  // Common screening-question defaults
+  hearAboutSource    String @default("")
+  usState            String @default("")
+  authorizedToWork   String @default("")
+  sponsorshipDetails String @default("")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+/// A vacancy discovered by one of the source adapters.
+model Job {
+  id           String    @id @default(cuid())
+  source       String
+  externalId   String
+  title        String
+  company      String
+  location     String    @default("")
+  remote       Boolean   @default(false)
+  url          String
+  applyUrl     String    @default("")
+  description  String    @default("")
+  salary       String    @default("")
+  postedAt     DateTime?
+  atsPlatform  String    @default("unknown")
+  matchScore   Int       @default(0)
+  visaRisk     String    @default("none")
+  status       String    @default("new")
+  discoveredAt DateTime  @default(now())
+
+  applications Application[]
+
+  @@unique([source, externalId])
+  @@index([company])
+  @@index([status])
+}
+
+/// One application attempt for a job, including the tailored documents.
+model Application {
+  id               String    @id @default(cuid())
+  userId           String
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jobId            String
+  job              Job       @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  status           String    @default("draft")
+  tailoredResume   String    @default("")
+  coverLetter      String    @default("")
+  matchNotes       String    @default("")
+  beforeMatch      String    @default("")
+  afterMatch       String    @default("")
+  companyEdge      String    @default("")
+  formAnswers      String    @default("{}")
+  reviewScreenshot String    @default("")
+  autoApplyLog     String    @default("")
+  tailorKitCharged   Boolean @default(false)
+  autofillKitCharged Boolean @default(false)
+  incorporateCharged Boolean @default(false)
+  submittedAt      DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([jobId, userId])
+}
+
+/// Monthly usage, plan, and credit balance (one row per user).
+model UsageAccount {
+  id               String    @id @default(cuid())
+  userId           String    @unique
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan             String    @default("free")
+  isStudent        Boolean   @default(false)
+  creditBalance    Int       @default(0)
+  periodStart      DateTime  @default(now())
+  tailorKitsUsed   Int       @default(0)
+  autofillKitsUsed Int       @default(0)
+  planKitsUsed     Int       @default(0)
+  seasonKitsTotal  Int       @default(0)
+  seasonEndsAt     DateTime?
+  flexPausedUntil  DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+}
+
+model UsageEvent {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind          String
+  creditsDelta  Int      @default(0)
+  applicationId String   @default("")
+  meta          String   @default("{}")
+  createdAt     DateTime @default(now())
+
+  @@index([userId, createdAt])
+}
