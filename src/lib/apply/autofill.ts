@@ -467,7 +467,7 @@ async function fillReactSelect(
     if ((await input.count()) === 0) return false;
 
     await dismissOpenMenus(page);
-    await input.focus({ force: true });
+    await input.click({ force: true });
     await page.waitForTimeout(150);
 
     const isYesNo = answer === "Yes" || answer === "No";
@@ -475,7 +475,7 @@ async function fillReactSelect(
     if (isYesNo) {
       for (let attempt = 1; attempt <= 2; attempt++) {
         await dismissOpenMenus(page);
-        await input.focus({ force: true });
+        await input.click({ force: true });
         await page.waitForTimeout(150);
 
         if (attempt === 1) {
@@ -882,7 +882,7 @@ async function fillTextField(
   try {
     const page = surface.page();
     await dismissOpenMenus(page);
-    await locator.focus({ force: true });
+    await locator.click({ force: true });
     await locator.fill(value, { timeout: 4000 });
     await page.keyboard.press("Tab");
     await page.waitForTimeout(200);
