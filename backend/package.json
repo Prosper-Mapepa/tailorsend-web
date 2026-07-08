@@ -10,8 +10,7 @@
     "dev": "tsx watch src/index.ts",
     "build": "npm run generate && tsc --noEmit",
     "generate": "node scripts/prepare-prisma.mjs && prisma generate --schema prisma/schema.prisma",
-    "postinstall": "prisma generate --schema prisma/schema.prisma",
-    "start": "prisma generate --schema prisma/schema.prisma && node scripts/check-env.mjs && tsx src/index.ts",
+    "start": "node scripts/check-env.mjs && tsx src/index.ts",
     "test": "tsx src/test-auth.ts"
   },
   "dependencies": {
