@@ -6,7 +6,13 @@ import { apiFetch } from "@/lib/auth-client";
 import { formatPlanLabel, usageKitLabel } from "@/lib/billing/format";
 import type { UsageSummary } from "@/lib/billing/usage-core";
 
-export function UsageWidget({ compact = false }: { compact?: boolean }) {
+export function UsageWidget({
+  compact = false,
+  slim = false,
+}: {
+  compact?: boolean;
+  slim?: boolean;
+}) {
   const [usage, setUsage] = useState<UsageSummary | null>(null);
 
   useEffect(() => {
@@ -25,10 +31,32 @@ export function UsageWidget({ compact = false }: { compact?: boolean }) {
     return (
       <Link
         href="/billing"
-        className="hidden rounded-lg border border-emerald-200/80 bg-emerald-50/60 px-3 py-1.5 text-xs font-medium text-emerald-800 transition hover:bg-emerald-50 lg:inline-flex"
+        className="inline-flex rounded-lg border border-emerald-200/80 bg-emerald-50/60 px-2.5 py-1 text-xs font-medium text-emerald-800 transition hover:bg-emerald-50 sm:px-3 sm:py-1.5"
         title={`${plan} plan`}
       >
         {label}
+      </Link>
+    );
+  }
+
+  if (slim) {
+    return (
+      <Link
+        href="/billing"
+        className="flex items-center justify-between gap-3 rounded-lg border border-slate-200/70 bg-slate-50/50 px-4 py-2.5 text-sm transition hover:bg-slate-50"
+      >
+        <div className="min-w-0">
+          <span className="font-medium text-slate-900">{plan}</span>
+          <span className="text-slate-500"> · {label}</span>
+          {usage.plan === "free" && (
+            <span className="block text-xs text-slate-400">
+              Resets {new Date(usage.periodResetsAt).toLocaleDateString()}
+            </span>
+          )}
+        </div>
+        <span className="shrink-0 text-xs font-medium text-emerald-600">
+          Billing →
+        </span>
       </Link>
     );
   }

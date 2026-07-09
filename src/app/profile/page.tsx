@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
-  Alert,
   Button,
   Card,
   Label,
@@ -14,6 +13,8 @@ import {
   selectClass,
 } from "@/components/ui";
 import { ProfileJumpNav } from "@/components/ProfileJumpNav";
+import { ProfileImportSummary } from "@/components/ProfileImportSummary";
+import { ProfileProgress } from "@/components/ProfileProgress";
 import { ProfileSection, PROFILE_SECTION_SCROLL } from "@/components/ProfileSection";
 import { apiFetch } from "@/lib/auth-client";
 import { getProjectLinks, withProjectLinks } from "@/lib/project-links";
@@ -98,22 +99,6 @@ const EMPTY: ProfileForm = {
   sponsorshipDetails: "",
 };
 
-const NAV = [
-  { id: "upload", label: "Upload" },
-  { id: "contact", label: "Contact" },
-  { id: "experience", label: "Experience" },
-  { id: "education", label: "Education" },
-  { id: "projects", label: "Projects" },
-  { id: "skills", label: "Skills" },
-  { id: "certifications", label: "Certs" },
-  { id: "summary", label: "Summary" },
-  { id: "resume", label: "Base resume" },
-  { id: "roles", label: "Target roles" },
-  { id: "visa", label: "Work auth" },
-  { id: "application", label: "Application" },
-  { id: "eeo", label: "EEO" },
-] as const;
-
 function highlightsText(highlights: string[]) {
   return highlights.join("\n");
 }
@@ -197,7 +182,9 @@ export default function ProfilePage() {
   const [importSummary, setImportSummary] = useState<ImportSummary | null>(
     null,
   );
+  const [extractedChars, setExtractedChars] = useState<number | null>(null);
   const [outlining, setOutlining] = useState(false);
+  const [uploadExpanded, setUploadExpanded] = useState(false);
 
   function hydrate(data: Partial<ProfileForm>) {
     setForm({ ...EMPTY, ...data });
@@ -387,6 +374,7 @@ export default function ProfilePage() {
     setUploading(true);
     setUploadMsg(null);
     setImportSummary(null);
+    setExtractedChars(null);
     try {
       const fd = new FormData();
       fd.append("file", file);
@@ -398,12 +386,14 @@ export default function ProfilePage() {
       if (!res.ok) throw new Error(data.error ?? "Upload failed");
       hydrate(data.profile);
       setImportSummary(data.imported ?? null);
-      setUploadMsg(
-        `Resume imported (${data.extractedChars.toLocaleString()} characters). Profile replaced from this file — review and save.`,
-      );
+      setExtractedChars(data.extractedChars ?? null);
+      setUploadMsg(null);
+      setUploadExpanded(false);
       setSaved(false);
     } catch (e) {
       setUploadMsg((e as Error).message);
+      setImportSummary(null);
+      setExtractedChars(null);
     } finally {
       setUploading(false);
     }
@@ -439,102 +429,155 @@ export default function ProfilePage() {
     [form, skillsText],
   );
 
+  const hasProfileData =
+    completion.contact ||
+    completion.experience ||
+    completion.education ||
+    form.projects.length > 0;
+
+  const navCounts = useMemo(
+    () => ({
+      experience: form.workExperience.length,
+      education: form.education.length,
+      projects: form.projects.length,
+      certifications: form.certifications.length,
+      roles: form.targetRoles.length,
+      skills: skillsText
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean).length,
+    }),
+    [
+      form.workExperience.length,
+      form.education.length,
+      form.projects.length,
+      form.certifications.length,
+      form.targetRoles.length,
+      skillsText,
+    ],
+  );
+
   if (loading) return <PageLoader label="Loading profile…" />;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-5">
       <PageHeader
         title="Your profile"
-        description="Upload your resume once — we fill contact, jobs, education, projects, and skills. The AI tailors only from what you list here."
+        description="Resume data the AI uses for tailoring and autofill."
         actions={
           <>
-            {saved && (
-              <span className="text-sm font-medium text-emerald-600">
-                Saved ✓
-              </span>
+            {hasProfileData && !uploadExpanded && (
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setUploadExpanded(true);
+                  requestAnimationFrame(() =>
+                    document
+                      .getElementById("upload")
+                      ?.scrollIntoView({ behavior: "smooth" }),
+                  );
+                }}
+              >
+                Re-upload resume
+              </Button>
             )}
-            <Button onClick={save} disabled={saving} size="lg">
-              {saving ? "Saving…" : "Save profile"}
+            <Button
+              onClick={save}
+              disabled={saving || saved}
+              variant={saved ? "secondary" : "primary"}
+              size="lg"
+            >
+              {saving ? "Saving…" : saved ? "Saved" : "Save profile"}
             </Button>
           </>
         }
       />
 
-      <div className="grid grid-cols-1 gap-8 xl:grid-cols-[11.5rem_minmax(0,1fr)] xl:gap-10">
-        <ProfileJumpNav items={NAV} />
+      <ProfileProgress completion={completion} />
 
-        <div className="min-w-0 space-y-5">
-          <section id="upload" className={PROFILE_SECTION_SCROLL}>
-          <Card className="border-emerald-200/50 bg-white shadow-sm">
-            <SectionTitle
-              title="Start here — upload your resume"
-              description="Re-upload anytime to replace your profile from the latest resume — contact, links, jobs, education, projects, and skills."
-            />
-            <UploadZone
-              accept=".pdf,.docx,.txt,.md"
+      <div className="grid grid-cols-1 gap-8 xl:grid-cols-[11.5rem_minmax(0,1fr)] xl:gap-10">
+        <ProfileJumpNav
+          counts={navCounts}
+          onNavigate={(id) => {
+            if (id === "upload" && hasProfileData && !uploadExpanded) {
+              setUploadExpanded(true);
+              requestAnimationFrame(() =>
+                document
+                  .getElementById("upload")
+                  ?.scrollIntoView({ behavior: "smooth" }),
+              );
+            }
+          }}
+        />
+
+        <div className="min-w-0 space-y-4">
+          {(uploading || importSummary || uploadMsg) && (
+            <ProfileImportSummary
+              summary={importSummary}
+              extractedChars={extractedChars ?? undefined}
               loading={uploading}
-              label={
-                uploading
-                  ? "Reading your resume…"
-                  : "Drop your resume here or click to browse"
+              error={
+                uploadMsg &&
+                (uploadMsg.toLowerCase().includes("fail") ||
+                  uploadMsg.includes("Couldn't"))
+                  ? uploadMsg
+                  : null
               }
-              hint="PDF, DOCX, TXT, or Markdown · text-based PDFs work best"
-              onFile={uploadResume}
+              onDismiss={
+                importSummary && !uploading
+                  ? () => {
+                      setImportSummary(null);
+                      setExtractedChars(null);
+                    }
+                  : undefined
+              }
             />
-            {importSummary && (
-              <div className="mt-4 flex flex-wrap gap-2">
-                {importSummary.workExperience > 0 && (
-                  <span className="rounded-full bg-white px-3 py-1 text-xs font-medium text-emerald-800 ring-1 ring-emerald-200">
-                    {importSummary.workExperience} job
-                    {importSummary.workExperience === 1 ? "" : "s"}
-                  </span>
-                )}
-                {importSummary.education > 0 && (
-                  <span className="rounded-full bg-white px-3 py-1 text-xs font-medium text-emerald-800 ring-1 ring-emerald-200">
-                    {importSummary.education} education
-                  </span>
-                )}
-                {importSummary.projects > 0 && (
-                  <span className="rounded-full bg-white px-3 py-1 text-xs font-medium text-emerald-800 ring-1 ring-emerald-200">
-                    {importSummary.projects} project
-                    {importSummary.projects === 1 ? "" : "s"}
-                  </span>
-                )}
-                {importSummary.certifications > 0 && (
-                  <span className="rounded-full bg-white px-3 py-1 text-xs font-medium text-emerald-800 ring-1 ring-emerald-200">
-                    {importSummary.certifications} cert
-                    {importSummary.certifications === 1 ? "" : "s"}
-                  </span>
-                )}
-                {importSummary.skills > 0 && (
-                  <span className="rounded-full bg-white px-3 py-1 text-xs font-medium text-emerald-800 ring-1 ring-emerald-200">
-                    {importSummary.skills} skills
-                  </span>
-                )}
-              </div>
-            )}
-            {uploadMsg && (
-              <Alert
-                variant={
-                  uploadMsg.toLowerCase().includes("fail") ||
-                  uploadMsg.includes("Couldn't")
-                    ? "error"
-                    : "success"
-                }
-                className="mt-4"
-              >
-                {uploadMsg}
-              </Alert>
-            )}
-          </Card>
+          )}
+
+          {(!hasProfileData || uploadExpanded) && (
+          <section id="upload" className={PROFILE_SECTION_SCROLL}>
+            <Card padding="default" className="border-slate-200/60">
+              {hasProfileData && (
+                <div className="mb-4 flex justify-end">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setUploadExpanded(false)}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              )}
+              {!hasProfileData && (
+                <SectionTitle
+                  title="Upload your resume"
+                  description="We parse contact, experience, education, and skills into the sections below."
+                />
+              )}
+              <UploadZone
+                  accept=".pdf,.docx,.txt,.md"
+                  loading={uploading}
+                  label={
+                    uploading
+                      ? "Reading your resume…"
+                      : "Drop your resume here or click to browse"
+                  }
+                  hint="PDF, DOCX, TXT, or Markdown · text-based PDFs work best"
+                  onFile={uploadResume}
+                />
+            </Card>
           </section>
+          )}
+
+          {hasProfileData && !uploadExpanded && (
+            <span id="upload" className="sr-only" aria-hidden />
+          )}
 
           <ProfileSection
             id="contact"
             title="Contact"
             description="Used to autofill application forms."
-            complete={completion.contact}
-            defaultOpen
+            defaultOpen={!completion.contact}
           >
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
@@ -606,8 +649,7 @@ export default function ProfilePage() {
             title="Work experience"
             description="Jobs and internships — most recent first. One bullet per line under achievements."
             count={form.workExperience.length}
-            complete={completion.experience}
-            defaultOpen={form.workExperience.length > 0}
+            defaultOpen={form.workExperience.length === 0}
             action={
               <Button variant="secondary" size="sm" onClick={addWork}>
                 + Add role
@@ -721,8 +763,7 @@ export default function ProfilePage() {
             title="Education"
             description="Degrees, bootcamps, and formal training."
             count={form.education.length}
-            complete={completion.education}
-            defaultOpen={form.education.length > 0}
+            defaultOpen={form.education.length === 0}
             action={
               <Button variant="secondary" size="sm" onClick={addEducation}>
                 + Add education
@@ -835,8 +876,7 @@ export default function ProfilePage() {
             title="Projects"
             description="Website, App Store, and Play Store links per project — used when tailoring."
             count={form.projects.length}
-            complete={completion.projects}
-            defaultOpen={form.projects.length > 0}
+            defaultOpen={form.projects.length === 0}
             action={
               <Button variant="secondary" size="sm" onClick={addProject}>
                 + Add project
@@ -969,7 +1009,7 @@ export default function ProfilePage() {
             id="skills"
             title="Skills"
             description="Comma-separated — used for ATS keyword matching."
-            complete={completion.skills}
+            defaultOpen={!completion.skills}
           >
             <input
               className={inputClass}
@@ -983,47 +1023,11 @@ export default function ProfilePage() {
           </ProfileSection>
 
           <ProfileSection
-            id="summary"
-            title="Professional summary"
-            description="2–3 sentences that guide tailoring."
-            complete={completion.summary}
-          >
-            <textarea
-              className={`${inputClass} min-h-24`}
-              value={form.summary}
-              onChange={(e) => set("summary", e.target.value)}
-            />
-          </ProfileSection>
-
-          <ProfileSection
-            id="resume"
-            title="Base resume"
-            description="Full master resume text — auto-filled from upload."
-            complete={completion.resume}
-            action={
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={generateOutline}
-                disabled={outlining}
-              >
-                {outlining ? "Generating…" : "✨ Generate outline"}
-              </Button>
-            }
-          >
-            <textarea
-              className={`${inputClass} min-h-72 font-mono text-xs leading-relaxed`}
-              value={form.baseResume}
-              onChange={(e) => set("baseResume", e.target.value)}
-            />
-          </ProfileSection>
-
-          <ProfileSection
             id="certifications"
             title="Certifications"
             description="Professional licenses and credentials."
             count={form.certifications.length}
-            defaultOpen={form.certifications.length > 0}
+            defaultOpen={form.certifications.length === 0}
             action={
               <Button variant="secondary" size="sm" onClick={addCert}>
                 + Add certification
@@ -1086,10 +1090,47 @@ export default function ProfilePage() {
           </ProfileSection>
 
           <ProfileSection
+            id="summary"
+            title="Professional summary"
+            description="2–3 sentences that guide tailoring."
+            defaultOpen={!completion.summary}
+          >
+            <textarea
+              className={`${inputClass} min-h-24`}
+              value={form.summary}
+              onChange={(e) => set("summary", e.target.value)}
+            />
+          </ProfileSection>
+
+          <ProfileSection
+            id="resume"
+            title="Base resume"
+            description="Full master resume text — auto-filled from upload."
+            defaultOpen={!completion.resume}
+            action={
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={generateOutline}
+                disabled={outlining}
+              >
+                {outlining ? "Generating…" : "✨ Generate outline"}
+              </Button>
+            }
+          >
+            <textarea
+              className={`${inputClass} min-h-72 font-mono text-xs leading-relaxed`}
+              value={form.baseResume}
+              onChange={(e) => set("baseResume", e.target.value)}
+            />
+          </ProfileSection>
+
+          <ProfileSection
             id="roles"
             title="Target roles"
             description="What the job scanner searches for."
             count={form.targetRoles.length}
+            defaultOpen={form.targetRoles.length === 0}
             action={
               <Button variant="secondary" size="sm" onClick={addRole}>
                 + Add role
@@ -1160,7 +1201,7 @@ export default function ProfilePage() {
             )}
           </ProfileSection>
 
-          <ProfileSection id="visa" title="Work authorization">
+          <ProfileSection id="visa" title="Work authorization" defaultOpen={false}>
             <p className="mb-3 text-sm text-slate-500">
               Hides jobs that require citizenship or refuse sponsorship when
               enabled.
@@ -1188,7 +1229,7 @@ export default function ProfilePage() {
             </div>
           </ProfileSection>
 
-          <ProfileSection id="application" title="Application defaults">
+          <ProfileSection id="application" title="Application defaults" defaultOpen={false}>
             <p className="mb-3 text-sm text-slate-500">
               Saved answers for common screening questions on job applications.
               Autofill uses these when a form asks for them.
@@ -1251,7 +1292,7 @@ export default function ProfilePage() {
             </div>
           </ProfileSection>
 
-          <ProfileSection id="eeo" title="Voluntary disclosures (EEO)">
+          <ProfileSection id="eeo" title="Voluntary disclosures (EEO)" defaultOpen={false}>
             <p className="mb-3 text-sm text-slate-500">
               Optional demographic answers for OFCCP-style questions. Autofill
               uses your choices when applications require them.
@@ -1316,11 +1357,6 @@ export default function ProfilePage() {
             </div>
           </ProfileSection>
 
-          <div className="flex justify-end border-t border-slate-100 pt-6">
-            <Button onClick={save} disabled={saving} size="lg">
-              {saving ? "Saving…" : "Save profile"}
-            </Button>
-          </div>
         </div>
       </div>
     </div>

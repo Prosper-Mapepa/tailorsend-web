@@ -17,6 +17,7 @@ import {
   registerUser,
   setStoredToken,
 } from "@/lib/auth-client";
+import { markOnboardingPending } from "@/lib/onboarding";
 
 interface AuthContextValue {
   user: AuthUser | null;
@@ -61,6 +62,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { token, user: u } = await registerUser({ email, password, name });
       setStoredToken(token);
       setUser(u);
+      markOnboardingPending();
       router.push("/profile");
       router.refresh();
     },

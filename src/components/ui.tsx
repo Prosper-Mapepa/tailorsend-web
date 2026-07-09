@@ -42,7 +42,7 @@ type Variant = "primary" | "secondary" | "ghost" | "danger" | "outline";
 
 const VARIANTS: Record<Variant, string> = {
   primary:
-    "bg-emerald-600 text-white shadow-sm shadow-emerald-600/20 hover:bg-emerald-700 active:bg-emerald-800 disabled:bg-emerald-300 disabled:shadow-none",
+    "bg-emerald-600 text-white shadow-sm shadow-emerald-600/20 hover:bg-emerald-700 active:bg-emerald-800 disabled:bg-emerald-600 disabled:text-white disabled:opacity-50 disabled:shadow-none",
   secondary:
     "border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50 active:bg-slate-100 disabled:opacity-50",
   outline:
@@ -301,7 +301,7 @@ export function ScorePill({ score }: { score: number }) {
         : "bg-slate-100 text-slate-600 ring-slate-200/60";
   return (
     <span
-      className={`inline-flex rounded-lg px-2 py-0.5 text-xs font-semibold ring-1 ring-inset ${color}`}
+      className={`inline-flex shrink-0 whitespace-nowrap rounded-lg px-2 py-0.5 text-xs font-semibold leading-none ring-1 ring-inset ${color}`}
     >
       {score}% match
     </span>

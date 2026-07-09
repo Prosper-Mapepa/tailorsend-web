@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Button, Card, PageHeader, SectionTitle, inputClass, labelClass } from "@/components/ui";
+import { Button, Card, PageHeader, UploadZone, inputClass, labelClass } from "@/components/ui";
 import { FormattedDocEditor } from "@/components/FormattedDocEditor";
 import { FormResponsesPanel } from "@/components/FormResponsesPanel";
 import { CompanyEdgePanel } from "@/components/CompanyEdgePanel";
@@ -12,8 +12,34 @@ import type { MatchScore } from "@/lib/match-score";
 import { mdToHtml, normalizeResumeMarkdown } from "@/lib/markdown";
 import type { FormFieldResponse } from "@/lib/types";
 
-type Mode = "url" | "screenshots" | "text";
+type InputMode = "url" | "screenshots" | "text" | "format";
 type DocTab = "resume" | "cover" | "edge" | "form" | "notes";
+
+const INPUT_TABS: { id: InputMode; label: string; hint: string }[] = [
+  {
+    id: "url",
+    label: "Job link",
+    hint: "Paste a posting URL — we fetch the description when the site allows it.",
+  },
+  {
+    id: "screenshots",
+    label: "Screenshots",
+    hint: "Upload images of the job posting when a link won't load.",
+  },
+  {
+    id: "text",
+    label: "Paste text",
+    hint: "Copy the full job description from any site.",
+  },
+  {
+    id: "format",
+    label: "Format resume",
+    hint: "Upload any resume and get a clean, formatted PDF — no job needed.",
+  },
+];
+
+const TAILOR_TABS = INPUT_TABS.filter((t) => t.id !== "format");
+const FORMAT_TAB = INPUT_TABS.find((t) => t.id === "format")!;
 
 const DOC_TABS: { id: DocTab; label: string }[] = [
   { id: "resume", label: "Tailored resume" },
@@ -75,11 +101,6 @@ async function downloadPdf(
   URL.revokeObjectURL(url);
 }
 
-const MODE_LABELS: Record<Mode, string> = {
-  url: "Job link",
-  screenshots: "Upload screenshots",
-  text: "Paste description",
-};
 
 function resumeSlug(markdown: string): string {
   const first = markdown.split("\n").find((l) => l.trim()) ?? "resume";
@@ -92,8 +113,7 @@ function resumeSlug(markdown: string): string {
     .replace(/^-|-$/g, "") || "resume";
 }
 
-function FormatResumeSection() {
-  const uploadRef = useRef<HTMLInputElement>(null);
+function FormatResumeTab() {
   const [fileName, setFileName] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -101,7 +121,6 @@ function FormatResumeSection() {
   const [editing, setEditing] = useState(false);
   const [pdfBusy, setPdfBusy] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [expanded, setExpanded] = useState(true);
 
   async function formatFile(file: File) {
     setLoading(true);
@@ -120,7 +139,6 @@ function FormatResumeSection() {
       setError((e as Error).message);
     } finally {
       setLoading(false);
-      if (uploadRef.current) uploadRef.current.value = "";
     }
   }
 
@@ -134,147 +152,112 @@ function FormatResumeSection() {
   const displayMd = markdown ? normalizeResumeMarkdown(markdown) : "";
 
   return (
-    <Card className="border-emerald-200 bg-emerald-50/30">
-      <button
-        type="button"
-        onClick={() => setExpanded((v) => !v)}
-        className="flex w-full items-center justify-between text-left"
-      >
-        <div>
-          <h2 className="text-lg font-semibold">Format my resume</h2>
-          <p className="mt-1 text-sm text-slate-600">
-            Upload a PDF, DOCX, or TXT resume and get a clean, formatted PDF —
-            no job description required.
-          </p>
-        </div>
-        <span className="ml-4 text-sm text-slate-500">{expanded ? "▾" : "▸"}</span>
-      </button>
+    <div className="space-y-5">
+      <UploadZone
+        accept=".pdf,.docx,.txt,.md"
+        loading={loading}
+        label={
+          loading
+            ? "Formatting your resume…"
+            : "Drop your resume here or click to browse"
+        }
+        hint="PDF, DOCX, TXT, or Markdown"
+        onFile={formatFile}
+      />
+      {fileName && !loading && (
+        <p className="text-xs text-slate-500">
+          Last file: <span className="font-medium text-slate-700">{fileName}</span>
+        </p>
+      )}
+      {error && (
+        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
+      )}
 
-      {expanded && (
-        <div className="mt-4 space-y-4 border-t border-emerald-100 pt-4">
-          <div
-            onClick={() => uploadRef.current?.click()}
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={(e) => {
-              e.preventDefault();
-              const f = e.dataTransfer.files?.[0];
-              if (f) formatFile(f);
-            }}
-            className="flex cursor-pointer flex-col items-center justify-center rounded-md border-2 border-dashed border-emerald-300 bg-white px-4 py-8 text-center hover:border-emerald-500"
-          >
-            <p className="text-sm font-medium text-slate-700">
-              Click to upload or drag &amp; drop your resume
-            </p>
-            <p className="mt-1 text-xs text-slate-500">PDF, DOCX, TXT, or Markdown</p>
-            {fileName && (
-              <p className="mt-2 text-xs text-emerald-700">Last file: {fileName}</p>
-            )}
+      {markdown && (
+        <div className="space-y-4 border-t border-slate-100 pt-5">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="inline-flex overflow-hidden rounded-lg border border-slate-200">
+              <button
+                type="button"
+                onClick={() => setEditing(false)}
+                className={`px-3 py-1.5 text-sm font-medium transition ${
+                  !editing
+                    ? "bg-emerald-600 text-white"
+                    : "bg-white text-slate-600 hover:bg-slate-50"
+                }`}
+              >
+                Preview
+              </button>
+              <button
+                type="button"
+                onClick={() => setEditing(true)}
+                className={`px-3 py-1.5 text-sm font-medium transition ${
+                  editing
+                    ? "bg-emerald-600 text-white"
+                    : "bg-white text-slate-600 hover:bg-slate-50"
+                }`}
+              >
+                Edit
+              </button>
+            </div>
+            <Button variant="secondary" size="sm" onClick={copyMarkdown}>
+              {copied ? "Copied ✓" : "Copy"}
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => download(`${slug}.md`, displayMd)}
+            >
+              Download .md
+            </Button>
+            <Button
+              size="sm"
+              disabled={pdfBusy}
+              onClick={async () => {
+                setPdfBusy(true);
+                try {
+                  await downloadPdf(`${slug}.pdf`, "Formatted resume", displayMd);
+                } catch (e) {
+                  setError((e as Error).message);
+                } finally {
+                  setPdfBusy(false);
+                }
+              }}
+            >
+              {pdfBusy ? "Generating PDF…" : "Download PDF"}
+            </Button>
           </div>
-          <input
-            ref={uploadRef}
-            type="file"
-            accept=".pdf,.docx,.txt,.md"
-            className="hidden"
-            onChange={(e) => {
-              const f = e.target.files?.[0];
-              if (f) formatFile(f);
-            }}
-          />
 
-          {loading && (
-            <p className="text-sm text-slate-500">
-              Reading your resume and applying professional formatting…
-            </p>
-          )}
-          {error && <p className="text-sm text-red-600">{error}</p>}
-
-          {markdown && (
-            <div className="space-y-3">
-              <div className="flex flex-wrap items-center gap-2">
-                <div className="inline-flex overflow-hidden rounded-md border border-slate-200">
-                  <button
-                    type="button"
-                    onClick={() => setEditing(false)}
-                    className={`px-3 py-1.5 text-sm font-medium transition ${
-                      !editing
-                        ? "bg-emerald-600 text-white"
-                        : "bg-white text-slate-600 hover:bg-slate-50"
-                    }`}
-                  >
-                    Preview
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setEditing(true)}
-                    className={`px-3 py-1.5 text-sm font-medium transition ${
-                      editing
-                        ? "bg-emerald-600 text-white"
-                        : "bg-white text-slate-600 hover:bg-slate-50"
-                    }`}
-                  >
-                    Edit
-                  </button>
-                </div>
-                <Button variant="secondary" onClick={copyMarkdown}>
-                  {copied ? "Copied ✓" : "Copy"}
-                </Button>
-                <Button
-                  variant="secondary"
-                  onClick={() => download(`${slug}.md`, displayMd)}
-                >
-                  Download .md
-                </Button>
-                <Button
-                  disabled={pdfBusy}
-                  onClick={async () => {
-                    setPdfBusy(true);
-                    try {
-                      await downloadPdf(
-                        `${slug}.pdf`,
-                        "Formatted resume",
-                        displayMd,
-                      );
-                    } catch (e) {
-                      setError((e as Error).message);
-                    } finally {
-                      setPdfBusy(false);
-                    }
-                  }}
-                >
-                  {pdfBusy ? "Generating PDF…" : "Download PDF"}
-                </Button>
-              </div>
-
-              {editing ? (
-                <div>
-                  <textarea
-                    value={markdown}
-                    onChange={(e) => setMarkdown(e.target.value)}
-                    spellCheck
-                    className="h-[420px] w-full resize-y rounded-md border border-slate-300 bg-white p-4 font-mono text-sm leading-relaxed text-slate-800 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                  />
-                  <p className="mt-1 text-xs text-slate-400">
-                    Markdown supported. Edits apply to Copy, PDF, and .md downloads.
-                  </p>
-                </div>
-              ) : (
-                <div className="rounded-md border border-slate-200 bg-white p-6">
-                  <div
-                    className="doc-preview"
-                    dangerouslySetInnerHTML={{ __html: mdToHtml(displayMd, { kind: "resume" }) }}
-                  />
-                </div>
-              )}
+          {editing ? (
+            <div>
+              <textarea
+                value={markdown}
+                onChange={(e) => setMarkdown(e.target.value)}
+                spellCheck
+                className="h-[420px] w-full resize-y rounded-lg border border-slate-200 bg-white p-4 font-mono text-sm leading-relaxed text-slate-800 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+              />
+              <p className="mt-1 text-xs text-slate-400">
+                Markdown supported. Edits apply to Copy, PDF, and .md downloads.
+              </p>
+            </div>
+          ) : (
+            <div className="rounded-lg border border-slate-200 bg-white p-6">
+              <div
+                className="doc-preview"
+                dangerouslySetInnerHTML={{
+                  __html: mdToHtml(displayMd, { kind: "resume" }),
+                }}
+              />
             </div>
           )}
         </div>
       )}
-    </Card>
+    </div>
   );
 }
 
 export default function TailorPage() {
-  const [mode, setMode] = useState<Mode>("url");
+  const [mode, setMode] = useState<InputMode>("url");
   const [url, setUrl] = useState("");
   const [text, setText] = useState("");
   const [files, setFiles] = useState<File[]>([]);
@@ -455,172 +438,222 @@ export default function TailorPage() {
     (t) => t.id !== "edge" || result?.edge,
   );
 
+  const isFormat = mode === "format";
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-5">
       <PageHeader
-        title="Tailor for a specific role"
+        title="Tailor"
         description={
           <>
-            Paste a job link, upload screenshots, or paste the description. AI
-            tailors your resume & cover letter from your{" "}
+            Research the company, fix honest gaps, tailor documents, and autofill
+            applications — all from your{" "}
             <a href="/profile" className="font-medium text-emerald-600 hover:underline">
               profile
-            </a>{" "}
-            using only experience you listed.
+            </a>
+            .
           </>
         }
       />
 
-      <FormatResumeSection />
-
       <Card>
-        <div className="mb-5 flex flex-wrap gap-1 rounded-xl bg-slate-100/80 p-1">
-          {(Object.keys(MODE_LABELS) as Mode[]).map((m) => (
-            <button
-              key={m}
-              onClick={() => setMode(m)}
-              className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
-                mode === m
-                  ? "bg-white text-emerald-700 shadow-sm"
-                  : "text-slate-600 hover:text-slate-900"
-              }`}
-            >
-              {MODE_LABELS[m]}
-            </button>
-          ))}
-        </div>
-
-        {mode === "url" && (
-          <div>
-            <label className={labelCls}>Job posting URL</label>
-            <input
-              className={field}
-              placeholder="https://company.com/careers/senior-security-engineer"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-            />
-            <p className="mt-1 text-xs text-slate-400">
-              Tip: some sites (LinkedIn, Workday) block bots. If a link fails,
-              use screenshots or paste the text.
+        {!isFormat ? (
+          <div className="mb-5 rounded-xl border border-emerald-100 bg-emerald-50/40 px-4 py-3.5 sm:px-5">
+            <p className="text-sm leading-relaxed text-slate-700">
+              We research every company and suggest{" "}
+              <span className="font-medium text-slate-900">honest gaps to fix</span>
+              , then weave them into your resume and cover letter. Autofill
+              applications on company career sites —{" "}
+              <span className="font-medium text-slate-900">
+                you review every field before you submit
+              </span>
+              .
             </p>
           </div>
+        ) : (
+          <p className="mb-4 text-sm text-slate-500">{FORMAT_TAB.hint}</p>
         )}
 
-        {mode === "text" && (
-          <div>
-            <label className={labelCls}>Job description</label>
-            <textarea
-              className={`${field} min-h-[180px] font-mono`}
-              placeholder="Paste the full job description here…"
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-            />
+        <div className="mb-4 flex items-center gap-1 rounded-xl bg-slate-100/80 p-1">
+          <div className="flex min-w-0 flex-1 gap-1">
+            {TAILOR_TABS.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setMode(tab.id)}
+                className={`min-w-0 flex-1 rounded-lg px-3 py-2 text-sm font-medium transition ${
+                  mode === tab.id
+                    ? "bg-white text-emerald-700 shadow-sm ring-1 ring-slate-200/80"
+                    : "text-slate-600 hover:text-slate-900"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
           </div>
-        )}
-
-        {mode === "screenshots" && (
-          <div>
-            <label className={labelCls}>Job screenshots</label>
-            <div
-              onClick={() => fileRef.current?.click()}
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={(e) => {
-                e.preventDefault();
-                addFiles(e.dataTransfer.files);
-              }}
-              className="flex cursor-pointer flex-col items-center justify-center rounded-md border-2 border-dashed border-slate-300 px-4 py-8 text-center hover:border-emerald-400"
-            >
-              <p className="text-sm text-slate-600">
-                Click to upload or drag &amp; drop screenshots
-              </p>
-              <p className="mt-1 text-xs text-slate-400">
-                PNG/JPG, up to 6 images
-              </p>
-              <input
-                ref={fileRef}
-                type="file"
-                accept="image/*"
-                multiple
-                className="hidden"
-                onChange={(e) => addFiles(e.target.files)}
-              />
-            </div>
-            {files.length > 0 && (
-              <ul className="mt-3 space-y-1">
-                {files.map((f, i) => (
-                  <li
-                    key={i}
-                    className="flex items-center justify-between rounded-md bg-slate-50 px-3 py-1.5 text-sm"
-                  >
-                    <span className="truncate">{f.name}</span>
-                    <button
-                      onClick={() =>
-                        setFiles((prev) => prev.filter((_, idx) => idx !== i))
-                      }
-                      className="text-slate-400 hover:text-red-600"
-                    >
-                      Remove
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        )}
-
-        <div className="mt-4">
+          <div className="mx-0.5 hidden h-6 w-px shrink-0 bg-slate-200 sm:block" />
           <button
-            onClick={() => setShowOptional((s) => !s)}
-            className="text-sm font-medium text-slate-500 hover:text-slate-700"
+            type="button"
+            onClick={() => setMode("format")}
+            className={`shrink-0 rounded-lg px-3 py-2 text-sm font-medium transition ${
+              isFormat
+                ? "bg-white text-emerald-700 shadow-sm ring-1 ring-slate-200/80"
+                : "text-slate-600 hover:text-slate-900"
+            }`}
           >
-            {showOptional ? "▾" : "▸"} Optional: set title / company / location
+            {FORMAT_TAB.label}
           </button>
-          {showOptional && (
-            <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
-              <div>
-                <label className={labelCls}>Title</label>
-                <input
-                  className={field}
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                />
-              </div>
-              <div>
-                <label className={labelCls}>Company</label>
-                <input
-                  className={field}
-                  value={company}
-                  onChange={(e) => setCompany(e.target.value)}
-                />
-              </div>
-              <div>
-                <label className={labelCls}>Location</label>
-                <input
-                  className={field}
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                />
-              </div>
+        </div>
+
+        {isFormat ? (
+            <FormatResumeTab />
+          ) : (
+            <div className="space-y-4">
+              {mode === "url" && (
+                <div className="space-y-3">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+                    <div className="min-w-0 flex-1">
+                      <label className={labelCls}>Job posting URL</label>
+                      <input
+                        className={field}
+                        placeholder="https://company.com/careers/role"
+                        value={url}
+                        onChange={(e) => setUrl(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && canSubmit) void run();
+                        }}
+                      />
+                    </div>
+                    <Button
+                      onClick={run}
+                      disabled={!canSubmit}
+                      size="lg"
+                      className="shrink-0 sm:mb-0.5"
+                    >
+                      {loading ? "Tailoring…" : "Tailor"}
+                    </Button>
+                  </div>
+                  <p className="text-xs text-slate-400">
+                    LinkedIn and Workday often block bots — try Screenshots or
+                    Paste text.
+                  </p>
+                </div>
+              )}
+
+              {mode === "text" && (
+                <div className="space-y-3">
+                  <div>
+                    <label className={labelCls}>Job description</label>
+                    <textarea
+                      className={`${field} min-h-[160px] text-sm leading-relaxed`}
+                      placeholder="Paste the full job description…"
+                      value={text}
+                      onChange={(e) => setText(e.target.value)}
+                    />
+                  </div>
+                  <Button onClick={run} disabled={!canSubmit} size="lg">
+                    {loading ? "Tailoring…" : "Tailor resume & cover letter"}
+                  </Button>
+                </div>
+              )}
+
+              {mode === "screenshots" && (
+                <div className="space-y-3">
+                  <UploadZone
+                    accept="image/*"
+                    loading={false}
+                    label="Drop screenshots here or click to browse"
+                    hint="PNG or JPG · up to 6 images"
+                    onFile={(file) =>
+                      setFiles((prev) => [...prev, file].slice(0, 6))
+                    }
+                  />
+                  <input
+                    ref={fileRef}
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                    onChange={(e) => addFiles(e.target.files)}
+                  />
+                  
+                  {files.length > 0 && (
+                    <ul className="space-y-1">
+                      {files.map((f, i) => (
+                        <li
+                          key={i}
+                          className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-1.5 text-sm"
+                        >
+                          <span className="truncate">{f.name}</span>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setFiles((prev) =>
+                                prev.filter((_, idx) => idx !== i),
+                              )
+                            }
+                            className="text-slate-400 hover:text-red-600"
+                          >
+                            Remove
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  <Button onClick={run} disabled={!canSubmit} size="lg">
+                    {loading ? "Tailoring…" : "Tailor resume & cover letter"}
+                  </Button>
+                </div>
+              )}
+
+              <button
+                type="button"
+                onClick={() => setShowOptional((s) => !s)}
+                className="text-xs font-medium text-slate-500 hover:text-slate-700"
+              >
+                {showOptional ? "▾" : "▸"} Optional: title, company, location
+              </button>
+              {showOptional && (
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                  <div>
+                    <label className={labelCls}>Title</label>
+                    <input
+                      className={field}
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label className={labelCls}>Company</label>
+                    <input
+                      className={field}
+                      value={company}
+                      onChange={(e) => setCompany(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label className={labelCls}>Location</label>
+                    <input
+                      className={field}
+                      value={location}
+                      onChange={(e) => setLocation(e.target.value)}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {loading && mode === "url" && (
+                <p className="text-sm text-slate-500">
+                  Reading the role and writing your documents…
+                </p>
+              )}
+              {error && (
+                <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+                  {error}
+                </p>
+              )}
             </div>
           )}
-        </div>
-
-        <div className="mt-5 flex items-center gap-3">
-          <Button onClick={run} disabled={!canSubmit}>
-            {loading ? "Tailoring…" : "Tailor resume & cover letter"}
-          </Button>
-          {loading && (
-            <span className="text-sm text-slate-500">
-              Reading the role and writing your documents…
-            </span>
-          )}
-        </div>
-
-        {error && (
-          <p className="mt-3 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
-            {error}
-          </p>
-        )}
       </Card>
 
       {result && (

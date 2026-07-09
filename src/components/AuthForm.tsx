@@ -46,20 +46,20 @@ export function SignInForm() {
           type="email"
           required
           autoComplete="email"
-          placeholder="you@university.edu"
+          placeholder="Enter your email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="mt-2"
+          className="mt-0"
         />
       </div>
       <div>
-        <div className="mb-2 flex items-center justify-between">
+        <div className="mb-0 flex items-center justify-between">
           <Label htmlFor="password">Password</Label>
           <Link
             href="/forgot-password"
-            className="text-xs font-medium text-emerald-600 hover:text-emerald-700"
+            className="text-xs font-semibold text-emerald-600 hover:text-emerald-700"
           >
-            Forgot?
+            Forgot your password?
           </Link>
         </div>
         <Input
@@ -67,12 +67,12 @@ export function SignInForm() {
           type="password"
           required
           autoComplete="current-password"
-          placeholder="••••••••"
+          placeholder="Enter your password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
       </div>
-      <Button type="submit" disabled={busy} className="mt-2 w-full" size="lg">
+      <Button type="submit" disabled={busy} className="mt-2 w-full font-semibold" size="lg">
         {busy ? "Signing in…" : "Sign in"}
       </Button>
       <p className="!mt-6 text-center text-sm text-slate-500">
@@ -118,10 +118,10 @@ export function RegisterForm() {
           id="name"
           type="text"
           autoComplete="name"
-          placeholder="Alex Johnson"
+          placeholder="Enter your full name"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="mt-2"
+          className="mt-0"
         />
       </div>
       <div>
@@ -131,12 +131,12 @@ export function RegisterForm() {
           type="email"
           required
           autoComplete="email"
-          placeholder="you@university.edu"
+          placeholder="Enter your email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="mt-2"
+          className="mt-0"
         />
-        <p className="mt-2 text-xs text-emerald-600">
+        <p className="mt-2 text-xs text-emerald-600 font-semibold">
           .edu emails unlock student pricing & extra free kits.
         </p>
       </div>
@@ -150,10 +150,10 @@ export function RegisterForm() {
           placeholder="Min. 8 characters"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="mt-2"
+          className="mt-0"
         />
       </div>
-      <Button type="submit" disabled={busy} className="mt-2 w-full" size="lg">
+      <Button type="submit" disabled={busy} className="mt-2 w-full font-semibold" size="lg">
         {busy ? "Creating account…" : "Get started free"}
       </Button>
       <p className="!mt-6 text-center text-sm text-slate-500">
@@ -212,13 +212,13 @@ export function ForgotPasswordForm() {
           type="email"
           required
           autoComplete="email"
-          placeholder="you@example.com"
+          placeholder="Enter your email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="mt-2"
+          className="mt-0"
         />
       </div>
-      <Button type="submit" disabled={busy} className="mt-2 w-full" size="lg">
+      <Button type="submit" disabled={busy} className="mt-2 w-full font-semibold" size="lg">
         {busy ? "Sending…" : "Send reset link"}
       </Button>
       <p className="!mt-6 text-center text-sm text-slate-500">

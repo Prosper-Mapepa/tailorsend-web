@@ -118,7 +118,10 @@ export function LandingPage() {
             </p>
 
             <h1 className="mt-8 text-[2.5rem] font-semibold leading-[1.05] tracking-tight text-slate-900 sm:text-5xl lg:text-[3.5rem]">
-              Gaps you can fix —{" "}
+              <span className="rounded bg-emerald-200 px-1.5 text-emerald-900">
+                Gaps
+              </span>{" "}
+              you can fix —{" "}
               <span className="relative">
                 <span className="relative z-10 bg-gradient-to-r from-emerald-600 via-green-600 to-teal-600 bg-clip-text text-transparent">
                   woven into every application.

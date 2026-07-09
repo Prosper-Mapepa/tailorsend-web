@@ -53,7 +53,7 @@ function HeroCTAs() {
   return (
     <div className="flex flex-wrap justify-center gap-3 lg:justify-start">
       <Link href="/register">
-        <Button size="lg" className="shadow-lg shadow-emerald-600/25">
+        <Button size="lg" className="shadow-lg shadow-emerald-600/25 text-xl">
           Create free account
         </Button>
       </Link>
@@ -61,7 +61,7 @@ function HeroCTAs() {
         <Button
           size="lg"
           variant="secondary"
-          className="border-white/25 bg-white/10 text-white hover:bg-white/20"
+          className="border-white/25 bg-white/10 text-white hover:bg-white/20 text-xl"
         >
           Sign in
         </Button>
@@ -73,20 +73,22 @@ function HeroCTAs() {
 export function AuthMarketingShell() {
   return (
     <div className="flex min-h-screen w-full flex-col">
-      <header className="flex shrink-0 items-center justify-between gap-4 border-b border-white/10 px-5 py-4 sm:px-8 lg:px-12">
+      <header className="flex shrink-0 items-center justify-between gap-4 border-b border-white/10 px-5 py-5 sm:px-8 lg:px-12">
         <AuthLogo />
         <div className="flex shrink-0 items-center gap-2 sm:gap-3">
           <Link href="/sign-in" className="hidden sm:block">
             <Button
-              size="sm"
+              size="md"
               variant="secondary"
-              className="border-white/20 bg-white/10 text-white hover:bg-white/20"
+              className="border-white/20 bg-white/10 text-base text-white hover:bg-white/20"
             >
               Sign in
             </Button>
           </Link>
           <Link href="/register">
-            <Button size="sm">Get started</Button>
+            <Button size="md" className="text-base">
+              Get started
+            </Button>
           </Link>
         </div>
       </header>
@@ -110,7 +112,7 @@ export function AuthMarketingShell() {
           <section className="grid items-start gap-8 lg:grid-cols-[1fr_380px] lg:gap-12 xl:grid-cols-[1fr_420px]">
             <div className="space-y-8">
               <div>
-                <h2 className="text-lg font-semibold text-white sm:text-xl">
+                <h2 className="text-xl font-semibold text-white sm:text-2xl">
                   Why TailorSend is different
                 </h2>
                 <div className="mt-5">
@@ -137,7 +139,7 @@ export function AuthMarketingShell() {
       </main>
 
       <footer className="shrink-0 border-t border-white/10 px-5 py-6 sm:px-8 lg:px-12">
-        <p className="mx-auto max-w-7xl text-center text-[11px] leading-relaxed text-white/40">
+        <p className="mx-auto max-w-7xl text-center text-sm leading-relaxed text-white/60 sm:text-base">
           By continuing, you agree to our{" "}
           <Link
             href="/terms"
@@ -182,12 +184,12 @@ export function FormShell({
         </div>
 
         <header className="mb-8 text-center">
-          <h1 className="text-[1.75rem] font-semibold tracking-tight text-white">
+          {/* <h1 className="text-[1.75rem] font-semibold tracking-tight text-white">
             {title}
-          </h1>
-          <p className="mt-2 text-[15px] leading-relaxed text-white/55">
+          </h1> */}
+          {/* <p className="mt-2 text-[15px] leading-relaxed text-white/55">
             {subtitle}
-          </p>
+          </p> */}
         </header>
 
         <div className="rounded-2xl border border-white/10 bg-white p-6 shadow-2xl shadow-emerald-950/30 sm:p-8">

@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -11,7 +11,6 @@ import {
   PageLoader,
   Pagination,
   ScorePill,
-  SectionTitle,
   inputClass,
 } from "@/components/ui";
 import { apiFetch } from "@/lib/auth-client";
@@ -38,7 +37,7 @@ interface JobRow {
   applications: { id: string; status: string }[];
 }
 
-type JobGroup = "autofill" | "manual";
+type JobListTab = "autofill" | "manual";
 
 const PAGE_SIZE = 12;
 
@@ -73,31 +72,10 @@ function timeAgo(iso: string | null): string {
 }
 
 function VisaTag({ risk }: { risk: VisaRisk }) {
-  if (risk === "none") {
-    return (
-      <span className="rounded bg-emerald-100 px-1.5 py-0.5 text-xs text-emerald-700">
-        {visaRiskLabel(risk)}
-      </span>
-    );
-  }
+  if (risk === "none") return null;
   return (
-    <span className="rounded bg-red-100 px-1.5 py-0.5 text-xs text-red-700">
+    <span className="rounded-full bg-red-50 px-2 py-0.5 text-[11px] font-medium text-red-700 ring-1 ring-red-100">
       {visaRiskLabel(risk)}
-    </span>
-  );
-}
-
-function AutofillTag({ supported }: { supported: boolean }) {
-  if (supported) {
-    return (
-      <span className="rounded bg-emerald-100 px-1.5 py-0.5 text-xs font-medium text-emerald-800">
-        Auto-fill
-      </span>
-    );
-  }
-  return (
-    <span className="rounded bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-900">
-      Manual apply
     </span>
   );
 }
@@ -114,84 +92,77 @@ function JobCard({
   onSetStatus: (id: string, status: string) => void;
 }) {
   const app = job.applications[0];
-  const applyUrl = job.applyUrl || job.url;
-  const autofill = supportsAutofill(applyUrl, job.atsPlatform);
+  const posted = job.postedAt ? timeAgo(job.postedAt) : null;
+  const meta = [job.company, job.location, job.remote ? "Remote" : null]
+    .filter(Boolean)
+    .join(" · ");
 
   return (
-    <Card className="flex h-full flex-col gap-3">
+    <div className="flex h-full flex-col rounded-xl border border-slate-200/70 bg-white p-4 transition hover:border-slate-300/80 hover:shadow-sm">
       <div className="min-w-0 flex-1 space-y-2">
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-start gap-2">
           <a
             href={job.url}
             target="_blank"
             rel="noreferrer"
-            className="line-clamp-2 font-semibold leading-snug text-slate-900 hover:text-emerald-600"
+            className="min-w-0 flex-1 line-clamp-2 font-semibold leading-snug text-slate-900 hover:text-emerald-600"
           >
             {job.title}
           </a>
+          <ScorePill score={job.matchScore} />
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <ScorePill score={job.matchScore} />
-          <AutofillTag supported={autofill} />
-        </div>
-        <p className="line-clamp-2 text-sm text-slate-600">
-          {job.company}
-          {job.location ? ` · ${job.location}` : ""}
-          {job.remote ? " · Remote" : ""}
-        </p>
-        {job.salary && (
-          <p className="text-xs text-slate-500">{job.salary}</p>
-        )}
-        <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-400">
-          <span className="rounded bg-slate-100 px-1.5 py-0.5">{job.source}</span>
-          {job.atsPlatform !== "unknown" && (
-            <span className="rounded bg-slate-100 px-1.5 py-0.5">
-              {job.atsPlatform}
+          {meta && <p className="text-sm text-slate-500">{meta}</p>}
+          {posted && (
+            <span className="shrink-0 rounded-md  px-2 py-0.5 text-xs font-bold text-[#009866] ">
+              {posted}
             </span>
           )}
-          <VisaTag risk={job.visaRisk} />
-          {job.postedAt && <span>{timeAgo(job.postedAt)}</span>}
         </div>
-        {app && (
-          <p className="text-xs text-slate-500">
-            Application: <Badge status={app.status} />
-          </p>
+        {job.salary && (
+          <p className="text-xs text-slate-400">{job.salary}</p>
         )}
+        <div className="flex flex-wrap items-center gap-1.5">
+          <VisaTag risk={job.visaRisk} />
+          {app && <Badge status={app.status} />}
+        </div>
       </div>
-
-      <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3">
+      {/* <div className="ml-auto flex items-center gap-1">
+        <button
+          type="button"
+          onClick={() => onSetStatus(job.id, "saved")}
+          className="px-2 text-xs font-medium text-slate-500 hover:text-slate-800"
+        >
+          Save
+        </button>
+        <button
+          type="button"
+          onClick={() => onSetStatus(job.id, "hidden")}
+          className="px-2 text-xs font-medium text-slate-500 hover:text-slate-800"
+        >
+          Hide
+        </button>
+        </div> */}
+      <div className="mt-4 flex items-center justify-end gap-3 border-t border-slate-100 pt-3">
+        
         {app ? (
-          <Link href={`/applications/${app.id}`} className="flex-1">
-            <Button variant="secondary" size="sm" className="w-full">
+          <Link href={`/applications/${app.id}`}>
+            <Button variant="outline" size="md" className="font-semibold border-green-500 text-green-500 hover:bg-green-500 hover:text-white">
               Open application
             </Button>
           </Link>
         ) : (
           <Button
-            size="sm"
-            className="flex-1"
+            size="md"
             onClick={() => onTailor(job.id)}
             disabled={tailoringId === job.id}
           >
             {tailoringId === job.id ? "Tailoring…" : "Tailor & prep"}
           </Button>
         )}
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => onSetStatus(job.id, "saved")}
-        >
-          Save
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => onSetStatus(job.id, "hidden")}
-        >
-          Hide
-        </Button>
+   
       </div>
-    </Card>
+    </div>
   );
 }
 
@@ -213,6 +184,7 @@ export default function JobsPage() {
   const [message, setMessage] = useState<string | null>(null);
   const [tailoringId, setTailoringId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
+  const [jobTab, setJobTab] = useState<JobListTab>("autofill");
   const [filtersOpen, setFiltersOpen] = useState(false);
   const router = useRouter();
   const [targetRoles, setTargetRoles] = useState<string[]>([]);
@@ -353,17 +325,11 @@ export default function JobsPage() {
     (j) => !supportsAutofill(j.applyUrl || j.url, j.atsPlatform),
   );
 
-  const allJobs = useMemo(
-    () => [
-      ...autofillJobs.map((job) => ({ job, group: "autofill" as JobGroup })),
-      ...manualJobs.map((job) => ({ job, group: "manual" as JobGroup })),
-    ],
-    [autofillJobs, manualJobs],
-  );
+  const activeJobs = jobTab === "autofill" ? autofillJobs : manualJobs;
 
-  const totalPages = Math.max(1, Math.ceil(allJobs.length / PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(activeJobs.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
-  const pageJobs = allJobs.slice(
+  const pageJobs = activeJobs.slice(
     (safePage - 1) * PAGE_SIZE,
     safePage * PAGE_SIZE,
   );
@@ -372,104 +338,107 @@ export default function JobsPage() {
     if (page > totalPages) setPage(totalPages);
   }, [page, totalPages]);
 
+  useEffect(() => {
+    if (
+      jobTab === "autofill" &&
+      autofillJobs.length === 0 &&
+      manualJobs.length > 0
+    ) {
+      setJobTab("manual");
+    }
+  }, [autofillJobs.length, manualJobs.length, jobTab]);
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <PageHeader
         title="Jobs"
-        description="Scan US job boards for recent roles, score matches against your profile, and tailor applications."
+        description="Scan boards, score matches, and tailor applications from your profile."
       />
 
-      <Card className="space-y-4">
+      <Card>
         {targetRoles.length > 0 && (
-          <div>
-            <div className="mb-2 flex items-center justify-between gap-2">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                Target roles
-              </p>
-              <Link
-                href="/profile"
-                className="text-xs font-medium text-emerald-600 hover:underline"
-              >
-                Edit →
-              </Link>
-            </div>
-            <div className="flex flex-wrap gap-1.5">
-              {targetRoles.map((t) => (
-                <button
-                  key={t}
-                  type="button"
-                  onClick={() => setQuery(t)}
-                  title="Click to search this role"
-                  className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-100"
-                >
-                  {t}
-                </button>
-              ))}
+          <div className="mb-4 flex flex-wrap items-center gap-2">
+            <span className="text-xs font-medium text-slate-400">Roles:</span>
+            {targetRoles.map((t) => (
               <button
+                key={t}
                 type="button"
-                onClick={() => setQuery("")}
-                className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600 hover:bg-slate-200"
+                onClick={() => setQuery(t)}
+                className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-700 hover:bg-emerald-50 hover:text-emerald-800"
               >
-                All roles
+                {t}
               </button>
-            </div>
+            ))}
+            <Link
+              href="/profile"
+              className="text-xs font-medium text-emerald-600 hover:underline"
+            >
+              Edit
+            </Link>
           </div>
         )}
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <input
-            className={`${field} lg:col-span-2`}
-            placeholder="Role keywords (blank = target roles)"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
-          <input
-            className={field}
-            placeholder="Location"
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
-          />
-          <Button onClick={runSearch} disabled={searching} className="w-full">
-            {searching ? "Scanning…" : "Scan for jobs"}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+          <div className="grid min-w-0 flex-1 grid-cols-1 gap-3 sm:grid-cols-2">
+            <input
+              className={field}
+              placeholder="Role keywords"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+            <input
+              className={field}
+              placeholder="Location"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+            />
+          </div>
+          <Button
+            onClick={runSearch}
+            disabled={searching}
+            size="lg"
+            className="shrink-0 sm:mb-0.5"
+          >
+            {searching ? "Scanning…" : "Scan jobs"}
           </Button>
         </div>
 
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
-          <label className="flex items-center gap-2 text-slate-700">
+        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-slate-600">
+          <label className="flex items-center gap-1.5">
             <input
               type="checkbox"
               checked={remoteOnly}
               onChange={(e) => setRemoteOnly(e.target.checked)}
             />
-            Remote only
+            Remote
           </label>
-          <label className="flex items-center gap-2 text-slate-700">
+          <label className="flex items-center gap-1.5">
             <input
               type="checkbox"
               checked={fullTimeOnly}
               onChange={(e) => setFullTimeOnly(e.target.checked)}
             />
-            Full-time only
+            Full-time
           </label>
-          <label className="flex items-center gap-2 text-slate-700">
+          <label className="flex items-center gap-1.5">
             <input
               type="checkbox"
               checked={sponsorshipFriendly}
               onChange={(e) => setSponsorshipFriendly(e.target.checked)}
             />
-            Sponsorship-friendly
+            Sponsorship OK
           </label>
           <button
             type="button"
             onClick={() => setFiltersOpen((o) => !o)}
-            className="text-sm font-medium text-slate-500 hover:text-slate-800"
+            className="text-xs font-medium text-slate-500 hover:text-slate-800"
           >
-            {filtersOpen ? "▾ Fewer options" : "▸ More options"}
+            {filtersOpen ? "Less" : "More filters"}
           </button>
         </div>
 
         {filtersOpen && (
-          <div className="space-y-3 rounded-xl border border-slate-100 bg-slate-50/60 p-4">
+          <div className="mt-3 space-y-3 rounded-lg border border-slate-100 bg-slate-50/50 p-3">
             <div className="flex flex-wrap items-center gap-4">
               <label className="flex items-center gap-2 text-sm text-slate-600">
                 Posted
@@ -488,7 +457,7 @@ export default function JobsPage() {
                 </select>
               </label>
               <label className="flex items-center gap-2 text-sm text-slate-600">
-                Min match
+                Min match {minScore}%
                 <input
                   type="range"
                   min={0}
@@ -496,15 +465,15 @@ export default function JobsPage() {
                   step={10}
                   value={minScore}
                   onChange={(e) => setMinScore(Number(e.target.value))}
+                  className="w-24"
                 />
-                <span className="w-8 font-medium">{minScore}%</span>
               </label>
             </div>
             <div className="flex flex-wrap gap-3">
               {ALL_SOURCES.map((s) => (
                 <label
                   key={s.id}
-                  className="flex items-center gap-1.5 text-sm"
+                  className="flex items-center gap-1.5 text-xs text-slate-600"
                 >
                   <input
                     type="checkbox"
@@ -518,56 +487,91 @@ export default function JobsPage() {
           </div>
         )}
 
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-3">
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={clearJobs}
-            disabled={clearing || searching}
-          >
-            {clearing ? "Clearing…" : "Clear results"}
-          </Button>
-          {message && (
-            <p className="text-sm text-slate-500">{message}</p>
-          )}
-        </div>
+        {message && (
+          <p className="mt-3 rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600">
+            {message}
+          </p>
+        )}
       </Card>
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-slate-500">
-          {jobs.length} job{jobs.length === 1 ? "" : "s"}
-          {jobs.length > 0 && (
-            <>
-              {" "}
-              ·{" "}
-              <span className="text-emerald-700">
-                {autofillJobs.length} auto-fill
+      {!loading && jobs.length > 0 && (
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex gap-1 rounded-xl bg-slate-100/80 p-1">
+            <button
+              type="button"
+              onClick={() => {
+                setJobTab("autofill");
+                setPage(1);
+              }}
+              className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
+                jobTab === "autofill"
+                  ? "bg-white text-emerald-700 shadow-sm ring-1 ring-slate-200/80"
+                  : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              Auto-fill
+              <span
+                className={`ml-1.5 rounded-full px-1.5 py-0.5 text-xs ${
+                  jobTab === "autofill"
+                    ? "bg-emerald-100 text-emerald-700"
+                    : "bg-slate-200/80 text-slate-600"
+                }`}
+              >
+                {autofillJobs.length}
               </span>
-              {" · "}
-              <span className="text-amber-800">
-                {manualJobs.length} manual
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setJobTab("manual");
+                setPage(1);
+              }}
+              className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
+                jobTab === "manual"
+                  ? "bg-white text-slate-800 shadow-sm ring-1 ring-slate-200/80"
+                  : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              Manual
+              <span
+                className={`ml-1.5 rounded-full px-1.5 py-0.5 text-xs ${
+                  jobTab === "manual"
+                    ? "bg-slate-100 text-slate-700"
+                    : "bg-slate-200/80 text-slate-600"
+                }`}
+              >
+                {manualJobs.length}
               </span>
-            </>
-          )}
-          {jobs.length > PAGE_SIZE && (
-            <>
-              {" "}
-              · page {safePage} of {totalPages}
-            </>
-          )}
-        </p>
-        <label className="flex items-center gap-2 text-sm text-slate-600">
-          Sort
-          <select
-            className={field}
-            value={sort}
-            onChange={(e) => setSort(e.target.value as "recent" | "match")}
-          >
-            <option value="recent">Most recent</option>
-            <option value="match">Best match</option>
-          </select>
-        </label>
-      </div>
+            </button>
+          </div>
+          <div className="flex items-center gap-3">
+            {totalPages > 1 && (
+              <span className="text-xs text-slate-400">
+                Page {safePage} of {totalPages}
+              </span>
+            )}
+            <button
+              type="button"
+              onClick={clearJobs}
+              disabled={clearing || searching}
+              className="text-xs font-medium text-slate-500 hover:text-slate-800 disabled:opacity-50"
+            >
+              {clearing ? "Clearing…" : "Clear all"}
+            </button>
+            <label className="flex items-center gap-2 text-sm text-slate-600">
+              Sort
+              <select
+                className={`${field} py-1.5`}
+                value={sort}
+                onChange={(e) => setSort(e.target.value as "recent" | "match")}
+              >
+                <option value="recent">Recent</option>
+                <option value="match">Match</option>
+              </select>
+            </label>
+          </div>
+        </div>
+      )}
 
       {loading ? (
         <PageLoader label="Loading jobs…" />
@@ -583,42 +587,26 @@ export default function JobsPage() {
         </Card>
       ) : (
         <>
-          <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-            {pageJobs.map(({ job, group }, i) => {
-              const prev = pageJobs[i - 1];
-              const showAutofillHeader =
-                group === "autofill" && prev?.group !== "autofill";
-              const showManualHeader =
-                group === "manual" && prev?.group !== "manual";
-
-              return (
-                <Fragment key={job.id}>
-                  {showAutofillHeader && (
-                    <div className="col-span-full">
-                      <SectionTitle
-                        title={`Auto-fill supported (${autofillJobs.length})`}
-                        description="Greenhouse, Lever, Ashby — tailor and auto-fill in one click."
-                      />
-                    </div>
-                  )}
-                  {showManualHeader && (
-                    <div className="col-span-full">
-                      <SectionTitle
-                        title={`Manual apply only (${manualJobs.length})`}
-                        description="Workday, LinkedIn, and sign-in sites — tailor here, apply manually."
-                      />
-                    </div>
-                  )}
-                  <JobCard
-                    job={job}
-                    tailoringId={tailoringId}
-                    onTailor={tailor}
-                    onSetStatus={setStatus}
-                  />
-                </Fragment>
-              );
-            })}
-          </div>
+          {pageJobs.length === 0 ? (
+            <Card>
+              <p className="text-sm text-slate-500">
+                No {jobTab === "autofill" ? "auto-fill" : "manual"} jobs in this
+                list. Try the other tab or run a new scan.
+              </p>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+              {pageJobs.map((job) => (
+                <JobCard
+                  key={job.id}
+                  job={job}
+                  tailoringId={tailoringId}
+                  onTailor={tailor}
+                  onSetStatus={setStatus}
+                />
+              ))}
+            </div>
+          )}
 
           <Pagination
             page={safePage}

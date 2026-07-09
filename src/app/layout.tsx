@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Nav } from "@/components/Nav";
+import { OnboardingGate } from "@/components/OnboardingGate";
 import { AuthProvider } from "@/contexts/AuthProvider";
 
 const geistSans = Geist({
@@ -33,6 +34,7 @@ export default function RootLayout({
       <body className="app-shell min-h-full flex flex-col font-sans">
         <AuthProvider>
           <Nav />
+          <OnboardingGate />
           <main className="mx-auto w-full max-w-6xl flex-1 overflow-x-hidden px-4 py-8 sm:px-6 sm:py-10">
             {children}
           </main>

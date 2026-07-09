@@ -4,42 +4,42 @@ import { SiteLogo } from "@/components/SiteLogo";
 const WORKFLOW = [
   {
     step: 1,
-    label: "Find jobs",
+    label: "Find Jobs",
     short: "Search & score",
     highlight: false,
     featured: false,
   },
   {
     step: 2,
-    label: "Company research",
+    label: "Company Research",
     short: "Intel per employer",
     highlight: true,
     featured: false,
   },
   {
     step: 3,
-    label: "Suggest gaps",
+    label: "Suggest Gaps",
     short: "Honest fixes",
     highlight: true,
     featured: false,
   },
   {
     step: 4,
-    label: "Resume & cover",
+    label: "Resume & Cover",
     short: "Woven in",
     highlight: true,
     featured: false,
   },
   {
     step: 5,
-    label: "Autofill",
+    label: "Autofill Forms",
     short: "Greenhouse · Lever & more",
     highlight: true,
     featured: true,
   },
   {
     step: 6,
-    label: "You submit",
+    label: "You Submit",
     short: "Your approval",
     highlight: false,
     featured: false,
@@ -54,39 +54,39 @@ function WorkflowStep({ item }: { item: (typeof WORKFLOW)[number] }) {
           ? "border-lime-400/50 bg-gradient-to-b from-lime-400/25 via-emerald-500/20 to-emerald-500/10 shadow-xl shadow-lime-900/30 ring-1 ring-lime-400/30 lg:min-h-[130px]"
           : item.highlight
             ? "border-emerald-400/40 bg-gradient-to-b from-emerald-500/30 to-emerald-500/10 shadow-lg shadow-emerald-950/25"
-            : "border-white/10 bg-white/[0.05]"
+            : "border-white/50 bg-white/[0.05]"
       }`}
     >
       {item.featured && (
-        <span className="absolute -top-2.5 left-3 rounded-full bg-lime-400 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-emerald-950">
+        <span className="absolute -top-2.5 left-3 rounded-full bg-lime-400 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-emerald-950 sm:text-xs">
           Smart autofill
         </span>
       )}
       <span
-        className={`flex h-8 w-8 items-center justify-center rounded-lg text-xs font-bold sm:h-9 sm:w-9 sm:text-sm ${
+        className={`flex h-9 w-9 items-center justify-center rounded-lg text-sm font-bold sm:h-10 sm:w-10 sm:text-base ${
           item.featured
             ? "bg-lime-400 text-emerald-950"
             : item.highlight
               ? "bg-emerald-400 text-emerald-950"
-              : "bg-white/10 text-white/55"
+              : "bg-white/10 text-white/80"
         }`}
       >
         {item.step}
       </span>
       <p
-        className={`mt-2 text-sm font-semibold leading-snug sm:text-[15px] ${
-          item.featured || item.highlight ? "text-white" : "text-white/80"
+        className={`mt-2.5 text-base font-semibold leading-snug sm:text-lg ${
+          item.featured || item.highlight ? "text-white" : "text-white/90"
         }`}
       >
         {item.label}
       </p>
       <p
-        className={`mt-0.5 text-[11px] leading-snug sm:text-xs ${
+        className={`mt-1 text-sm leading-snug sm:text-base ${
           item.featured
-            ? "text-lime-200/90"
+            ? "text-lime-100"
             : item.highlight
-              ? "text-emerald-200/75"
-              : "text-white/42"
+              ? "text-emerald-100/90"
+              : "text-white/70"
         }`}
       >
         {item.short}
@@ -102,17 +102,17 @@ export function MarketingHero() {
         Research Company · Identify Gaps · Tailor · Autofill · Submit
       </p> */}
 
-      <h1 className="mt-6 text-[2.1rem] font-semibold leading-[1.1] tracking-tight text-white sm:text-[2.75rem] lg:text-[3.25rem]">
-        Gaps you can fix -{" "}
-        <span className="bg-gradient-to-r from-emerald-200 to-green-300 bg-clip-text text-transparent">
-          added to your application.
-        </span>
+      <h1 className="mt-6 text-[2.35rem] font-bold leading-[1.08] tracking-tight text-emerald-100 sm:text-[3rem] lg:text-[3.5rem]">
+        <span className="rounded bg-emerald-200 px-1.5 text-emerald-900">
+          Gaps
+        </span>{" "}
+        you can fix - added to your application.
       </h1>
 
-      <p className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-white/58 sm:text-lg lg:mx-0">
+      <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-white/80 sm:text-xl lg:mx-0">
         TailorSend researches each employer, suggests honest gap fixes, tailors
         your resume and cover letter — then{" "}
-        <span className="font-medium text-lime-200">
+        <span className="font-semibold text-lime-100">
           auto-fills real ATS forms
         </span>{" "}
         for your review before you submit.
@@ -123,7 +123,7 @@ export function MarketingHero() {
 
 export function MarketingFeatures() {
   return (
-    <ul className="space-y-3 text-base text-white/62 sm:text-[17px]">
+    <ul className="space-y-4 text-lg text-white/85 sm:text-xl">
       {[
         {
           text: "Smart autofill for Greenhouse, Lever & multi-step ATS forms",
@@ -138,15 +138,15 @@ export function MarketingFeatures() {
         return (
           <li key={text} className="flex items-start gap-3">
             <span
-              className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-sm ${
+              className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-base sm:h-8 sm:w-8 sm:text-lg ${
                 accent
-                  ? "bg-lime-400/25 text-lime-300"
-                  : "bg-emerald-500/20 text-emerald-400"
+                  ? "bg-lime-400/25 text-lime-200"
+                  : "bg-emerald-500/20 text-emerald-300"
               }`}
             >
               {accent ? "⚡" : "✓"}
             </span>
-            <span className={accent ? "font-medium text-lime-100/90" : ""}>
+            <span className={accent ? "font-semibold text-lime-50" : "text-white/90"}>
               {text}
             </span>
           </li>
@@ -158,15 +158,15 @@ export function MarketingFeatures() {
 
 export function ServiceWorkflow() {
   return (
-    <div className="brand-glass w-full rounded-3xl border border-white/15 p-5 shadow-xl shadow-emerald-950/25 sm:p-6">
+    <div className="brand-glass w-full rounded-3xl border border-white/20 p-6 shadow-xl shadow-emerald-950/25 sm:p-8">
       <div className="flex flex-wrap items-end justify-between gap-3">
-        <p className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-300">
+        <p className="text-sm font-bold uppercase tracking-[0.18em] text-emerald-200 sm:text-base">
           Your Application Workflow
         </p>
-        <p className="text-xs text-white/45">6 steps · you click submit last</p>
+        <p className="text-sm text-white/65 sm:text-base">6 steps · you click submit last</p>
       </div>
 
-      <ol className="mt-5 grid list-none grid-cols-2 gap-2.5 pt-1 sm:grid-cols-3 sm:gap-3 lg:grid-cols-6 lg:gap-3">
+      <ol className="mt-6 grid list-none grid-cols-2 gap-3 pt-1 sm:grid-cols-3 sm:gap-4 lg:grid-cols-6 lg:gap-4">
         {WORKFLOW.map((item) => (
           <li key={item.label} className={item.featured ? "lg:col-span-1" : ""}>
             <WorkflowStep item={item} />
@@ -174,18 +174,18 @@ export function ServiceWorkflow() {
         ))}
       </ol>
 
-      <div className="mt-4 flex flex-col gap-3 rounded-2xl border border-lime-400/25 bg-gradient-to-r from-lime-500/15 to-emerald-500/10 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+      <div className="mt-5 flex flex-col gap-3 rounded-2xl border border-lime-400/30 bg-gradient-to-r from-lime-500/20 to-emerald-500/15 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
         <div>
-          <p className="text-sm font-semibold text-lime-200">
+          <p className="text-base font-semibold text-lime-100 sm:text-lg">
             ⚡ Smart autofill — you stay in control
           </p>
-          <p className="mt-1 text-xs leading-relaxed text-white/55 sm:text-sm">
+          <p className="mt-2 text-sm leading-relaxed text-white/75 sm:text-base">
             We fill applications in a real browser — work auth, EEO, resume
             upload, Save &amp; Continue flows. You review every field; we never
             click submit.
           </p>
         </div>
-        <p className="shrink-0 text-xs font-medium text-lime-300/80">
+        <p className="shrink-0 text-sm font-medium text-lime-200 sm:text-base">
           Greenhouse · Lever · more
         </p>
       </div>
@@ -215,7 +215,7 @@ export function MarketingCopy() {
 }
 
 export function AuthLogo() {
-  return <SiteLogo size="lg" variant="dark" className="gap-3" />;
+  return <SiteLogo size="lg" variant="dark" className="gap-2" />;
 }
 
 /** @deprecated Use MarketingHero + MarketingFeatures + ServiceWorkflow */

@@ -43,14 +43,14 @@ export function SiteLogo({
   const content = (
     <>
       <span
-        className={`grid place-items-center ${s.box} ${v.box}`}
+        className='text-3xl'
         aria-hidden
       >
         🚀
       </span>
       {showName && (
-        <span className={`font-bold tracking-tight ${s.name} ${v.name}`}>
-          TailorSend
+        <span className={`font-bold tracking-tight ${s.name} ${v.name} `}>
+          Tailor<span className="text-emerald-600">Send</span>
         </span>
       )}
     </>
