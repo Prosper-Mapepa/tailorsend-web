@@ -44,7 +44,7 @@ export default async function HomePage() {
   );
 
   const greetings = allDone
-    ? `Nice work`
+    ? `Nice work!`
     : activeIndex === 0
       ? `Let's finish your profile`
       : activeIndex === 1
