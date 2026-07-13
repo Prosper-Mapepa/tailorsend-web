@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { useSearchParams } from "next/navigation";
 import {
   Button,
   Card,
@@ -175,7 +174,6 @@ function ItemCard({
 }
 
 export default function ProfilePage() {
-  const searchParams = useSearchParams();
   const [form, setForm] = useState<ProfileForm>(EMPTY);
   const [skillsText, setSkillsText] = useState("");
   const [loading, setLoading] = useState(true);
@@ -196,13 +194,14 @@ export default function ProfilePage() {
   }
 
   useEffect(() => {
-    if (searchParams.get("parse") !== "partial") return;
-    const msg = searchParams.get("msg");
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("parse") !== "partial") return;
+    const msg = params.get("msg");
     if (msg) {
       setUploadMsg(decodeURIComponent(msg));
       setUploadExpanded(true);
     }
-  }, [searchParams]);
+  }, []);
 
   useEffect(() => {
     apiFetch("/api/profile")
