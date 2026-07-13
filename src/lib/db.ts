@@ -24,6 +24,20 @@ function schemaFingerprint(): string {
   }
 }
 
+function poolSsl(connectionString: string) {
+  if (process.env.DATABASE_SSL === "false") return undefined;
+  if (process.env.DATABASE_SSL === "true") {
+    return { rejectUnauthorized: false };
+  }
+  if (/sslmode=require|ssl=true/i.test(connectionString)) {
+    return { rejectUnauthorized: false };
+  }
+  if (/railway|neon\.tech|supabase|render\.com/i.test(connectionString)) {
+    return { rejectUnauthorized: false };
+  }
+  return undefined;
+}
+
 function createPrisma(): PrismaClient {
   const connectionString = process.env.DATABASE_URL;
   if (!connectionString) {
@@ -38,6 +52,7 @@ function createPrisma(): PrismaClient {
     globalForPrisma.pgPool ??
     new Pool({
       connectionString: normalized,
+      ssl: poolSsl(normalized),
       // Fail fast instead of hanging ~68s on a dead connection.
       connectionTimeoutMillis: 10_000,
       // Recycle idle connections so stale sockets (e.g. after sleep) are dropped.
@@ -49,9 +64,7 @@ function createPrisma(): PrismaClient {
   pool.on("error", (err) => {
     console.error("pg pool error (will recycle connection):", err.message);
   });
-  if (process.env.NODE_ENV !== "production") {
-    globalForPrisma.pgPool = pool;
-  }
+  globalForPrisma.pgPool = pool;
   const adapter = new PrismaPg(pool);
   return new PrismaClient({
     adapter,
@@ -65,10 +78,8 @@ function getPrisma(): PrismaClient {
     return globalForPrisma.prisma;
   }
   const client = createPrisma();
-  if (process.env.NODE_ENV !== "production") {
-    globalForPrisma.prisma = client;
-    globalForPrisma.prismaSchemaFp = fp;
-  }
+  globalForPrisma.prisma = client;
+  globalForPrisma.prismaSchemaFp = fp;
   return client;
 }
 

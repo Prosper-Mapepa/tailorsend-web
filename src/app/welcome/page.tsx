@@ -6,6 +6,7 @@ import { Button, Card, PageLoader, UploadZone } from "@/components/ui";
 import { ProfileImportSummary } from "@/components/ProfileImportSummary";
 import { useAuth } from "@/contexts/AuthProvider";
 import { apiFetch } from "@/lib/auth-client";
+import { readApiJson } from "@/lib/read-api-json";
 import { markOnboardingComplete } from "@/lib/onboarding";
 
 export default function WelcomePage() {
@@ -34,7 +35,7 @@ export default function WelcomePage() {
         method: "POST",
         body: fd,
       });
-      const data = await res.json();
+      const data = await readApiJson<{ error?: string }>(res);
       if (!res.ok) throw new Error(data.error ?? "Upload failed");
       finish();
     } catch (e) {

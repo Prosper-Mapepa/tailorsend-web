@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { apiRouteError } from "@/lib/api-response";
 import { requireAuthUser, isAuthUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { getProfile } from "@/lib/profile";
@@ -7,10 +8,14 @@ import { getProfile } from "@/lib/profile";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const auth = await requireAuthUser();
-  if (!isAuthUser(auth)) return auth;
-  const profile = await getProfile(auth.id);
-  return NextResponse.json(profile);
+  try {
+    const auth = await requireAuthUser();
+    if (!isAuthUser(auth)) return auth;
+    const profile = await getProfile(auth.id);
+    return NextResponse.json(profile);
+  } catch (err) {
+    return apiRouteError(err, "GET /api/profile");
+  }
 }
 
 const targetRoleSchema = z.object({

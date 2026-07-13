@@ -17,6 +17,7 @@ import { ProfileImportSummary } from "@/components/ProfileImportSummary";
 import { ProfileProgress } from "@/components/ProfileProgress";
 import { ProfileSection, PROFILE_SECTION_SCROLL } from "@/components/ProfileSection";
 import { apiFetch } from "@/lib/auth-client";
+import { readApiJson } from "@/lib/read-api-json";
 import { getProjectLinks, withProjectLinks } from "@/lib/project-links";
 import {
   DISABILITY_OPTIONS,
@@ -382,9 +383,14 @@ export default function ProfilePage() {
         method: "POST",
         body: fd,
       });
-      const data = await res.json();
+      const data = await readApiJson<{
+        error?: string;
+        profile?: Partial<ProfileForm>;
+        imported?: ImportSummary;
+        extractedChars?: number;
+      }>(res);
       if (!res.ok) throw new Error(data.error ?? "Upload failed");
-      hydrate(data.profile);
+      hydrate(data.profile ?? {});
       setImportSummary(data.imported ?? null);
       setExtractedChars(data.extractedChars ?? null);
       setUploadMsg(null);
