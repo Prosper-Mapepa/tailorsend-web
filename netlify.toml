@@ -10,7 +10,3 @@
   # Playwright/Chromium cannot run inside Netlify Functions.
   PLAYWRIGHT_ENABLED = "false"
   NEXT_PUBLIC_PLAYWRIGHT_ENABLED = "false"
-
-# AI routes (parse, tailor) can exceed Netlify's default 10s limit on Pro.
-[functions]
-  timeout = 26
