@@ -4,7 +4,9 @@
 
 [build]
 builder = "nixpacks"
-buildCommand = "npm ci && npx prisma generate && npm run build"
+# Chromium install is best-effort: screenshots/PDF need it, but a browser
+# download hiccup must never fail the core web build (tailoring/parse).
+buildCommand = "npm ci && npx prisma generate && npm run build && (npx playwright install --with-deps chromium || npx playwright install chromium || true)"
 
 [deploy]
 # Migrate before serving so schema stays current on each deploy.
@@ -13,4 +15,4 @@ healthcheckPath = "/"
 healthcheckTimeout = 100
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 5
-# PORT and NODE_ENV are injected / set in the Railway dashboard.
+# Next.js `next start` binds to $PORT, which Railway injects automatically.
