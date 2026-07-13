@@ -1,0 +1,19 @@
+# Nixpacks phases for Railway web service.
+# Keep install separate from build so Docker's node_modules cache mount
+# is not deleted by `npm ci` (causes EBUSY on /.cache).
+
+[phases.setup]
+nixPkgs = ["nodejs_20", "npm-10_x"]
+
+[phases.install]
+cmds = ["npm install --include=dev"]
+
+[phases.build]
+cmds = [
+  "npx prisma generate",
+  "npm run build",
+  "npx playwright install --with-deps chromium || npx playwright install chromium || true",
+]
+
+[start]
+cmd = "npx prisma migrate deploy && npm run start"

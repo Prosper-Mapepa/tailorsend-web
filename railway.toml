@@ -1,12 +1,10 @@
 # Railway — Web (Next.js frontend)
 # Create a service with Root Directory = "/" (repo root).
-# Attach the same Postgres plugin as the API service.
+# Build phases live in nixpacks.toml (avoids EBUSY when npm ci fights the
+# Docker node_modules cache mount used by Nixpacks).
 
 [build]
 builder = "nixpacks"
-# Chromium install is best-effort: screenshots/PDF need it, but a browser
-# download hiccup must never fail the core web build (tailoring/parse).
-buildCommand = "npm ci && npx prisma generate && npm run build && (npx playwright install --with-deps chromium || npx playwright install chromium || true)"
 
 [deploy]
 # Migrate before serving so schema stays current on each deploy.
