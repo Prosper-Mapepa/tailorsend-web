@@ -6,13 +6,16 @@ import { Button, Card, PageLoader, UploadZone } from "@/components/ui";
 import { ProfileImportSummary } from "@/components/ProfileImportSummary";
 import { useAuth } from "@/contexts/AuthProvider";
 import { apiFetch } from "@/lib/auth-client";
-import { readApiJson } from "@/lib/read-api-json";
 import { markOnboardingComplete } from "@/lib/onboarding";
+import { uploadAndParseResume } from "@/lib/profile-upload-client";
 
 export default function WelcomePage() {
   const router = useRouter();
   const { user, loading } = useAuth();
   const [uploading, setUploading] = useState(false);
+  const [uploadPhase, setUploadPhase] = useState<"upload" | "parse" | null>(
+    null,
+  );
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -27,20 +30,23 @@ export default function WelcomePage() {
 
   async function uploadResume(file: File) {
     setUploading(true);
+    setUploadPhase("upload");
     setError(null);
     try {
-      const fd = new FormData();
-      fd.append("file", file);
-      const res = await apiFetch("/api/profile/import", {
-        method: "POST",
-        body: fd,
-      });
-      const data = await readApiJson<{ error?: string }>(res);
-      if (!res.ok) throw new Error(data.error ?? "Upload failed");
+      const result = await uploadAndParseResume(file, setUploadPhase);
+      if (result.parseFailed) {
+        if (user) markOnboardingComplete(user.id);
+        router.push(
+          `/profile?parse=partial&msg=${encodeURIComponent(result.parseError ?? "")}`,
+        );
+        router.refresh();
+        return;
+      }
       finish();
     } catch (e) {
       setError((e as Error).message);
       setUploading(false);
+      setUploadPhase(null);
     }
   }
 
@@ -75,7 +81,9 @@ export default function WelcomePage() {
           loading={uploading}
           label={
             uploading
-              ? "Parsing your resume…"
+              ? uploadPhase === "parse"
+                ? "Parsing your resume…"
+                : "Saving your resume…"
               : "Drop your resume here or click to browse"
           }
           hint="PDF, DOCX, TXT, or Markdown · text-based PDFs work best"

@@ -23,6 +23,7 @@ import { normalizeCompanyEdge } from "@/lib/ai";
 import type { MatchScore } from "@/lib/match-score";
 import type { FormFieldResponse } from "@/lib/types";
 import { prepareResumeMarkdown } from "@/lib/markdown";
+import { playwrightCaptureEnabled } from "@/lib/playwright-env";
 import { ensureAllProfileProjects } from "@/lib/resume-projects";
 import { safeJson } from "@/lib/util";
 
@@ -300,6 +301,7 @@ export default function ApplicationDetailPage() {
 
   useEffect(() => {
     if (!app || loading || docTab !== "form") return;
+    if (!playwrightCaptureEnabled()) return;
     if (app.reviewScreenshot || pageCaptured.current) return;
 
     const applyUrl = app.job.applyUrl || app.job.url;

@@ -7,6 +7,10 @@ import {
   prepareResumeMarkdown,
   type ResumeContact,
 } from "@/lib/markdown";
+import {
+  PLAYWRIGHT_DISABLED_MESSAGE,
+  playwrightEnabled,
+} from "@/lib/playwright-env";
 import type { Project } from "@/lib/types";
 
 /** Render markdown to a PDF file on disk (for resume upload during autofill). */
@@ -18,6 +22,10 @@ export async function writeMarkdownPdf(
   projects: Project[] = [],
   contact?: ResumeContact,
 ): Promise<void> {
+  if (!playwrightEnabled()) {
+    throw new Error(PLAYWRIGHT_DISABLED_MESSAGE);
+  }
+
   await fs.mkdir(path.dirname(filePath), { recursive: true });
 
   const htmlMd =

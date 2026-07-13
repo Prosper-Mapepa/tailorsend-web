@@ -5,6 +5,10 @@ import {
   launchAutofillBrowser,
   newAutofillContext,
 } from "@/lib/apply/browser";
+import {
+  PLAYWRIGHT_DISABLED_MESSAGE,
+  playwrightEnabled,
+} from "@/lib/playwright-env";
 
 const STORAGE = path.join(process.cwd(), "storage");
 
@@ -17,6 +21,10 @@ export async function captureApplyPageScreenshot(opts: {
   applicationId: string;
   applyUrl: string;
 }): Promise<{ screenshotPath: string; log: string[] }> {
+  if (!playwrightEnabled()) {
+    throw new Error(PLAYWRIGHT_DISABLED_MESSAGE);
+  }
+
   const log: string[] = [];
   const launched = await launchAutofillBrowser(true);
   const browser = launched.browser;

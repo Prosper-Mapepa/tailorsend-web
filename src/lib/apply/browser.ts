@@ -1,6 +1,10 @@
 import fs from "node:fs";
 import path from "node:path";
 import { chromium, type Browser, type BrowserContext } from "playwright";
+import {
+  PLAYWRIGHT_DISABLED_MESSAGE,
+  playwrightEnabled,
+} from "@/lib/playwright-env";
 
 const STEALTH_ARGS = ["--disable-blink-features=AutomationControlled"];
 
@@ -37,6 +41,10 @@ export interface LaunchResult {
 export async function launchAutofillBrowser(
   headless: boolean,
 ): Promise<LaunchResult> {
+  if (!playwrightEnabled()) {
+    throw new Error(PLAYWRIGHT_DISABLED_MESSAGE);
+  }
+
   const launchOpts = {
     headless,
     ignoreDefaultArgs: ["--enable-automation"],

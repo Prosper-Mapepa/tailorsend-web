@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   Button,
   Card,
@@ -18,6 +19,7 @@ import { ProfileProgress } from "@/components/ProfileProgress";
 import { ProfileSection, PROFILE_SECTION_SCROLL } from "@/components/ProfileSection";
 import { apiFetch } from "@/lib/auth-client";
 import { readApiJson } from "@/lib/read-api-json";
+import { uploadAndParseResume } from "@/lib/profile-upload-client";
 import { getProjectLinks, withProjectLinks } from "@/lib/project-links";
 import {
   DISABILITY_OPTIONS,
@@ -173,6 +175,7 @@ function ItemCard({
 }
 
 export default function ProfilePage() {
+  const searchParams = useSearchParams();
   const [form, setForm] = useState<ProfileForm>(EMPTY);
   const [skillsText, setSkillsText] = useState("");
   const [loading, setLoading] = useState(true);
@@ -191,6 +194,15 @@ export default function ProfilePage() {
     setForm({ ...EMPTY, ...data });
     setSkillsText((data.skills ?? []).join(", "));
   }
+
+  useEffect(() => {
+    if (searchParams.get("parse") !== "partial") return;
+    const msg = searchParams.get("msg");
+    if (msg) {
+      setUploadMsg(decodeURIComponent(msg));
+      setUploadExpanded(true);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     apiFetch("/api/profile")
@@ -377,24 +389,16 @@ export default function ProfilePage() {
     setImportSummary(null);
     setExtractedChars(null);
     try {
-      const fd = new FormData();
-      fd.append("file", file);
-      const res = await apiFetch("/api/profile/import", {
-        method: "POST",
-        body: fd,
-      });
-      const data = await readApiJson<{
-        error?: string;
-        profile?: Partial<ProfileForm>;
-        imported?: ImportSummary;
-        extractedChars?: number;
-      }>(res);
-      if (!res.ok) throw new Error(data.error ?? "Upload failed");
-      hydrate(data.profile ?? {});
-      setImportSummary(data.imported ?? null);
-      setExtractedChars(data.extractedChars ?? null);
-      setUploadMsg(null);
-      setUploadExpanded(false);
+      const result = await uploadAndParseResume(file);
+      hydrate(result.profile as Partial<ProfileForm>);
+      setImportSummary(result.imported ?? null);
+      setExtractedChars(result.extractedChars ?? null);
+      if (result.parseFailed) {
+        setUploadMsg(result.parseError ?? "Resume saved; parsing timed out.");
+      } else {
+        setUploadMsg(null);
+        setUploadExpanded(false);
+      }
       setSaved(false);
     } catch (e) {
       setUploadMsg((e as Error).message);

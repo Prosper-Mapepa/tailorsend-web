@@ -3,6 +3,7 @@ import fs from "node:fs/promises";
 import { requireAuthUser, isAuthUser } from "@/lib/auth";
 import { captureApplyPageScreenshot } from "@/lib/apply/capture-page";
 import { prisma } from "@/lib/db";
+import { PLAYWRIGHT_DISABLED_MESSAGE } from "@/lib/playwright-env";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -69,9 +70,9 @@ export async function POST(
 
     return NextResponse.json({ ok: true, log });
   } catch (err) {
-    return NextResponse.json(
-      { error: (err as Error).message },
-      { status: 500 },
-    );
+    const message = (err as Error).message;
+    const status =
+      message === PLAYWRIGHT_DISABLED_MESSAGE ? 503 : 500;
+    return NextResponse.json({ error: message }, { status });
   }
 }

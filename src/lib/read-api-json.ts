@@ -7,7 +7,9 @@ export async function readApiJson<T extends Record<string, unknown>>(
     throw new Error(
       res.ok
         ? "Empty response from server."
-        : `Server error (${res.status}). If this persists, check DATABASE_URL and run migrations on production.`,
+        : res.status === 502 || res.status === 504
+          ? "Server timed out. If you were uploading a resume, check Profile — your file may still be saved."
+          : `Server error (${res.status}). If this persists, check DATABASE_URL and run migrations on production.`,
     );
   }
   try {
