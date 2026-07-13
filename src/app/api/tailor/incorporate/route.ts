@@ -3,7 +3,11 @@ import { z } from "zod";
 import { incorporateBuildIdeas } from "@/lib/ai";
 import { requireAuthUser, isAuthUser } from "@/lib/auth";
 import { prepareResumeMarkdown } from "@/lib/markdown";
-import { getProfile } from "@/lib/profile";
+import { getProfile, profileResumeContact } from "@/lib/profile";
+import {
+  ensureAllProfileProjects,
+  preserveExistingProjects,
+} from "@/lib/resume-projects";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -44,9 +48,15 @@ export async function POST(req: Request) {
   try {
     const result = await incorporateBuildIdeas(parsed.data);
     const profile = await getProfile(auth.id);
+    let resume = preserveExistingProjects(parsed.data.resume, result.resume);
+    resume = ensureAllProfileProjects(resume, profile.projects);
     return NextResponse.json({
       ...result,
-      resume: prepareResumeMarkdown(result.resume, profile.projects),
+      resume: prepareResumeMarkdown(
+        resume,
+        profile.projects,
+        profileResumeContact(profile),
+      ),
     });
   } catch (err) {
     return NextResponse.json({ error: (err as Error).message }, { status: 500 });

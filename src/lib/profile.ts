@@ -9,7 +9,9 @@ import type {
   TargetRole,
   WorkExperience,
 } from "@/lib/types";
+import type { ResumeContact } from "@/lib/markdown";
 import { safeJson } from "@/lib/util";
+
 
 function normalizeProjects(raw: Project[]): Project[] {
   return raw.map((p) => {
@@ -21,8 +23,15 @@ function normalizeProjects(raw: Project[]): Project[] {
     const web =
       links.find(
         (u) =>
-          !/apps\.apple\.com|itunes\.apple\.com|play\.google\.com/i.test(u),
-      ) ?? "";
+          !/apps\.apple\.com|itunes\.apple\.com|play\.google\.com/i.test(u) &&
+          !/github\.com/i.test(u),
+      ) ??
+      links.find(
+        (u) =>
+          !/apps\.apple\.com|itunes\.apple\.com|play\.google\.com/i.test(u) &&
+          /github\.com\/[^/]+\/[^/]+/i.test(u),
+      ) ??
+      "";
     return {
       ...p,
       links,
@@ -184,5 +193,21 @@ export function buildAutofillProfile(profile: ProfileView) {
     usState: inferUsState(profile.usState, profile.location),
     authorizedToWork: profile.authorizedToWork,
     sponsorshipDetails: profile.sponsorshipDetails,
+  };
+}
+
+export function profileResumeContact(
+  profile: Pick<
+    ProfileView,
+    "email" | "phone" | "location" | "linkedin" | "github" | "website"
+  >,
+): ResumeContact {
+  return {
+    email: profile.email,
+    phone: profile.phone,
+    location: profile.location,
+    linkedin: profile.linkedin,
+    github: profile.github,
+    website: profile.website,
   };
 }

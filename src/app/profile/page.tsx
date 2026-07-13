@@ -430,9 +430,10 @@ export default function ProfilePage() {
   );
 
   const hasProfileData =
-    completion.contact ||
     completion.experience ||
     completion.education ||
+    completion.skills ||
+    completion.resume ||
     form.projects.length > 0;
 
   const navCounts = useMemo(

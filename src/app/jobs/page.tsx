@@ -154,8 +154,8 @@ function JobCard({
         ) : (
           <Button
             size="md"
+            loading={tailoringId === job.id}
             onClick={() => onTailor(job.id)}
-            disabled={tailoringId === job.id}
           >
             {tailoringId === job.id ? "Tailoring…" : "Tailor & prep"}
           </Button>

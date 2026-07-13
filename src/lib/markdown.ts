@@ -3,6 +3,11 @@
 
 import type { Project } from "@/lib/types";
 import { injectProjectLinks } from "@/lib/project-links";
+import {
+  boldProjectHeaderLine,
+  consolidateProjectSections,
+  normalizeProjectParagraphs,
+} from "@/lib/resume-projects";
 
 // Canonical resume section titles. Used to repair headings when a model pass
 // flattens "## SUMMARY" into plain "SUMMARY" (which loses all styling).
@@ -76,32 +81,365 @@ export function normalizeResumeMarkdown(md: string): string {
     }
   }
   return normalizeResumeEntries(
-    normalizeSkillsLists(lines.join("\n")),
+    normalizeProjectHeaders(
+      normalizeEducationEntries(
+        reorderExperienceEntries(
+          mergeOrphanRoleDates(
+            normalizeProjectParagraphs(
+              consolidateProjectSections(
+                normalizeSkillsLists(lines.join("\n")),
+              ),
+            ),
+          ),
+        ),
+      ),
+    ),
   );
 }
 
-/** Normalize + inject verified project links (server-side PDF / API responses). */
-export function prepareResumeMarkdown(md: string, projects: Project[]): string {
-  return injectProjectLinks(normalizeResumeMarkdown(md), projects);
+export type ResumeContact = {
+  email?: string;
+  phone?: string;
+  location?: string;
+  linkedin?: string;
+  github?: string;
+  website?: string;
+};
+
+function normalizeUrl(url: string): string {
+  const t = url.trim();
+  if (!t) return "";
+  if (/^https?:\/\//i.test(t)) return t;
+  return `https://${t.replace(/^\/+/, "")}`;
+}
+
+function contactLinkLabel(
+  type: "linkedin" | "github" | "portfolio",
+  url: string,
+): string {
+  const u = normalizeUrl(url);
+  if (type === "linkedin") return `[LinkedIn](${u})`;
+  if (type === "github") return `[GitHub](${u})`;
+  return `[Portfolio](${u})`;
+}
+
+function enrichContactSegment(seg: string, contact: ResumeContact): string {
+  const t = seg.trim();
+  if (!t || /\[.+?\]\(.+?\)/.test(t)) return t;
+
+  if (/^linkedin$/i.test(t) && contact.linkedin?.trim()) {
+    return contactLinkLabel("linkedin", contact.linkedin);
+  }
+  if (/^github$/i.test(t) && contact.github?.trim()) {
+    return contactLinkLabel("github", contact.github);
+  }
+  if (/^portfolio$/i.test(t) && contact.website?.trim()) {
+    return contactLinkLabel("portfolio", contact.website);
+  }
+
+  const li = t.match(/(?:https?:\/\/)?(?:www\.)?linkedin\.com\/[^\s|)]+/i);
+  if (li) return contactLinkLabel("linkedin", li[0]);
+
+  const gh = t.match(/(?:https?:\/\/)?(?:www\.)?github\.com\/[^\s|)]+/i);
+  if (gh) return contactLinkLabel("github", gh[0]);
+
+  return t;
+}
+
+function expandLinkLabelSegment(segment: string): string[] {
+  const words = segment.trim().split(/\s+/).filter(Boolean);
+  if (
+    words.length >= 2 &&
+    words.every((w) => /^(linkedin|github|portfolio)$/i.test(w))
+  ) {
+    return words;
+  }
+  return [segment];
+}
+
+/** Turn plain LinkedIn / GitHub / Portfolio labels into markdown links from profile. */
+export function injectContactLinks(md: string, contact: ResumeContact): string {
+  const lines = md.replace(/\r/g, "").split("\n");
+  const nameIdx = lines.findIndex((l) => /^#\s/.test(l.trim()));
+  if (nameIdx < 0) return md;
+
+  let contactIdx = -1;
+  for (let i = nameIdx + 1; i < lines.length; i++) {
+    const t = lines[i].trim();
+    if (!t) continue;
+    if (/^##\s/.test(t)) break;
+    contactIdx = i;
+    break;
+  }
+
+  const existing = contactIdx >= 0 ? lines[contactIdx] : "";
+  const enriched: string[] = [];
+
+  if (existing) {
+    for (const segment of existing.split("|")) {
+      for (const piece of expandLinkLabelSegment(segment)) {
+        const part = enrichContactSegment(piece.trim(), contact);
+        if (part) enriched.push(part);
+      }
+    }
+  }
+
+  const email =
+    contact.email?.trim() ||
+    enriched.find((s) => /@/.test(s) && !/\[/.test(s)) ||
+    existing.match(/[\w.+-]+@[\w.-]+\.\w+/)?.[0] ||
+    "";
+  const phone =
+    contact.phone?.trim() ||
+    enriched.find(
+      (s) => /\d{3}/.test(s) && !/\[/.test(s) && !/@/.test(s),
+    ) ||
+    existing.match(/\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/)?.[0] ||
+    "";
+  const location =
+    contact.location?.trim() ||
+    enriched.find(
+      (s) =>
+        !/\[/.test(s) &&
+        !/@/.test(s) &&
+        !/\d{3}[-.\s]?\d{3}/.test(s) &&
+        s.length > 2,
+    ) ||
+    "";
+
+  const linkParts = enriched.filter((s) =>
+    /\[(LinkedIn|GitHub|Portfolio)\]/i.test(s),
+  );
+
+  if (
+    contact.linkedin?.trim() &&
+    !linkParts.some((s) => /\[LinkedIn\]/i.test(s))
+  ) {
+    linkParts.push(contactLinkLabel("linkedin", contact.linkedin));
+  }
+  if (contact.github?.trim() && !linkParts.some((s) => /\[GitHub\]/i.test(s))) {
+    linkParts.push(contactLinkLabel("github", contact.github));
+  }
+  if (
+    contact.website?.trim() &&
+    !linkParts.some((s) => /\[Portfolio\]/i.test(s))
+  ) {
+    linkParts.push(contactLinkLabel("portfolio", contact.website));
+  }
+
+  const parts = [email, phone, location, ...linkParts].filter(Boolean);
+  const newLine = parts.join(" | ");
+  if (!newLine) return md;
+
+  if (contactIdx >= 0) lines[contactIdx] = newLine;
+  else lines.splice(nameIdx + 1, 0, newLine);
+
+  return lines.join("\n");
+}
+
+/** Normalize + inject verified contact and project links (PDF, preview, API). */
+export function prepareResumeMarkdown(
+  md: string,
+  projects: Project[] = [],
+  contact?: ResumeContact,
+): string {
+  let out = injectProjectLinks(normalizeResumeMarkdown(md), projects, {
+    profileGithub: contact?.github,
+  });
+  if (contact) out = injectContactLinks(out, contact);
+  return out;
 }
 
 const EXP_SECTIONS =
   /^(WORK EXPERIENCE|EXPERIENCE|PROFESSIONAL EXPERIENCE|EMPLOYMENT|EMPLOYMENT HISTORY)$/i;
 
+const EDUCATION_SECTIONS = /^EDUCATION$/i;
+
+const PROJECT_SECTIONS = /^PROJECTS/i;
+
 const SKILLS_SECTIONS =
   /^(CORE SKILLS|SKILLS|TECHNICAL SKILLS|KEY SKILLS)$/i;
+
+const DEGREE_KEYWORDS =
+  /\b(MBA|M\.?S\.?|B\.?S\.?|B\.?A\.?|M\.?A\.?|Ph\.?D\.?|Bachelor|Master|Doctor|Associate)\b/i;
+
+const UNIVERSITY_KEYWORDS =
+  /\b(University|College|Institute|School|Academy)\b/i;
 
 const DATE_IN_PARENS = /\([^)]*\d{4}[^)]*\)\s*$/;
 const DATE_RANGE =
   /(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?\s+\d{4}\s*[–—-]\s*(?:Present|(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?\s+\d{4}|\d{4})/i;
 
-const LOCATION_TAIL = /,\s*[A-Z]{2}(\s|$)|\b(Remote|USA|United States)\b/i;
+const LOCATION_TAIL =
+  /,\s*[A-Z]{2}(\s|$)|,\s*(?:United Kingdom|UK|Canada|Australia|Germany|France|India)\b|\b(Remote|USA|United States)\b/i;
+
+const COMPANY_MARKERS =
+  /\b(Ltd|LLC|Inc|Corp|Corporation|University|College|Institute|Group|Technologies|Systems)\b/i;
 
 function stripMd(line: string): string {
   return line.replace(/\*\*/g, "").replace(/^#+\s*/, "").trim();
 }
 
+function isDatesOnlyLine(line: string): boolean {
+  const plain = stripMd(line);
+  return /^\([^)]*\d{4}[^)]*\)\s*$/.test(plain);
+}
+
+function isEducationSchoolLine(line: string): boolean {
+  const plain = stripMd(line);
+  const emDash = plain.match(/^(.+?)\s+[—–-]\s+(.+)$/);
+  if (emDash) {
+    return (
+      UNIVERSITY_KEYWORDS.test(emDash[1]) || LOCATION_TAIL.test(emDash[2])
+    );
+  }
+  return UNIVERSITY_KEYWORDS.test(plain);
+}
+
+function isEducationDegreeLine(line: string): boolean {
+  const plain = stripMd(line);
+  return (
+    DEGREE_KEYWORDS.test(plain) ||
+    /\(Graduation|Expected|GPA|Class of/i.test(plain)
+  );
+}
+
+function isEducationDetailLine(line: string): boolean {
+  const plain = stripMd(line);
+  return (
+    /leader\s*shape/i.test(plain) ||
+    /^relevant coursework:/i.test(plain) ||
+    (/^completed\s+/i.test(plain) && plain.length > 30)
+  );
+}
+
+/** Merge role title + dates when the model splits them across two lines. */
+function mergeOrphanRoleDates(md: string): string {
+  const lines = md.replace(/\r/g, "").split("\n");
+  let section = "";
+  const out: string[] = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    const trimmed = lines[i].trim();
+    if (/^##\s+/.test(trimmed)) {
+      section = trimmed.replace(/^##\s+/, "").trim();
+      out.push(lines[i]);
+      continue;
+    }
+
+    if (EXP_SECTIONS.test(section) && trimmed && !/^[-*]/.test(trimmed)) {
+      const next = lines[i + 1]?.trim() ?? "";
+      if (
+        !DATE_IN_PARENS.test(stripMd(trimmed)) &&
+        !isCompanyLine(trimmed) &&
+        /^\([^)]*\d{4}[^)]*\)\s*$/.test(next)
+      ) {
+        out.push(`${trimmed} ${next}`);
+        i++;
+        continue;
+      }
+    }
+
+    out.push(lines[i]);
+  }
+
+  return out.join("\n");
+}
+
+/** Bold school/degree lines; split LeaderShape & coursework into bullets. */
+function normalizeEducationEntries(md: string): string {
+  const lines = md.replace(/\r/g, "").split("\n");
+  let inEducation = false;
+  const out: string[] = [];
+
+  for (const raw of lines) {
+    const trimmed = raw.trim();
+
+    if (/^##\s+/.test(trimmed)) {
+      const title = trimmed.replace(/^##\s+/, "").trim();
+      inEducation = EDUCATION_SECTIONS.test(title);
+      out.push(raw);
+      continue;
+    }
+
+    if (/^##\s+/.test(trimmed) || (!inEducation && !trimmed)) {
+      out.push(raw);
+      continue;
+    }
+
+    if (!inEducation) {
+      out.push(raw);
+      continue;
+    }
+
+    if (!trimmed) {
+      out.push(raw);
+      continue;
+    }
+
+    if (/^[-*]\s+/.test(trimmed)) {
+      out.push(raw);
+      continue;
+    }
+
+    const plain = stripMd(trimmed);
+
+    if (/leader\s*shape/i.test(plain) && /relevant coursework:/i.test(plain)) {
+      const courseworkIdx = plain.search(/relevant coursework:/i);
+      const leaderPart = plain.slice(0, courseworkIdx).trim();
+      const courseworkPart = plain.slice(courseworkIdx).trim();
+      if (leaderPart) out.push(`- ${leaderPart}`);
+      if (courseworkPart) out.push(`- ${courseworkPart}`);
+      continue;
+    }
+
+    if (isEducationDetailLine(trimmed)) {
+      out.push(`- ${plain}`);
+      continue;
+    }
+
+    if (isEducationSchoolLine(trimmed)) {
+      out.push(boldCompanyLine(raw));
+      continue;
+    }
+
+    if (isEducationDegreeLine(trimmed)) {
+      out.push(boldRoleLine(raw));
+      continue;
+    }
+
+    out.push(raw);
+  }
+
+  return out.join("\n");
+}
+
+/** Ensure every project header line is bold with consistent trailing dates. */
+function ensureBoldProjectHeader(line: string): string {
+  if (/^\s*[-*]\s/.test(line)) return line;
+  return boldProjectHeaderLine(line);
+}
+
+function normalizeProjectHeaders(md: string): string {
+  const lines = md.replace(/\r/g, "").split("\n");
+  let inProjects = false;
+
+  return lines
+    .map((raw) => {
+      const trimmed = raw.trim();
+      if (/^##\s+PROJECTS/i.test(trimmed)) {
+        inProjects = true;
+        return raw;
+      }
+      if (/^##\s+/.test(trimmed) && inProjects) inProjects = false;
+      if (!inProjects || !trimmed || /^[-*]/.test(trimmed)) return raw;
+      return ensureBoldProjectHeader(raw);
+    })
+    .join("\n");
+}
+
 function isRoleLine(trimmed: string): boolean {
+  if (isDatesOnlyLine(trimmed)) return false;
   const plain = stripMd(trimmed);
   if (DATE_IN_PARENS.test(plain)) return true;
   const emDash = plain.match(/^(.+?)\s+[—–-]\s+(.+)$/);
@@ -113,7 +451,172 @@ function isCompanyLine(trimmed: string): boolean {
   if (isRoleLine(trimmed)) return false;
   const emDash = plain.match(/^(.+?)\s+[—–-]\s+(.+)$/);
   if (!emDash) return false;
-  return LOCATION_TAIL.test(emDash[2]);
+  const tail = emDash[2];
+  if (LOCATION_TAIL.test(tail)) return true;
+  if (/,\s*[A-Za-z][A-Za-z\s]{2,}$/.test(tail)) return true;
+  if (COMPANY_MARKERS.test(emDash[1])) return true;
+  if (UNIVERSITY_KEYWORDS.test(emDash[1])) return true;
+  return false;
+}
+
+function looksLikeJobTitle(line: string): boolean {
+  const plain = stripMd(line);
+  return (
+    /engineer|analyst|developer|manager|architect|consultant|specialist|lead|director|intern|crm|security/i.test(
+      plain,
+    ) || DATE_IN_PARENS.test(plain)
+  );
+}
+
+/** Move company lines that appear after bullets to directly above the role. */
+function reorderExperienceEntries(md: string): string {
+  const lines = md.replace(/\r/g, "").split("\n");
+  let section = "";
+  const out: string[] = [];
+  let i = 0;
+
+  while (i < lines.length) {
+    const line = lines[i];
+    const trimmed = line.trim();
+
+    if (/^##\s+/.test(trimmed)) {
+      section = trimmed.replace(/^##\s+/, "").trim();
+      out.push(line);
+      i++;
+      continue;
+    }
+
+    if (!EXP_SECTIONS.test(section)) {
+      out.push(line);
+      i++;
+      continue;
+    }
+
+    if (!trimmed) {
+      out.push(line);
+      i++;
+      continue;
+    }
+
+    if (/^[-*]\s+/.test(trimmed)) {
+      out.push(line);
+      i++;
+      continue;
+    }
+
+    let company: string | null = null;
+    let role: string | null = null;
+    const bullets: string[] = [];
+    let j = i;
+
+    const first = lines[j]?.trim() ?? "";
+    if (first && isCompanyLine(first) && !looksLikeJobTitle(first)) {
+      company = lines[j];
+      j++;
+    }
+
+    const roleCandidate = lines[j]?.trim() ?? "";
+    if (
+      roleCandidate &&
+      !/^[-*]/.test(roleCandidate) &&
+      !/^##/.test(roleCandidate) &&
+      (isRoleLine(roleCandidate) ||
+        looksLikeJobTitle(roleCandidate) ||
+        /^\*\*/.test(roleCandidate))
+    ) {
+      role = lines[j];
+      j++;
+    }
+
+    while (j < lines.length && /^[-*]\s+/.test(lines[j].trim())) {
+      bullets.push(lines[j]);
+      j++;
+    }
+
+    const trailing = lines[j]?.trim() ?? "";
+    if (
+      trailing &&
+      !/^##/.test(trailing) &&
+      isCompanyLine(trailing) &&
+      !looksLikeJobTitle(trailing)
+    ) {
+      if (!company) company = lines[j];
+      j++;
+    }
+
+    if (role || company) {
+      if (company) out.push(company);
+      if (role) out.push(role);
+      out.push(...bullets);
+      i = j;
+      continue;
+    }
+
+    out.push(line);
+    i++;
+  }
+
+  return out.join("\n");
+}
+
+const SKILL_ACRONYMS: Record<string, string> = {
+  "ci/cd": "CI/CD",
+  sdlc: "SDLC",
+  sast: "SAST",
+  dast: "DAST",
+  api: "API",
+  apis: "APIs",
+  pki: "PKI",
+  tls: "TLS",
+  owasp: "OWASP",
+  "c++": "C++",
+  "c#": "C#",
+  aws: "AWS",
+  gcp: "GCP",
+  iam: "IAM",
+  rbac: "RBAC",
+  sql: "SQL",
+  nosql: "NoSQL",
+  rest: "REST",
+  graphql: "GraphQL",
+  html: "HTML",
+  css: "CSS",
+  jwt: "JWT",
+  oauth: "OAuth",
+  saas: "SaaS",
+  paas: "PaaS",
+  ios: "iOS",
+  ml: "ML",
+  ai: "AI",
+};
+
+function titleCaseSkill(skill: string): string {
+  const trimmed = skill.trim();
+  if (!trimmed) return trimmed;
+
+  return trimmed
+    .split(/\s+/)
+    .map((word) => {
+      const key = word.toLowerCase();
+      if (SKILL_ACRONYMS[key]) return SKILL_ACRONYMS[key];
+      if (/^[A-Z0-9+/#.]{2,}$/.test(word)) return word;
+      if (word.includes("/")) {
+        return word
+          .split("/")
+          .map((p) => {
+            const k = p.toLowerCase();
+            return SKILL_ACRONYMS[k] ?? p.charAt(0).toUpperCase() + p.slice(1).toLowerCase();
+          })
+          .join("/");
+      }
+      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+    })
+    .join(" ");
+}
+
+function pushSkill(out: string[], skill: string) {
+  const formatted = titleCaseSkill(skill);
+  if (formatted) out.push(`- ${formatted}`);
 }
 
 function boldCompanyLine(line: string): string {
@@ -147,22 +650,20 @@ function normalizeSkillsLists(md: string): string {
       const item = trimmed.replace(/^[-*]\s+/, "");
       if (item.includes(",") && item.split(",").length >= 4) {
         for (const part of item.split(",")) {
-          const skill = part.trim();
-          if (skill) out.push(`- ${skill}`);
+          pushSkill(out, part);
         }
       } else {
-        out.push(raw);
+        pushSkill(out, item);
       }
       continue;
     }
 
     if (trimmed.includes(",")) {
       for (const part of trimmed.split(",")) {
-        const skill = part.trim();
-        if (skill) out.push(`- ${skill}`);
+        pushSkill(out, part);
       }
     } else {
-      out.push(`- ${trimmed}`);
+      pushSkill(out, trimmed);
     }
   }
 
@@ -218,6 +719,8 @@ export function normalizeResumeEntries(md: string): string {
     }
 
     if (EXP_SECTIONS.test(section)) {
+      if (isDatesOnlyLine(trimmed)) return raw;
+
       if (isRoleLine(trimmed)) {
         afterCompany = false;
         return boldRoleLine(raw);
@@ -239,6 +742,18 @@ export function normalizeResumeEntries(md: string): string {
       if (afterCompany) {
         afterCompany = false;
         return boldRoleLine(raw);
+      }
+      // Role at same company without repeating company header (stacked titles).
+      if (
+        !isCompanyLine(trimmed) &&
+        !/^[-*]/.test(trimmed) &&
+        (DEGREE_KEYWORDS.test(stripMd(trimmed)) === false)
+      ) {
+        const looksLikeTitle = looksLikeJobTitle(trimmed);
+        if (looksLikeTitle) {
+          afterCompany = false;
+          return boldRoleLine(raw);
+        }
       }
     }
 
@@ -398,6 +913,8 @@ function mdToResumeHtml(md: string): string {
   let listItems: string[] = [];
   let listIsSkills = false;
   let section = "";
+  /** First body line after H1 is the contact bar. */
+  let expectContactLine = false;
   /** In experience: idle → after company line, expecting job title. */
   let expPhase: "idle" | "after-company" = "idle";
 
@@ -417,10 +934,26 @@ function mdToResumeHtml(md: string): string {
   const paragraphClass = (line: string): string => {
     const trimmed = line.trim();
     const isBold = /^\*\*/.test(trimmed);
+    const plain = stripMd(trimmed);
     const inExperience = EXP_SECTIONS.test(section);
-    const inProjects = /^PROJECTS/i.test(section);
+    const inProjects = PROJECT_SECTIONS.test(section);
+    const inEducation = EDUCATION_SECTIONS.test(section);
 
-    if (inProjects && isBold) return "entry-project";
+    if (inProjects && (isBold || /\[.+?\]\(.+?\)/.test(trimmed))) {
+      return "entry-project";
+    }
+
+    if (inEducation) {
+      if (isBold) {
+        if (
+          DEGREE_KEYWORDS.test(plain) ||
+          /\(Graduation|Expected|GPA/i.test(plain)
+        ) {
+          return "entry-degree";
+        }
+        return "entry-school";
+      }
+    }
 
     if (inExperience) {
       if (isBold) {
@@ -452,12 +985,14 @@ function mdToResumeHtml(md: string): string {
       const level = line.match(/^#+/)![0].length;
       const heading = line.replace(/^#+\s+/, "");
       if (level === 3 && EXP_SECTIONS.test(section)) {
+        expectContactLine = false;
         expPhase = "after-company";
         html.push(`<p class="entry-company">${inline(heading)}</p>`);
       } else {
         expPhase = "idle";
         section = heading.trim();
         listIsSkills = /\bskills?\b/i.test(heading);
+        expectContactLine = level === 1;
         html.push(`<h${level}>${inline(heading)}</h${level}>`);
       }
     } else if (/^[-*]\s+/.test(line)) {
@@ -469,7 +1004,13 @@ function mdToResumeHtml(md: string): string {
       expPhase = "idle";
     } else {
       closeList();
-      const cls = paragraphClass(line);
+      let cls = paragraphClass(line);
+      if (expectContactLine && !cls) {
+        cls = "contact-line";
+        expectContactLine = false;
+      } else if (expectContactLine) {
+        expectContactLine = false;
+      }
       html.push(
         `<p${cls ? ` class="${cls}"` : ""}>${inline(line)}</p>`,
       );
@@ -492,39 +1033,115 @@ export function documentHtml(
 }
 
 const DOCUMENT_BASE_CSS = `
-  @page { margin: 0.5in; }
+  @page { margin: 0.55in 0.6in; }
   * { box-sizing: border-box; }
   body {
-    font-family: Georgia, "Times New Roman", serif;
-    color: #111;
-    line-height: 1.32;
+    font-family: Calibri, "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    color: #000;
+    line-height: 1.38;
     margin: 0;
     padding: 0;
-    font-size: 11px;
+    font-size: 10.5px;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
-  a { color: #111; text-decoration: underline; text-underline-offset: 1px; }
+  a {
+    color: #000;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    font-weight: inherit;
+  }
 `;
 
 const RESUME_PRINT_CSS = `
   ${DOCUMENT_BASE_CSS}
-  h1 { font-size: 19px; margin: 0 0 2px; }
-  h1 + p { margin: 0 0 2px; color: #333; }
-  h2 { font-size: 12.5px; text-transform: uppercase; letter-spacing: .03em; border-bottom: 1px solid #ccc; padding-bottom: 2px; margin: 13px 0 6px; }
-  h3 { font-size: 11.5px; margin: 10px 0 2px; }
-  p { margin: 2px 0; font-size: 11px; }
-  p.entry-company { margin: 10px 0 0; font-size: 11.5px; font-weight: 700; }
-  p.entry-role { margin: 0 0 3px; font-size: 11.5px; font-weight: 700; color: #111; font-style: normal; }
-  p.entry-role em { font-weight: 400; font-style: italic; color: #444; }
-  p.entry-project { margin: 10px 0 2px; font-size: 11.5px; font-weight: 700; }
-  h2 + p.entry-company, h2 + p.entry-project { margin-top: 2px; }
-  p.entry { margin: 10px 0 1px; font-size: 11.5px; font-weight: 700; }
+  h1 {
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: none;
+    margin: 0 0 2px;
+    line-height: 1.2;
+    color: #000;
+  }
+  p.contact-line {
+    margin: 0 0 9px;
+    padding-bottom: 0;
+    border-bottom: none;
+    font-size: 9.5px;
+    color: #1a1a1a;
+    line-height: 1.45;
+  }
+  p.contact-line a { text-decoration: underline; color: #000; }
+  h2 {
+    font-size: 10.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    border-bottom: 0.5px solid #9ca3af;
+    padding-bottom: 2px;
+    margin: 11px 0 5px;
+    color: #000;
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+  h3 { font-size: 10.5px; margin: 8px 0 2px; font-weight: 700; color: #000; }
+  p { margin: 1px 0; font-size: 10.5px; color: #000; }
+  p.entry-company,
+  p.entry-school {
+    margin: 9px 0 0;
+    font-size: 10.5px;
+    font-weight: 700;
+    color: #000;
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+  p.entry-company + p.entry-role,
+  p.entry-school + p.entry-degree {
+    margin-top: 0;
+  }
+  p.entry-role,
+  p.entry-degree {
+    margin: 0 0 3px;
+    font-size: 10.5px;
+    font-weight: 700;
+    color: #000;
+    font-style: normal;
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+  p.entry-role strong,
+  p.entry-degree strong { font-weight: 700; }
+  p.entry-role em,
+  p.entry-degree em { font-weight: 400; font-style: italic; color: #333; }
+  p.entry-project {
+    margin: 8px 0 1px;
+    font-size: 10.5px;
+    font-weight: 700;
+    color: #000;
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+  p.entry-project strong { font-weight: 700; color: #000; text-decoration: none; }
+  p.entry-project a { font-weight: 700; color: #000; text-decoration: underline; }
+  h2 + p.entry-company,
+  h2 + p.entry-school,
+  h2 + p.entry-project { margin-top: 2px; }
+  p.entry { margin: 8px 0 1px; font-size: 10.5px; font-weight: 700; color: #000; }
   h2 + p.entry, h3 + p.entry { margin-top: 2px; }
-  ul { margin: 3px 0 0; padding-left: 16px; }
-  li { font-size: 11px; margin: 1.5px 0; }
-  ul.cols-2 { column-count: 2; column-gap: 24px; }
-  ul.cols-3 { column-count: 3; column-gap: 18px; }
+  ul { margin: 2px 0 4px; padding-left: 14px; }
+  li { font-size: 10.5px; margin: 1px 0; line-height: 1.32; color: #000; }
+  ul.cols-2 { column-count: 2; column-gap: 20px; }
+  ul.cols-3 { column-count: 3; column-gap: 14px; }
   ul.cols-2 li, ul.cols-3 li { break-inside: avoid; -webkit-column-break-inside: avoid; }
-  p.entry-project, p.entry-company, p.entry-role, p.entry { text-decoration: none; }
+  p.entry-project, p.entry-company, p.entry-role, p.entry-school, p.entry-degree, p.entry { text-decoration: none; }
+  p.entry-company + ul,
+  p.entry-role + ul,
+  p.entry-project + ul,
+  p.entry-degree + ul {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
 `;
 
 const COVER_LETTER_CSS = `

@@ -15,6 +15,7 @@ import {
   isStudentEmail,
   packById,
 } from "@/lib/billing/plans";
+import { isStripeEnabled } from "@/lib/billing/stripe";
 
 export const dynamic = "force-dynamic";
 
@@ -32,7 +33,7 @@ const schema = z.discriminatedUnion("action", [
   }),
 ]);
 
-/** Dev-friendly billing actions (no Stripe yet). */
+/** Dev-only billing when Stripe is not configured. */
 export async function POST(req: Request) {
   const auth = await requireAuthUser();
   if (!isAuthUser(auth)) return auth;
@@ -46,8 +47,21 @@ export async function POST(req: Request) {
     );
   }
 
+  const data = parsed.data;
+  if (
+    isStripeEnabled() &&
+    (data.action === "purchase_pack" || data.action === "set_plan")
+  ) {
+    return NextResponse.json(
+      {
+        error: "Use checkout for purchases. Paid plans and packs go through Stripe.",
+        code: "USE_CHECKOUT",
+      },
+      { status: 400 },
+    );
+  }
+
   try {
-    const data = parsed.data;
     if (data.action === "purchase_pack") {
       const pack = packById(data.packId);
       if (!pack) {

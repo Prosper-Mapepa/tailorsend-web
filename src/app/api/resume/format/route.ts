@@ -3,7 +3,7 @@ import { requireAuthUser, isAuthUser } from "@/lib/auth";
 import { formatUploadedResume } from "@/lib/ai";
 import { extractResumeText } from "@/lib/extract-text";
 import { prepareResumeMarkdown } from "@/lib/markdown";
-import { getProfile } from "@/lib/profile";
+import { getProfile, profileResumeContact } from "@/lib/profile";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -44,7 +44,11 @@ export async function POST(req: Request) {
       linkedin: profile.linkedin,
       website: profile.website,
     });
-    const formatted = prepareResumeMarkdown(raw, profile.projects);
+    const formatted = prepareResumeMarkdown(
+      raw,
+      profile.projects,
+      profileResumeContact(profile),
+    );
     return NextResponse.json({
       markdown: formatted,
       extractedChars: text.length,

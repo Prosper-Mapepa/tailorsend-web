@@ -5,6 +5,7 @@ import {
   type TailorProfile,
 } from "@/lib/ai";
 import { prepareResumeMarkdown } from "@/lib/markdown";
+import { ensureAllProfileProjects } from "@/lib/resume-projects";
 import {
   extractJobRubric,
   extractWorkRoles,
@@ -83,7 +84,15 @@ export async function runTailorPipeline(
   }
 
   resume = sanitizePlaceholderLinks(resume);
-  resume = prepareResumeMarkdown(resume, profile.projects ?? []);
+  resume = ensureAllProfileProjects(resume, profile.projects ?? []);
+  resume = prepareResumeMarkdown(resume, profile.projects ?? [], {
+    email: profile.email,
+    phone: profile.phone,
+    location: profile.location,
+    linkedin: profile.linkedin,
+    github: profile.github,
+    website: profile.website,
+  });
 
   return {
     tailoredResume: resume,

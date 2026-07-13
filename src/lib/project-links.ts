@@ -8,6 +8,8 @@ const PROJECT_ALIASES: Record<string, string[]> = {
     "veritalent",
     "cmu talenthub",
     "veritalent app",
+    "talenthub rebranded to veritalent",
+    "talenthub rebranded",
   ],
   "Multi-Currency Remittance System / xGatePay": [
     "xgatepay",
@@ -35,6 +37,38 @@ function isJunkLink(url: string) {
   );
 }
 
+function isGitHubUrl(url: string) {
+  return /github\.com/i.test(url);
+}
+
+function isGitHubRepoUrl(url: string) {
+  return /github\.com\/[^/]+\/[^/]+/i.test(url);
+}
+
+function normalizeUrlPath(url: string): string {
+  return url
+    .replace(/^https?:\/\//i, "")
+    .replace(/^www\./i, "")
+    .replace(/\/$/, "")
+    .toLowerCase();
+}
+
+/** True when URL is a GitHub profile (not a specific repo). */
+export function isGitHubProfileUrl(
+  url: string,
+  profileGithub?: string,
+): boolean {
+  if (!isGitHubUrl(url) || isGitHubRepoUrl(url)) return false;
+  if (profileGithub) {
+    const profilePath = normalizeUrlPath(profileGithub);
+    const urlPath = normalizeUrlPath(url);
+    if (urlPath === profilePath || urlPath.startsWith(`${profilePath}/`)) {
+      return !isGitHubRepoUrl(url);
+    }
+  }
+  return /^github\.com\/[A-Za-z0-9._-]+\/?$/i.test(normalizeUrlPath(url));
+}
+
 /** All non-empty project URLs (links[] + legacy fields), deduped. */
 export function getProjectLinks(project: Project): string[] {
   const raw = [
@@ -57,6 +91,39 @@ export function getProjectLinks(project: Project): string[] {
 }
 
 /**
+ * Best URL to attach to a project title in the resume.
+ * Prefers live demos / websites, then repo URLs — never the candidate's GitHub profile.
+ */
+export function getPrimaryProjectWebLink(
+  project: Project,
+  opts?: { profileGithub?: string },
+): string {
+  const profileGithub = opts?.profileGithub;
+  const webLinks = getProjectLinks(project).filter(
+    (u) => !isAppStoreUrl(u) && !isPlayStoreUrl(u),
+  );
+
+  const liveSite = webLinks.find(
+    (u) => !isGitHubUrl(u) && !isGitHubProfileUrl(u, profileGithub),
+  );
+  if (liveSite) return liveSite;
+
+  const repo = webLinks.find(
+    (u) => isGitHubRepoUrl(u) && !isGitHubProfileUrl(u, profileGithub),
+  );
+  if (repo) return repo;
+
+  const other = webLinks.find((u) => !isGitHubProfileUrl(u, profileGithub));
+  if (other) return other;
+
+  // No web link — fall back to a single store link so the title still links out.
+  const stores = getProjectLinks(project).filter(
+    (u) => isAppStoreUrl(u) || isPlayStoreUrl(u),
+  );
+  return stores[0] ?? "";
+}
+
+/**
  * Set unlabeled links on a project and keep legacy fields in sync
  * so resume injection / AI prompts still know web vs store URLs.
  * Empty strings are kept in `links` so the editor can show blank rows.
@@ -66,8 +133,9 @@ export function withProjectLinks(project: Project, links: string[]): Project {
   const filled = ordered.filter((l) => l && !isJunkLink(l));
   const appStoreLink = filled.find(isAppStoreUrl) ?? "";
   const playStoreLink = filled.find(isPlayStoreUrl) ?? "";
-  const link =
-    filled.find((u) => !isAppStoreUrl(u) && !isPlayStoreUrl(u)) ?? "";
+  const link = getPrimaryProjectWebLink(
+    { ...project, links: filled, link: "", appStoreLink, playStoreLink },
+  );
   return {
     ...project,
     links: ordered,
@@ -198,13 +266,16 @@ export function mergeProjectLinks(projects: Project[]): Project[] {
   return applyKnownProjectLinks(projects, { addMissing: true });
 }
 
-function buildLinkSuffix(project: Project): string {
-  const parts: string[] = [];
-  for (const url of getProjectLinks(project)) {
-    if (isAppStoreUrl(url)) parts.push(`[App Store](${url})`);
-    else if (isPlayStoreUrl(url)) parts.push(`[Play Store](${url})`);
-  }
-  return parts.length ? ` | ${parts.join(" | ")}` : "";
+/** Strip link-label chips (store, GitHub, live demo, etc.) from a header line. */
+function stripStoreLinks(line: string): string {
+  return line
+    .replace(
+      /\s*\|\s*\[?(?:App Store|Play Store|GitHub|Live(?:\s*Demo)?|Demo|Website|Site|Source|Repo(?:sitory)?|Code)\]?(?:\([^)]*\))?/gi,
+      "",
+    )
+    .replace(/\s*\|\s*\[[^\]]+\]\([^)]*\)/g, "")
+    .replace(/\s*\(\s*(?:\[?(?:App Store|Play Store)\]?(?:\([^)]*\))?\s*\|?\s*)+\)/gi, "")
+    .trim();
 }
 
 function stripHeaderMarkdown(line: string): string {
@@ -231,68 +302,22 @@ function extractHeaderDates(text: string): { name: string; dates: string } {
   return { name: t, dates: "" };
 }
 
-function hasStoreLinks(line: string): boolean {
-  return /apps\.apple\.com|play\.google\.com|\[App Store\]|\[Play Store\]/i.test(
-    line,
-  );
-}
-
-/** Rebuild a project header in the standard layout with links and dates. */
-function formatProjectHeader(line: string, project: Project): string {
-  const links = getProjectLinks(project);
-  const web =
-    links.find((u) => !isAppStoreUrl(u) && !isPlayStoreUrl(u))?.trim() ?? "";
-  const suffix = buildLinkSuffix(project);
-  if (!web && !suffix) return line;
-
+function unlinkProjectHeader(line: string): string {
   const { name, dates } = extractHeaderDates(stripHeaderMarkdown(line));
-  const display = name || project.name;
-
-  let header = web ? `**[${display}](${web})**` : `**${display}**`;
-  header += suffix;
+  let header = `**${name}**`;
   if (dates) header += ` — *(${dates})*`;
   return header;
 }
 
-/** Add markdown links to a single project header line. */
-function enrichProjectLine(line: string, project: Project): string {
-  if (!lineMatchesProject(line, project)) return line;
-  if (/^\s*[-*]/.test(line)) return line;
-  if (hasStoreLinks(line) && /\*\*\[/.test(line)) return line;
-  return formatProjectHeader(line, project);
-}
-
-/** Normalize dates on a project header to " — *(dates)*" at the end. */
-function normalizeProjectHeaderDates(line: string): string {
-  if (/—\s*\*\([^)]+\)\*/.test(line)) return line;
-  const trimmed = line.trim();
-  if (!/^\*\*/.test(trimmed)) return line;
-
-  const storeMatch = trimmed.match(/(\s*\|\s*(?:\[[^\]]+\]\([^)]+\)\s*)+)/);
-  const storePart = storeMatch?.[1] ?? "";
-  const withoutStore = storePart
-    ? trimmed.slice(0, trimmed.indexOf(storePart))
-    : trimmed;
-
-  const plain = stripHeaderMarkdown(withoutStore);
-  const { name, dates } = extractHeaderDates(plain);
-  if (!dates) return line;
-
-  const webLink = withoutStore.match(/\*\*\[(.+?)\]\((.+?)\)\*\*/);
-  const namePart = webLink
-    ? `**[${webLink[1]}](${webLink[2]})**`
-    : `**${name}**`;
-
-  return `${namePart}${storePart} — *(${dates})*`;
-}
-
-/** Inject real project links into the PROJECTS section of a resume. */
-export function injectProjectLinks(md: string, projects: Project[]): string {
-  const withLinks = mergeProjectLinks(projects).filter(
-    (p) => getProjectLinks(p).length > 0,
-  );
-  if (!withLinks.length) return md;
-
+/**
+ * Strip ALL links from the PROJECTS section — web, GitHub, and App/Play Store —
+ * leaving clean `**Title** — *(dates)*` headers only.
+ */
+export function injectProjectLinks(
+  md: string,
+  _projects: Project[],
+  _opts?: { profileGithub?: string },
+): string {
   const lines = md.split("\n");
   let inProjects = false;
 
@@ -306,15 +331,9 @@ export function injectProjectLinks(md: string, projects: Project[]): string {
       if (/^##\s+/.test(trimmed) && inProjects) inProjects = false;
       if (!inProjects) return line;
       if (/^\s*[-*]/.test(trimmed)) return line;
+      if (!/^\*\*/.test(trimmed)) return line;
 
-      let result = line;
-      if (/^\*\*/.test(trimmed)) {
-        result = normalizeProjectHeaderDates(result);
-        for (const p of withLinks) {
-          result = enrichProjectLine(result, p);
-        }
-      }
-      return result;
+      return unlinkProjectHeader(stripStoreLinks(line));
     })
     .join("\n");
 }
@@ -326,6 +345,15 @@ export function projectLinksBlock(projects: Project[]): string {
   );
   if (!merged.length) return "(no project links on file)";
   return merged
-    .map((p) => `- ${p.name}: ${getProjectLinks(p).join(" · ")}`)
+    .map((p) => {
+      const primary = getPrimaryProjectWebLink(p);
+      const extras = getProjectLinks(p).filter(
+        (u) =>
+          u !== primary &&
+          (isAppStoreUrl(u) || isPlayStoreUrl(u) || isGitHubRepoUrl(u)),
+      );
+      const parts = [primary, ...extras].filter(Boolean);
+      return `- ${p.name}: ${parts.join(" · ") || "(no web URL — leave title unlinked)"}`;
+    })
     .join("\n");
 }

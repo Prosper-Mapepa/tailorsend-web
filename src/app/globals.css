@@ -49,87 +49,130 @@ body {
 
 /* On-page rendered preview of tailored resume / cover letter (mirrors the PDF). */
 .doc-preview {
-  color: #111;
-  font-size: 14px;
-  line-height: 1.5;
+  color: #000;
+  font-family: Calibri, "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 13px;
+  line-height: 1.38;
+  max-width: 8.5in;
 }
 .doc-preview h1 {
-  font-size: 24px;
+  font-size: 18px;
   font-weight: 700;
-  margin: 0 0 4px;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  margin: 0 0 3px;
+  line-height: 1.2;
+  color: #000;
 }
+.doc-preview p.contact-line,
 .doc-preview h1 + p {
-  margin: 0 0 4px;
-  color: #334155;
+  margin: 0 0 12px;
+  padding-bottom: 0;
+  border-bottom: none;
+  font-size: 12px;
+  color: #1a1a1a;
+  line-height: 1.45;
+}
+.doc-preview p.contact-line a,
+.doc-preview h1 + p a {
+  color: #000;
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 .doc-preview h2 {
-  font-size: 15px;
+  font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
-  border-bottom: 1px solid #cbd5e1;
+  letter-spacing: 0.07em;
+  border-bottom: 0.5px solid #9ca3af;
   padding-bottom: 3px;
-  margin: 20px 0 8px;
+  margin: 18px 0 8px;
+  color: #000;
 }
 .doc-preview h3 {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
-  margin: 14px 0 3px;
+  margin: 12px 0 3px;
+  color: #000;
 }
 .doc-preview p {
-  margin: 4px 0;
+  margin: 2px 0;
+  color: #000;
 }
-.doc-preview p.entry-company {
+.doc-preview p.entry-company,
+.doc-preview p.entry-school {
   font-weight: 700;
-  margin: 14px 0 0;
+  margin: 12px 0 0;
+  color: #000;
 }
-.doc-preview p.entry-role {
+.doc-preview p.entry-company + p.entry-role,
+.doc-preview p.entry-school + p.entry-degree {
+  margin-top: 0;
+}
+.doc-preview p.entry-role,
+.doc-preview p.entry-degree {
   font-weight: 700;
-  color: #0f172a;
+  color: #000;
   font-style: normal;
   margin: 0 0 4px;
 }
-.doc-preview p.entry-role em {
+.doc-preview p.entry-role em,
+.doc-preview p.entry-degree em {
   font-weight: 400;
   font-style: italic;
-  color: #64748b;
+  color: #333;
 }
 .doc-preview p.entry-project {
   font-weight: 700;
-  margin: 14px 0 4px;
+  margin: 12px 0 3px;
+  color: #000;
+}
+.doc-preview p.entry-project strong {
+  font-weight: 700;
+  color: #000;
+  text-decoration: none;
+}
+.doc-preview p.entry-project a {
+  font-weight: 700;
+  color: #000;
+  text-decoration: underline;
 }
 .doc-preview p.entry {
-  font-weight: 600;
-  margin: 14px 0 1px;
+  font-weight: 700;
+  margin: 12px 0 2px;
+  color: #000;
 }
 .doc-preview h2 + p.entry-company,
+.doc-preview h2 + p.entry-school,
 .doc-preview h2 + p.entry-project,
 .doc-preview h2 + p.entry,
 .doc-preview h3 + p.entry {
-  margin-top: 4px;
+  margin-top: 3px;
 }
 .doc-preview ul {
-  margin: 4px 0 0;
-  padding-left: 20px;
+  margin: 3px 0 6px;
+  padding-left: 18px;
   list-style: disc;
 }
 .doc-preview li {
-  margin: 2px 0;
+  margin: 1px 0;
+  line-height: 1.32;
+  color: #000;
 }
 .doc-preview ul.cols-2 {
   column-count: 2;
-  column-gap: 32px;
+  column-gap: 28px;
 }
 .doc-preview ul.cols-3 {
   column-count: 3;
-  column-gap: 24px;
+  column-gap: 20px;
 }
 .doc-preview ul.cols-2 li,
 .doc-preview ul.cols-3 li {
   break-inside: avoid;
 }
 .doc-preview a {
-  color: #111;
+  color: #000;
   text-decoration: underline;
   text-underline-offset: 2px;
 }

@@ -5,6 +5,7 @@ import {
   documentHtml,
   type DocumentKind,
   prepareResumeMarkdown,
+  type ResumeContact,
 } from "@/lib/markdown";
 import type { Project } from "@/lib/types";
 
@@ -15,11 +16,14 @@ export async function writeMarkdownPdf(
   title: string,
   kind: DocumentKind = "resume",
   projects: Project[] = [],
+  contact?: ResumeContact,
 ): Promise<void> {
   await fs.mkdir(path.dirname(filePath), { recursive: true });
 
   const htmlMd =
-    kind === "resume" ? prepareResumeMarkdown(markdown, projects) : markdown;
+    kind === "resume"
+      ? prepareResumeMarkdown(markdown, projects, contact)
+      : markdown;
 
   const browser = await chromium.launch({ headless: true });
   try {

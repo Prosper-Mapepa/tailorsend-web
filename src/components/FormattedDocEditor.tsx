@@ -1,13 +1,24 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui";
+import { apiFetch } from "@/lib/auth-client";
 import {
   downloadPdfFromMarkdown,
   downloadText,
   resumeSlug,
 } from "@/lib/download";
-import { mdToHtml, normalizeResumeMarkdown } from "@/lib/markdown";
+import {
+  mdToHtml,
+  prepareResumeMarkdown,
+  type ResumeContact,
+} from "@/lib/markdown";
+import type { Project } from "@/lib/types";
+
+type ResumeContext = {
+  projects: Project[];
+  contact: ResumeContact;
+};
 
 export function FormattedDocEditor({
   label,
@@ -19,6 +30,7 @@ export function FormattedDocEditor({
   minHeight = 480,
   hideTextDownloads = false,
   showLabel = true,
+  resumeContext,
 }: {
   label: string;
   value: string;
@@ -29,14 +41,53 @@ export function FormattedDocEditor({
   minHeight?: number;
   hideTextDownloads?: boolean;
   showLabel?: boolean;
+  /** When set, preview/PDF downloads use the same link injection as the server. */
+  resumeContext?: ResumeContext;
 }) {
   const [editing, setEditing] = useState(false);
   const [pdfBusy, setPdfBusy] = useState(false);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fetchedContext, setFetchedContext] = useState<ResumeContext | null>(
+    null,
+  );
 
-  const displayMd =
-    kind === "resume" ? normalizeResumeMarkdown(value) : value;
+  useEffect(() => {
+    if (kind !== "resume" || resumeContext) return;
+    let cancelled = false;
+    apiFetch("/api/profile")
+      .then((r) => r.json())
+      .then((data) => {
+        if (cancelled || !data?.email) return;
+        setFetchedContext({
+          projects: data.projects ?? [],
+          contact: {
+            email: data.email,
+            phone: data.phone,
+            location: data.location,
+            linkedin: data.linkedin,
+            github: data.github,
+            website: data.website,
+          },
+        });
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [kind, resumeContext]);
+
+  const activeContext = resumeContext ?? fetchedContext;
+
+  const displayMd = useMemo(() => {
+    if (kind !== "resume") return value;
+    return prepareResumeMarkdown(
+      value,
+      activeContext?.projects ?? [],
+      activeContext?.contact,
+    );
+  }, [kind, value, activeContext]);
+
   const slug = kind === "resume" ? resumeSlug(value) : downloadSlug;
   const baseName = kind === "resume" ? "resume" : "cover-letter";
 

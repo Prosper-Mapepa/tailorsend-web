@@ -22,6 +22,8 @@ import type { BuildIdea, CompanyEdge } from "@/lib/ai";
 import { normalizeCompanyEdge } from "@/lib/ai";
 import type { MatchScore } from "@/lib/match-score";
 import type { FormFieldResponse } from "@/lib/types";
+import { prepareResumeMarkdown } from "@/lib/markdown";
+import { ensureAllProfileProjects } from "@/lib/resume-projects";
 import { safeJson } from "@/lib/util";
 
 type DocTab = "resume" | "cover" | "edge" | "form";
@@ -112,6 +114,8 @@ export default function ApplicationDetailPage() {
     () => new Set(),
   );
   const [edgeIncorporated, setEdgeIncorporated] = useState(false);
+  const [reapplyingLinks, setReapplyingLinks] = useState(false);
+  const [linksMsg, setLinksMsg] = useState<string | null>(null);
 
   function parseMatch(raw?: string): MatchScore | null {
     if (!raw?.trim()) return null;
@@ -344,6 +348,53 @@ export default function ApplicationDetailPage() {
     setDirty(false);
   }
 
+  async function reapplyLinks() {
+    if (!resume.trim()) return;
+    setReapplyingLinks(true);
+    setLinksMsg(null);
+    try {
+      const res = await apiFetch("/api/profile");
+      const profile = await res.json();
+      if (!res.ok) {
+        throw new Error(profile.error ?? "Could not load profile.");
+      }
+      let updated = ensureAllProfileProjects(
+        resume,
+        profile.projects ?? [],
+      );
+      updated = prepareResumeMarkdown(
+        updated,
+        profile.projects ?? [],
+        {
+          email: profile.email,
+          phone: profile.phone,
+          location: profile.location,
+          linkedin: profile.linkedin,
+          github: profile.github,
+          website: profile.website,
+        },
+      );
+      setResume(updated);
+      setSaving(true);
+      await apiFetch(`/api/applications/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tailoredResume: updated,
+          coverLetter: cover,
+        }),
+      });
+      setDirty(false);
+      setLinksMsg("Contact and project links updated from your profile ✓");
+      setTimeout(() => setLinksMsg(null), 5000);
+    } catch (e) {
+      setLinksMsg((e as Error).message);
+    } finally {
+      setReapplyingLinks(false);
+      setSaving(false);
+    }
+  }
+
   function goToGuideStep(step: GuideStepId) {
     setGuideStep(step);
     const tabMap: Partial<Record<GuideStepId, DocTab>> = {
@@ -502,13 +553,13 @@ export default function ApplicationDetailPage() {
     <div className="space-y-6">
       <Link
         href="/applications"
-        className="text-sm text-emerald-600 hover:underline"
+        className="text-sm text-emerald-600 hover:underline font-medium"
       >
-        ← All applications
+        ← All Applications
       </Link>
 
       <Card>
-        <div className="mb-4 flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 pb-4">
+        <div className="mb-4 flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 pb-4 ">
           <div>
             <h1 className="text-2xl font-bold text-slate-900">{app.job.title}</h1>
             <p className="mt-1 text-sm text-slate-500">
@@ -649,6 +700,25 @@ export default function ApplicationDetailPage() {
           <Button onClick={saveDocs} disabled={saving || !dirty}>
             {saving ? "Saving…" : dirty ? "Save edits" : "Saved"}
           </Button>
+          {docTab === "resume" && resume.trim() && (
+            <Button
+              variant="secondary"
+              onClick={() => void reapplyLinks()}
+              disabled={reapplyingLinks || saving}
+              title="Refresh LinkedIn, GitHub, portfolio, and project links from your profile"
+            >
+              {reapplyingLinks ? "Updating links…" : "Re-apply links"}
+            </Button>
+          )}
+          {linksMsg && (
+            <span
+              className={`text-sm ${
+                linksMsg.includes("✓") ? "text-emerald-600" : "text-red-600"
+              }`}
+            >
+              {linksMsg}
+            </span>
+          )}
           <span className="text-sm text-slate-300">|</span>
           <Button
             variant="secondary"

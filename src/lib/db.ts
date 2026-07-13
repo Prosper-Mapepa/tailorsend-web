@@ -29,7 +29,26 @@ function createPrisma(): PrismaClient {
   if (!connectionString) {
     throw new Error("DATABASE_URL is not set.");
   }
-  const pool = globalForPrisma.pgPool ?? new Pool({ connectionString });
+  // Avoid slow IPv6 (`::1`) resolution when Postgres only listens on IPv4.
+  const normalized = connectionString.replace(
+    /@localhost(:|\/)/,
+    "@127.0.0.1$1",
+  );
+  const pool =
+    globalForPrisma.pgPool ??
+    new Pool({
+      connectionString: normalized,
+      // Fail fast instead of hanging ~68s on a dead connection.
+      connectionTimeoutMillis: 10_000,
+      // Recycle idle connections so stale sockets (e.g. after sleep) are dropped.
+      idleTimeoutMillis: 30_000,
+      keepAlive: true,
+      max: 10,
+    });
+  // Prevent an unhandled pool error (dead backend) from crashing the process.
+  pool.on("error", (err) => {
+    console.error("pg pool error (will recycle connection):", err.message);
+  });
   if (process.env.NODE_ENV !== "production") {
     globalForPrisma.pgPool = pool;
   }

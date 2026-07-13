@@ -157,8 +157,22 @@ model UsageAccount {
   seasonKitsTotal  Int       @default(0)
   seasonEndsAt     DateTime?
   flexPausedUntil  DateTime?
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
+}
+
+model StripeCheckout {
+  id        String   @id @default(cuid())
+  sessionId String   @unique
+  userId    String
+  kind      String
+  meta      String   @default("{}")
+  fulfilled Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }
 
 model UsageEvent {

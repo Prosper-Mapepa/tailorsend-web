@@ -9,7 +9,11 @@ import {
 } from "@/lib/billing/usage";
 import { prisma } from "@/lib/db";
 import { prepareResumeMarkdown } from "@/lib/markdown";
-import { getProfile } from "@/lib/profile";
+import { getProfile, profileResumeContact } from "@/lib/profile";
+import {
+  ensureAllProfileProjects,
+  preserveExistingProjects,
+} from "@/lib/resume-projects";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -77,7 +81,16 @@ export async function POST(
     });
 
     const profile = await getProfile(auth.id);
-    const resume = prepareResumeMarkdown(result.resume, profile.projects);
+    let resume = preserveExistingProjects(
+      application.tailoredResume,
+      result.resume,
+    );
+    resume = ensureAllProfileProjects(resume, profile.projects);
+    resume = prepareResumeMarkdown(
+      resume,
+      profile.projects,
+      profileResumeContact(profile),
+    );
 
     const updated = await prisma.application.update({
       where: { id },

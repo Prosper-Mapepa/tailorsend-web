@@ -63,17 +63,27 @@ export function Button({
   variant = "primary",
   size = "md",
   className = "",
+  loading = false,
   children,
+  disabled,
   ...props
 }: ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: Variant;
   size?: keyof typeof SIZES;
+  loading?: boolean;
 }) {
+  const spinnerClass =
+    variant === "primary" || variant === "danger"
+      ? "h-4 w-4 border-white/40 border-t-white"
+      : "h-4 w-4 border-emerald-200 border-t-emerald-600";
+
   return (
     <button
       className={`inline-flex items-center justify-center gap-2 font-medium transition disabled:cursor-not-allowed ${SIZES[size]} ${VARIANTS[variant]} ${className}`}
+      disabled={disabled || loading}
       {...props}
     >
+      {loading && <Spinner className={spinnerClass} />}
       {children}
     </button>
   );

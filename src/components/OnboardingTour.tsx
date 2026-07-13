@@ -83,10 +83,7 @@ export function OnboardingTour({
   const finish = useCallback(() => {
     markOnboardingComplete(userId);
     onClose();
-    router.push("/profile#upload");
-    requestAnimationFrame(() => {
-      document.getElementById("upload")?.scrollIntoView({ behavior: "smooth" });
-    });
+    router.push("/welcome");
   }, [userId, onClose, router]);
 
   const skip = useCallback(() => {

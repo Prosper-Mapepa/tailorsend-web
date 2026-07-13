@@ -139,15 +139,17 @@ ORDERING (critical):
   **Company — Location**
   **Job Title** *(Month Year – Month Year)*
   - achievement bullets (never paragraph text)
+  Company names AND job titles must both be bold. Dates in italics on the role line.
 - Include dates for every role/project/degree when available.
 
 PROJECTS (critical):
-- Select the 3-5 projects MOST relevant to this role from the candidate's project list (security/infra projects rank highest for security roles). Order them most recent first. Omit the least relevant ones to keep the resume to two pages.
+- Include EVERY project from the candidate's profile project list in the PROJECTS section — do NOT omit any. Order them most recent first (reverse-chronological by date). Tailor bullets and emphasis to the role, but every saved profile project must appear.
+- NEVER drop existing projects to make room — compress bullets if needed to stay within two pages.
 - EVERY project MUST use this exact pattern (consistent layout):
   **[Project Name](web-url)** | [App Store](url) | [Play Store](url) — *(Month Year – Month Year)*
   - achievement bullet
   - achievement bullet
-  Include only link types that are actually provided (omit Web / App Store / Play Store if not listed). If no web URL, use **Project Name** instead of a linked name. Dates go at the end in italics after an em dash. NEVER use paragraph blocks for project descriptions — always bullets. NEVER invent placeholder URLs.
+  Include only link types that are actually provided in the verified project-link list (omit Web / App Store / Play Store if not listed). If no project-specific URL exists, use **Project Name** (plain bold, NOT linked). NEVER link a project to the candidate's GitHub profile URL — only use the exact URLs from the verified list for that project. Dates go at the end in italics after an em dash. NEVER use paragraph blocks for project descriptions — always bullets. NEVER put the description or tech stack in the title line or inside a link label — title line is name + optional links + dates ONLY.
 - Include the tech stack and the impact/outcome in the bullets.
 
 COMPLETENESS (goal: maximize interview odds):
@@ -244,7 +246,7 @@ ${
     : ""
 }
 # Task
-1. Produce a tailored version of the resume (Markdown) optimized for this specific job, using ONLY information already present above (including projects).
+1. Produce a tailored version of the resume (Markdown) optimized for this specific job, using ONLY information already present above (including projects). The PROJECTS section must list every project from "Candidate projects" above — all ${input.profile.projects?.length ?? 0} of them.
 2. Write a tailored cover letter addressed to the ${input.job.company} hiring team.
 3. Provide honest match notes (fit + gaps + visa considerations).`;
 
@@ -302,7 +304,7 @@ export async function enhanceTailoredResume(input: {
       {
         role: "system",
         content:
-          "You edit an already-tailored resume to include specific missing ATS keywords. Add them naturally into Core Skills, the summary, or existing bullets. NEVER invent employers, dates, or experience. NEVER add a Work Authorization section. Return the full updated resume in Markdown only — no commentary.",
+          "You edit an already-tailored resume to include specific missing ATS keywords. Add them naturally into Core Skills, the summary, or existing bullets. NEVER invent employers, dates, or experience. NEVER remove or omit any existing projects or roles. NEVER add a Work Authorization section. Return the full updated resume in Markdown only — no commentary.",
       },
       {
         role: "user",
@@ -454,14 +456,18 @@ Hard rules (never break):
 - Do NOT use horizontal rules (---). Do NOT wrap the output in code fences.
 - For projects that match the verified link list, use this EXACT header pattern:
   **[Project Name](web-url)** | [App Store](url) | [Play Store](url) — *(Month Year – Month Year)*
-  Include ONLY the link types provided. If no web URL, use **Project Name** (not linked). Dates in italics at the end. NEVER use placeholder URLs.
+  Include ONLY the link types provided for that specific project. If no URL exists for a project, use **Project Name** (unlinked). NEVER use the candidate's GitHub profile URL as a project link.
 
 Structure (use these exact section headings as ## headings):
 # FULL NAME (first line)
 Contact line: email | phone | location | [LinkedIn](url) | [Portfolio](url) when present
 ## SUMMARY (or PROFESSIONAL SUMMARY if that's what the source uses)
 ## CORE SKILLS — bullet list; if 12+ skills, keep as one list (columns are applied at render time)
-## EDUCATION
+## EDUCATION — each entry MUST follow:
+  **School — Location**
+  **Degree** *(Graduation / expected date)*
+  - Completed LeaderShape Institute Leadership Program, … (standalone bullet if present)
+  - Relevant Coursework: … (standalone bullet if present)
 ## WORK EXPERIENCE — each role MUST follow:
   **Company — Location**
   **Job Title** *(Month Year – Month Year)*
@@ -709,7 +715,9 @@ Truthfulness (critical):
 - Keep ALL existing experience exactly: do not change job titles, companies, dates, or remove roles.
 
 Resume:
-- Add each selected initiative concisely under the Projects section (create one before Education if it doesn't exist), most impactful first. Include the tech stack. Keep bullets tight.
+- ADD each selected initiative to the existing Projects section — do NOT remove, replace, or shorten any project already on the resume. New gap-fix / build ideas are appended alongside all existing projects.
+- Present new initiatives honestly as in-progress / building (e.g. "In progress" in dates or title). Include the tech stack. Keep bullets tight.
+- Keep ALL existing projects verbatim in structure (names, links, dates) — only add bullets or new entries for the selected initiatives.
 
 Cover letter:
 - Weave in 1-2 specific sentences positioning these initiatives as things the candidate is building to address ${input.job.company}'s needs — forward-looking value, not claims of finished work.

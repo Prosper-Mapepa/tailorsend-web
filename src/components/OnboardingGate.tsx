@@ -16,6 +16,7 @@ const HIDDEN_PATHS = [
   "/reset-password",
   "/terms",
   "/privacy",
+  "/welcome",
 ];
 
 export function OnboardingGate() {

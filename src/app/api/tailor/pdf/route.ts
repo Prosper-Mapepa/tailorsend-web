@@ -5,7 +5,7 @@ import {
   prepareResumeMarkdown,
 } from "@/lib/markdown";
 import { requireAuthUser, isAuthUser } from "@/lib/auth";
-import { getProfile } from "@/lib/profile";
+import { getProfile, profileResumeContact } from "@/lib/profile";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -40,7 +40,11 @@ export async function POST(req: Request) {
       (kind === "auto" && !/dear\s+/i.test(markdown.toLowerCase()));
     if (isResume) {
       const profile = await getProfile(auth.id);
-      htmlMd = prepareResumeMarkdown(htmlMd, profile.projects);
+      htmlMd = prepareResumeMarkdown(
+        htmlMd,
+        profile.projects,
+        profileResumeContact(profile),
+      );
     }
 
     browser = await chromium.launch({ headless: true });

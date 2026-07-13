@@ -9,8 +9,8 @@ import { MatchComparison } from "@/components/MatchComparison";
 import { apiFetch } from "@/lib/auth-client";
 import type { BuildIdea, CompanyEdge } from "@/lib/ai";
 import type { MatchScore } from "@/lib/match-score";
-import { mdToHtml, normalizeResumeMarkdown } from "@/lib/markdown";
-import type { FormFieldResponse } from "@/lib/types";
+import { mdToHtml, prepareResumeMarkdown, type ResumeContact } from "@/lib/markdown";
+import type { FormFieldResponse, Project } from "@/lib/types";
 
 type InputMode = "url" | "screenshots" | "text" | "format";
 type DocTab = "resume" | "cover" | "edge" | "form" | "notes";
@@ -121,6 +121,30 @@ function FormatResumeTab() {
   const [editing, setEditing] = useState(false);
   const [pdfBusy, setPdfBusy] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [resumeContext, setResumeContext] = useState<{
+    projects: Project[];
+    contact: ResumeContact;
+  } | null>(null);
+
+  useEffect(() => {
+    apiFetch("/api/profile")
+      .then((r) => r.json())
+      .then((data) => {
+        if (!data?.email) return;
+        setResumeContext({
+          projects: data.projects ?? [],
+          contact: {
+            email: data.email,
+            phone: data.phone,
+            location: data.location,
+            linkedin: data.linkedin,
+            github: data.github,
+            website: data.website,
+          },
+        });
+      })
+      .catch(() => {});
+  }, []);
 
   async function formatFile(file: File) {
     setLoading(true);
@@ -149,7 +173,13 @@ function FormatResumeTab() {
   }
 
   const slug = resumeSlug(markdown);
-  const displayMd = markdown ? normalizeResumeMarkdown(markdown) : "";
+  const displayMd = markdown
+    ? prepareResumeMarkdown(
+        markdown,
+        resumeContext?.projects ?? [],
+        resumeContext?.contact,
+      )
+    : "";
 
   return (
     <div className="space-y-5">
