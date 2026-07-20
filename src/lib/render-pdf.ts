@@ -7,6 +7,7 @@ import {
   prepareResumeMarkdown,
   type ResumeContact,
 } from "@/lib/markdown";
+import { ensureCoverLetterDate } from "@/lib/cover-letter";
 import {
   PLAYWRIGHT_DISABLED_MESSAGE,
   playwrightEnabled,
@@ -31,7 +32,9 @@ export async function writeMarkdownPdf(
   const htmlMd =
     kind === "resume"
       ? prepareResumeMarkdown(markdown, projects, contact)
-      : markdown;
+      : kind === "cover"
+        ? ensureCoverLetterDate(markdown)
+        : markdown;
 
   const browser = await chromium.launch({ headless: true });
   try {

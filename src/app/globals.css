@@ -35,6 +35,17 @@ body {
   color: #064e3b;
 }
 
+@keyframes tailorFade {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* Flat page backdrop — avoids gradient seams on long scroll */
 .app-shell {
   background-color: var(--background);

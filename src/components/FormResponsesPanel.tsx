@@ -12,6 +12,7 @@ import {
   isCopyableField,
 } from "@/lib/form-field-utils";
 import { normalizeResumeMarkdown } from "@/lib/markdown";
+import { ensureCoverLetterDate } from "@/lib/cover-letter";
 import type { FormFieldResponse } from "@/lib/types";
 
 export function FormResponsesPanel({
@@ -116,7 +117,7 @@ export function FormResponsesPanel({
       const displayMd =
         kind === "resume"
           ? normalizeResumeMarkdown(markdown)
-          : markdown;
+          : ensureCoverLetterDate(markdown);
       const slug =
         kind === "resume" ? resumeSlug(markdown) : downloadSlug;
       const baseName = kind === "resume" ? "resume" : "cover-letter";
@@ -337,12 +338,33 @@ export function FormResponsesPanel({
               </div>
             </div>
           ) : (
-            <div className="flex flex-1 items-center justify-center px-6 py-12 text-center text-sm text-slate-400">
-              {busy
-                ? "Generating answers…"
-                : screenshotUrl
-                  ? 'Click "Regenerate from screenshot" to read the form fields.'
-                  : 'Click "Generate answers" or upload a form screenshot.'}
+            <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 py-12 text-center">
+              {busy ? (
+                <p className="text-sm text-slate-500">Reading form fields…</p>
+              ) : (
+                <>
+                  <p className="text-sm font-medium text-slate-700">
+                    Optional backup answers
+                  </p>
+                  <p className="max-w-xs text-sm leading-relaxed text-slate-500">
+                    Prefer auto-fill above. Upload a screenshot of the{" "}
+                    <span className="font-medium text-slate-700">
+                      application form
+                    </span>{" "}
+                    (not the job posting) if you need copy-paste answers.
+                  </p>
+                  {allowUpload && (
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      disabled={busy}
+                      onClick={() => fileRef.current?.click()}
+                    >
+                      Upload form screenshot
+                    </Button>
+                  )}
+                </>
+              )}
             </div>
           )}
         </section>

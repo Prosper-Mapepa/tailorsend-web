@@ -5,7 +5,7 @@ export function formatCents(cents: number): string {
 }
 
 export function formatPlanLabel(plan: string): string {
-  if (plan === "flex") return "Flex";
+  if (plan === "flex") return "Student Monthly";
   if (plan === "season") return "Season Pass";
   return "Free";
 }

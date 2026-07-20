@@ -1,4 +1,8 @@
 import OpenAI from "openai";
+import {
+  ensureCoverLetterDate,
+  formatCoverLetterDate,
+} from "@/lib/cover-letter";
 import { getProjectLinks, withProjectLinks } from "@/lib/project-links";
 import { extractUrlsFromText, stripInlineCitations, truncate } from "@/lib/util";
 import type {
@@ -129,7 +133,7 @@ Resume best practices to apply:
 - Lead with a concise professional summary (2-3 lines) targeted at this exact role.
 - Use a "Core Skills" section as a bullet list (one skill per line) that mirrors the keywords/technologies in the job description (only skills the candidate actually has) so it passes ATS keyword matching and renders in multi-column layout.
 - Convert responsibilities into achievement-oriented bullets using strong action verbs and the format: Action + what you built/did + tools + impact.
-- Keep formatting clean Markdown with clear section headers (Summary, Core Skills, Experience, Projects, Education). Mirror the job's exact terminology where truthful.
+- Keep formatting clean Markdown with clear section headers in this order: Summary, Core Skills, Education, Experience, Projects. Mirror the job's exact terminology where truthful.
 - Do NOT use horizontal rules or separator lines (no "---", "***", or "___"). Use section headings only.
 
 ORDERING (critical):
@@ -191,6 +195,7 @@ Cover letter:
   Sincerely,
 
   Full Name
+- The date line MUST be today's date from the task (exactly "Month Day, Year"). Never use an old or placeholder date.
 - 3-4 concise body paragraphs; professional tone; no generic filler or [placeholder] brackets.
 
 matchNotes:
@@ -247,7 +252,7 @@ ${
 }
 # Task
 1. Produce a tailored version of the resume (Markdown) optimized for this specific job, using ONLY information already present above (including projects). The PROJECTS section must list every project from "Candidate projects" above — all ${input.profile.projects?.length ?? 0} of them.
-2. Write a tailored cover letter addressed to the ${input.job.company} hiring team.
+2. Write a tailored cover letter addressed to the ${input.job.company} hiring team. Today's date for the letterhead is: ${formatCoverLetterDate()}.
 3. Provide honest match notes (fit + gaps + visa considerations).`;
 
   const completion = await openai.chat.completions.create({
@@ -280,7 +285,7 @@ ${
   const parsed = JSON.parse(content) as TailorOutput;
   return {
     tailoredResume: parsed.tailoredResume ?? "",
-    coverLetter: parsed.coverLetter ?? "",
+    coverLetter: ensureCoverLetterDate(parsed.coverLetter ?? ""),
     matchNotes: parsed.matchNotes ?? "",
   };
 }
@@ -386,7 +391,7 @@ Produce a complete, ready-to-edit master resume in clean Markdown that would imp
 
 Rules:
 - Use ONLY facts the candidate provides. Where a detail is missing but important, insert a clearly bracketed placeholder like [Add metric: e.g. "reduced load time 40%"] so the user knows to fill it.
-- Structure: Header (name + contact + LinkedIn/GitHub/portfolio URLs), Professional Summary, Core Skills (grouped, ATS-friendly), Experience (achievement bullets: Action + impact + tools), Projects, Education. Do NOT include a Work Authorization or visa/sponsorship line.
+- Structure: Header (name + contact + LinkedIn/GitHub/portfolio URLs), Professional Summary, Core Skills (grouped, ATS-friendly), Education, Experience (achievement bullets: Action + impact + tools), Projects. Do NOT include a Work Authorization or visa/sponsorship line.
 - Make bullets quantified and outcome-driven; never fabricate real numbers (use placeholders instead).
 - Target the listed role(s). Keep it tight and senior-sounding.`;
 
@@ -748,7 +753,9 @@ Return the updated resume and cover letter.`,
   );
   return {
     resume: parsed.resume?.trim() || input.resume,
-    coverLetter: parsed.coverLetter?.trim() || input.coverLetter,
+    coverLetter: ensureCoverLetterDate(
+      parsed.coverLetter?.trim() || input.coverLetter,
+    ),
   };
 }
 

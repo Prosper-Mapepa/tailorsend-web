@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TailorSend — Business Plan (Michigan SBDC)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <a class="site-logo" href="index.html"><span>🚀</span> TailorSend</a>
+    <nav class="site-nav">
+      <a href="index.html">Home</a>
+      <a href="pitch-deck.html">Overview</a>
+      <a href="business-plan.html" class="active">Business Plan</a>
+      <a href="financial-model.html">Financials</a>
+      <a href="one-pager.html">Summary</a>
+    </nav>
+    <div class="download-bar no-print">
+      <button type="button" class="btn-download" id="dl-self">↓ Download</button>
+    </div>
+  </header>
+
+  <div class="container">
+    <p class="eyebrow">Business plan · Michigan SBDC · July 2026</p>
+    <h1>TailorSend Business Plan</h1>
+    <p class="lead">Submitted in support of consulting with the <a href="https://michigansbdc.org/">Michigan Small Business Development Center</a>.</p>
+
+    <div class="card-grid">
+      <div class="stat-card"><div class="label">Legal structure</div><div class="value" style="font-size:1rem;">LLC (planned)</div></div>
+      <div class="stat-card"><div class="label">Location</div><div class="value" style="font-size:1rem;">Michigan</div></div>
+      <div class="stat-card"><div class="label">Website</div><div class="value" style="font-size:1rem;"><a href="https://tailorsend.cc">tailorsend.cc</a></div></div>
+    </div>
+
+    <h2>1. Executive Summary</h2>
+    <p><strong>TailorSend</strong> is a Michigan-based software company offering an online platform that helps job seekers — especially college students and recent graduates — search for roles, tailor resumes and cover letters with AI, and auto-fill application forms while keeping full control of every submission.</p>
+    <p>The product is <strong>live</strong> at tailorsend.cc with user accounts, Stripe billing, and core features operational. The business is <strong>bootstrapped</strong> with approximately $12,000 in owner capital. Year 1 projected revenue is conservative (~$1,500) while the founder validates product-market fit and builds campus partnerships in Michigan.</p>
+    <p><strong>SBDC support requested:</strong> market research validation, tech startup commercialization guidance, Michigan campus go-to-market strategy, and review of financial projections.</p>
+
+    <h2>2. Company Description</h2>
+    <table>
+      <tbody>
+        <tr><td><strong>Business name</strong></td><td>TailorSend</td></tr>
+        <tr><td><strong>Product</strong></td><td>Web-based SaaS (Software as a Service)</td></tr>
+        <tr><td><strong>Industry</strong></td><td>Career technology / EdTech</td></tr>
+        <tr><td><strong>Stage</strong></td><td>Early stage — MVP live, acquiring first users</td></tr>
+        <tr><td><strong>Employees</strong></td><td>1 (founder); no employees Year 1</td></tr>
+        <tr><td><strong>Formation</strong></td><td>LLC formation in Michigan (in progress / planned)</td></tr>
+      </tbody>
+    </table>
+
+    <h2>3. Products &amp; Services</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Feature</th><th>Description</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>Job search</td><td>Aggregates roles from Greenhouse, Lever, remote boards, and job APIs</td><td>Live</td></tr>
+          <tr><td>AI resume tailoring</td><td>Custom resume + cover letter per job with ATS keyword scoring</td><td>Live</td></tr>
+          <tr><td>Application autofill</td><td>Browser-based form fill; user reviews and submits manually</td><td>Live</td></tr>
+          <tr><td>Application tracker</td><td>Pipeline from draft to submitted</td><td>Live</td></tr>
+          <tr><td>Resume import</td><td>PDF/DOCX upload with AI field extraction</td><td>Live</td></tr>
+          <tr><td>Billing</td><td>Stripe subscriptions and one-time credit packs</td><td>Live</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Pricing (current)</h3>
+    <table>
+      <thead><tr><th>Plan</th><th>Price</th><th>Details</th></tr></thead>
+      <tbody>
+        <tr><td>Free</td><td>$0</td><td>3 tailor + 1 autofill/month (extra for .edu emails)</td></tr>
+        <tr><td>Campus</td><td>$5 one-time</td><td>8 kits — cheap first purchase</td></tr>
+        <tr><td>Student Monthly</td><td>$8/month</td><td>25 kits/month — primary MRR</td></tr>
+        <tr><td>Sprint</td><td>$12 ($8 .edu)</td><td>25 kits one-time — serious hunt push</td></tr>
+      </tbody>
+    </table>
+
+    <h2>4. Target Market</h2>
+    <h3>Primary customers</h3>
+    <ul>
+      <li><strong>Michigan college students</strong> — seniors and grad students in campus recruiting (CMU, University of Michigan, MSU, Wayne State, and other MI schools)</li>
+      <li><strong>Recent graduates</strong> — applying to 20–80 roles in first 6 months after graduation</li>
+      <li><strong>Career changers</strong> — professionals retooling for tech, PM, or engineering roles</li>
+    </ul>
+    <h3>Market size (realistic scope)</h3>
+    <ul>
+      <li>~300,000+ students enrolled at Michigan public universities</li>
+      <li>~50,000+ Michigan students job-seeking annually (estimate)</li>
+      <li>Addressable niche Year 1: hundreds of paying users in Michigan, expanding nationally online</li>
+    </ul>
+
+    <h2>5. Competition</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Competitor</th><th>What they do</th><th>TailorSend difference</th></tr></thead>
+        <tbody>
+          <tr><td>Jobscan, Teal</td><td>Resume optimization / tracking</td><td>We add job search + autofill + full workflow</td></tr>
+          <tr><td>ChatGPT</td><td>Generic AI writing</td><td>Purpose-built workflow, ATS scoring, no hallucinated experience</td></tr>
+          <tr><td>Simplify, LazyApply</td><td>Mass auto-apply</td><td>We never auto-submit; user reviews every application</td></tr>
+          <tr><td>University career centers</td><td>Free advising</td><td>Complements — faster execution between advising sessions</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2>6. Marketing &amp; Sales Plan</h2>
+    <p><strong>Year 1 focus: low-cost, Michigan-first organic growth.</strong></p>
+    <ul>
+      <li>Campus ambassadors at 2–3 Michigan universities ($0 – small stipends)</li>
+      <li>Posts in student subreddits, Discord, and LinkedIn groups</li>
+      <li>Partnerships with career centers (free workshops: “Tailor your resume in 10 minutes”)</li>
+      <li>SEO content: ATS tips, company-specific resume guides</li>
+      <li>Student .edu pricing to drive word-of-mouth</li>
+    </ul>
+    <p><strong>Marketing budget Year 1:</strong> ~$250–400/month (organic only; no paid ads until unit economics proven).</p>
+
+    <h2>7. Operations</h2>
+    <ul>
+      <li><strong>Technology:</strong> Next.js web app, PostgreSQL database, OpenAI API, Stripe payments, hosted on Railway</li>
+      <li><strong>Development:</strong> Founder-built; maintained part-time</li>
+      <li><strong>Support:</strong> Email support; self-service onboarding</li>
+      <li><strong>Legal:</strong> Terms of service and privacy policy published; users responsible for application accuracy</li>
+    </ul>
+
+    <h2>8. Management</h2>
+    <p><strong>[Your Name], Founder</strong></p>
+    <ul>
+      <li>Built TailorSend end-to-end (product, engineering, deployment)</li>
+      <li>[Add: your degree, school, relevant work experience]</li>
+      <li>Based in Michigan</li>
+    </ul>
+    <p>No employees planned in Year 1. Possible part-time marketing help in Year 2 if revenue supports it.</p>
+
+    <h2>9. Financial Summary</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Metric</th><th class="num">Year 1</th><th class="num">Year 2</th><th class="num">Year 3</th></tr></thead>
+        <tbody>
+          <tr><td>Revenue</td><td class="num">~$1,550</td><td class="num">~$11,000</td><td class="num">~$42,000</td></tr>
+          <tr><td>Paying users (EOY)</td><td class="num">24</td><td class="num">95</td><td class="num">280</td></tr>
+          <tr><td>Net income</td><td class="num negative">~($17K)</td><td class="num negative">~($27K)</td><td class="num negative">~($23K)</td></tr>
+          <tr><td>Owner capital</td><td class="num">$12,000</td><td>—</td><td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Year 1 losses reflect bootstrap stage: founder takes no salary months 1–8, minimal marketing spend, and infrastructure costs. Cash remains positive through month 12 on $12K starting capital. <a href="financial-model.html">Full projections →</a></p>
+
+    <h2>10. Funding</h2>
+    <p><strong>Current:</strong> $12,000 owner investment. No outside investors. No debt.</p>
+    <p><strong>Future (if needed):</strong> SBA microloan or revenue-based financing only after demonstrating paying customers and positive unit economics. Not seeking venture capital at this stage.</p>
+
+    <h2>11. Goals &amp; SBDC Support Needed</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>SBDC service</th><th>How it helps TailorSend</th></tr></thead>
+        <tbody>
+          <tr><td><a href="https://michigansbdc.org/">Market research</a></td><td>Validate pricing, sizing Michigan student market, competitor landscape</td></tr>
+          <tr><td>Tech services</td><td>Guidance on SaaS metrics, scaling infrastructure, IP considerations</td></tr>
+          <tr><td>Growth consulting</td><td>Campus partnership playbook, B2B2C with career centers</td></tr>
+          <tr><td>Business consulting</td><td>Review this plan, financials, and LLC/tax structure</td></tr>
+          <tr><td>Training + events</td><td>Accounting, QuickBooks, cybersecurity for customer data</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>12-month milestones</h3>
+    <ul>
+      <li>Form Michigan LLC and separate business banking</li>
+      <li>25+ paying customers</li>
+      <li>1–2 campus pilot partnerships in Michigan</li>
+      <li>Prove unit economics (LTV &gt; CAC on organic channels)</li>
+      <li>Decide whether to pursue SBA microloan for marketing in Year 2</li>
+    </ul>
+
+    <div class="section-divider"></div>
+    <p class="no-print" style="text-align: center;">
+      <a class="btn btn-primary" href="financial-model.html">Financial projections</a>
+      <a class="btn btn-secondary" href="one-pager.html">Executive summary</a>
+    </p>
+  </div>
+  <script src="download.js"></script>
+  <script>
+    document.getElementById("dl-self")?.addEventListener("click", () =>
+      window.TailorSendDownload.download("TailorSend-Business-Plan.html"));
+    if (new URLSearchParams(location.search).get("download") === "1")
+      window.addEventListener("load", () => setTimeout(() => window.TailorSendDownload.download("TailorSend-Business-Plan.html"), 400));
+  </script>
+</body>
+</html>

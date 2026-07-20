@@ -1,9 +1,13 @@
 import { NextResponse } from "next/server";
+import { isAuthUser, requireAuthUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
+  const auth = await requireAuthUser();
+  if (!isAuthUser(auth)) return auth;
+
   const { searchParams } = new URL(req.url);
   const status = searchParams.get("status") ?? undefined;
   const source = searchParams.get("source") ?? undefined;
@@ -29,6 +33,7 @@ export async function GET(req: Request) {
     take: 300,
     include: {
       applications: {
+        where: { userId: auth.id },
         select: { id: true, status: true },
         orderBy: { createdAt: "desc" },
         take: 1,
@@ -47,9 +52,12 @@ export async function GET(req: Request) {
   return NextResponse.json({ jobs: filtered });
 }
 
-// Clear discovered jobs. Preserves any job that already has an application so
-// tailored work is never lost.
+// Clear discovered jobs with no applications from anyone, so tailored work
+// is never lost.
 export async function DELETE() {
+  const auth = await requireAuthUser();
+  if (!isAuthUser(auth)) return auth;
+
   const result = await prisma.job.deleteMany({
     where: { applications: { none: {} } },
   });

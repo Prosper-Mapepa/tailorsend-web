@@ -1,6 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import {
   Button,
   Card,
@@ -15,7 +21,7 @@ import {
 import { ProfileJumpNav } from "@/components/ProfileJumpNav";
 import { ProfileImportSummary } from "@/components/ProfileImportSummary";
 import { ProfileProgress } from "@/components/ProfileProgress";
-import { ProfileSection, PROFILE_SECTION_SCROLL } from "@/components/ProfileSection";
+import { ProfileSection, PROFILE_SECTION_SCROLL, PROFILE_SECTION_HIGHLIGHT } from "@/components/ProfileSection";
 import { apiFetch } from "@/lib/auth-client";
 import { readApiJson } from "@/lib/read-api-json";
 import { uploadAndParseResume } from "@/lib/profile-upload-client";
@@ -179,6 +185,9 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [showStickySave, setShowStickySave] = useState(false);
+  const [expandSectionId, setExpandSectionId] = useState<string | null>(null);
+  const headerSaveRef = useRef<HTMLDivElement>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadMsg, setUploadMsg] = useState<string | null>(null);
   const [importSummary, setImportSummary] = useState<ImportSummary | null>(
@@ -467,7 +476,43 @@ export default function ProfilePage() {
     ],
   );
 
+  useEffect(() => {
+    if (loading) return;
+    const hash = window.location.hash.slice(1);
+    if (hash) setExpandSectionId(hash);
+  }, [loading]);
+
+  useEffect(() => {
+    if (loading) return;
+
+    const update = () => {
+      const el = headerSaveRef.current;
+      if (!el) return;
+      // Show fixed save once the header button scrolls under the nav (~64px).
+      setShowStickySave(el.getBoundingClientRect().bottom < 64);
+    };
+
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update);
+    return () => {
+      window.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
+    };
+  }, [loading]);
+
   if (loading) return <PageLoader label="Loading profile…" />;
+
+  const saveButton = (
+    <Button
+      onClick={save}
+      disabled={saving || saved}
+      variant={saved ? "secondary" : "primary"}
+      size="lg"
+    >
+      {saving ? "Saving…" : saved ? "Saved" : "Save profile"}
+    </Button>
+  );
 
   return (
     <div className="space-y-5">
@@ -475,7 +520,7 @@ export default function ProfilePage() {
         title="Your profile"
         description="Resume data the AI uses for tailoring and autofill."
         actions={
-          <>
+          <div ref={headerSaveRef} className="flex items-center gap-3">
             {hasProfileData && !uploadExpanded && (
               <Button
                 variant="ghost"
@@ -491,24 +536,34 @@ export default function ProfilePage() {
                 Re-upload resume
               </Button>
             )}
-            <Button
-              onClick={save}
-              disabled={saving || saved}
-              variant={saved ? "secondary" : "primary"}
-              size="lg"
-            >
-              {saving ? "Saving…" : saved ? "Saved" : "Save profile"}
-            </Button>
-          </>
+            {saveButton}
+          </div>
         }
       />
 
+      {showStickySave && (
+        <div className="fixed bottom-5 right-4 z-40 sm:bottom-6 sm:right-6">
+          <Button
+            onClick={save}
+            disabled={saving || saved}
+            variant={saved ? "secondary" : "primary"}
+            size="md"
+            className="shadow-lg shadow-emerald-900/15 ring-1 ring-black/5"
+          >
+            {saving ? "Saving…" : saved ? "Saved" : "Save"}
+          </Button>
+        </div>
+      )}
+
       <ProfileProgress completion={completion} />
 
-      <div className="grid grid-cols-1 gap-8 xl:grid-cols-[11.5rem_minmax(0,1fr)] xl:gap-10">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[11.5rem_minmax(0,1fr)] lg:gap-10">
         <ProfileJumpNav
           counts={navCounts}
           onNavigate={(id) => {
+            // Clear then set so re-clicking a collapsed section re-opens it.
+            setExpandSectionId(null);
+            queueMicrotask(() => setExpandSectionId(id));
             if (id === "upload" && hasProfileData && !uploadExpanded) {
               setUploadExpanded(true);
               requestAnimationFrame(() =>
@@ -546,36 +601,51 @@ export default function ProfilePage() {
 
           {(!hasProfileData || uploadExpanded) && (
           <section id="upload" className={PROFILE_SECTION_SCROLL}>
-            <Card padding="default" className="border-slate-200/60">
-              {hasProfileData && (
-                <div className="mb-4 flex justify-end">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setUploadExpanded(false)}
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              )}
-              {!hasProfileData && (
-                <SectionTitle
-                  title="Upload your resume"
-                  description="We parse contact, experience, education, and skills into the sections below."
-                />
-              )}
-              <UploadZone
-                  accept=".pdf,.docx,.txt,.md"
-                  loading={uploading}
-                  label={
-                    uploading
-                      ? "Reading your resume…"
-                      : "Drop your resume here or click to browse"
-                  }
-                  hint="PDF, DOCX, TXT, or Markdown · text-based PDFs work best"
-                  onFile={uploadResume}
-                />
-            </Card>
+            <div
+              className={`rounded-2xl transition-[box-shadow,border-color] duration-200 ${
+                expandSectionId === "upload"
+                  ? `border ${PROFILE_SECTION_HIGHLIGHT}`
+                  : ""
+              }`}
+            >
+              <Card
+                padding="default"
+                className={
+                  expandSectionId === "upload"
+                    ? "border-transparent shadow-none"
+                    : "border-slate-200/60"
+                }
+              >
+                {hasProfileData && (
+                  <div className="mb-4 flex justify-end">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setUploadExpanded(false)}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                )}
+                {!hasProfileData && (
+                  <SectionTitle
+                    title="Upload your resume"
+                    description="We parse contact, experience, education, and skills into the sections below."
+                  />
+                )}
+                <UploadZone
+                    accept=".pdf,.docx,.txt,.md"
+                    loading={uploading}
+                    label={
+                      uploading
+                        ? "Reading your resume…"
+                        : "Drop your resume here or click to browse"
+                    }
+                    hint="PDF, DOCX, TXT, or Markdown · text-based PDFs work best"
+                    onFile={uploadResume}
+                  />
+              </Card>
+            </div>
           </section>
           )}
 
@@ -585,6 +655,7 @@ export default function ProfilePage() {
 
           <ProfileSection
             id="contact"
+            expandOnId={expandSectionId}
             title="Contact"
             description="Used to autofill application forms."
             defaultOpen={!completion.contact}
@@ -656,6 +727,7 @@ export default function ProfilePage() {
 
           <ProfileSection
             id="experience"
+            expandOnId={expandSectionId}
             title="Work experience"
             description="Jobs and internships — most recent first. One bullet per line under achievements."
             count={form.workExperience.length}
@@ -770,6 +842,7 @@ export default function ProfilePage() {
 
           <ProfileSection
             id="education"
+            expandOnId={expandSectionId}
             title="Education"
             description="Degrees, bootcamps, and formal training."
             count={form.education.length}
@@ -883,6 +956,7 @@ export default function ProfilePage() {
 
           <ProfileSection
             id="projects"
+            expandOnId={expandSectionId}
             title="Projects"
             description="Website, App Store, and Play Store links per project — used when tailoring."
             count={form.projects.length}
@@ -1017,8 +1091,10 @@ export default function ProfilePage() {
 
           <ProfileSection
             id="skills"
+            expandOnId={expandSectionId}
             title="Skills"
             description="Comma-separated — used for ATS keyword matching."
+            count={navCounts.skills}
             defaultOpen={!completion.skills}
           >
             <input
@@ -1034,6 +1110,7 @@ export default function ProfilePage() {
 
           <ProfileSection
             id="certifications"
+            expandOnId={expandSectionId}
             title="Certifications"
             description="Professional licenses and credentials."
             count={form.certifications.length}
@@ -1101,6 +1178,7 @@ export default function ProfilePage() {
 
           <ProfileSection
             id="summary"
+            expandOnId={expandSectionId}
             title="Professional summary"
             description="2–3 sentences that guide tailoring."
             defaultOpen={!completion.summary}
@@ -1114,6 +1192,7 @@ export default function ProfilePage() {
 
           <ProfileSection
             id="resume"
+            expandOnId={expandSectionId}
             title="Base resume"
             description="Full master resume text — auto-filled from upload."
             defaultOpen={!completion.resume}
@@ -1137,6 +1216,7 @@ export default function ProfilePage() {
 
           <ProfileSection
             id="roles"
+            expandOnId={expandSectionId}
             title="Target roles"
             description="What the job scanner searches for."
             count={form.targetRoles.length}
@@ -1211,7 +1291,12 @@ export default function ProfilePage() {
             )}
           </ProfileSection>
 
-          <ProfileSection id="visa" title="Work authorization" defaultOpen={false}>
+          <ProfileSection
+            id="visa"
+            expandOnId={expandSectionId}
+            title="Work authorization"
+            defaultOpen={false}
+          >
             <p className="mb-3 text-sm text-slate-500">
               Hides jobs that require citizenship or refuse sponsorship when
               enabled.
@@ -1239,7 +1324,12 @@ export default function ProfilePage() {
             </div>
           </ProfileSection>
 
-          <ProfileSection id="application" title="Application defaults" defaultOpen={false}>
+          <ProfileSection
+            id="application"
+            expandOnId={expandSectionId}
+            title="Application defaults"
+            defaultOpen={false}
+          >
             <p className="mb-3 text-sm text-slate-500">
               Saved answers for common screening questions on job applications.
               Autofill uses these when a form asks for them.
@@ -1302,7 +1392,12 @@ export default function ProfilePage() {
             </div>
           </ProfileSection>
 
-          <ProfileSection id="eeo" title="Voluntary disclosures (EEO)" defaultOpen={false}>
+          <ProfileSection
+            id="eeo"
+            expandOnId={expandSectionId}
+            title="Voluntary disclosures (EEO)"
+            defaultOpen={false}
+          >
             <p className="mb-3 text-sm text-slate-500">
               Optional demographic answers for OFCCP-style questions. Autofill
               uses your choices when applications require them.

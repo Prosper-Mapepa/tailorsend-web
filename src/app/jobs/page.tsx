@@ -6,8 +6,6 @@ import { useRouter } from "next/navigation";
 import {
   Badge,
   Button,
-  Card,
-  PageHeader,
   PageLoader,
   Pagination,
   ScorePill,
@@ -71,10 +69,16 @@ function timeAgo(iso: string | null): string {
   return months === 1 ? "1 month ago" : `${months} months ago`;
 }
 
-function VisaTag({ risk }: { risk: VisaRisk }) {
-  if (risk === "none") return null;
+function SponsorshipTag({ risk }: { risk: VisaRisk }) {
+  if (risk === "none") {
+    return (
+      <span className="rounded-md bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-800 ring-1 ring-emerald-200/80">
+        Sponsorship OK
+      </span>
+    );
+  }
   return (
-    <span className="rounded-full bg-red-50 px-2 py-0.5 text-[11px] font-medium text-red-700 ring-1 ring-red-100">
+    <span className="rounded-md bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-900 ring-1 ring-amber-200/80">
       {visaRiskLabel(risk)}
     </span>
   );
@@ -84,70 +88,68 @@ function JobCard({
   job,
   tailoringId,
   onTailor,
-  onSetStatus,
 }: {
   job: JobRow;
   tailoringId: string | null;
   onTailor: (id: string) => void;
-  onSetStatus: (id: string, status: string) => void;
 }) {
   const app = job.applications[0];
   const posted = job.postedAt ? timeAgo(job.postedAt) : null;
-  const meta = [job.company, job.location, job.remote ? "Remote" : null]
-    .filter(Boolean)
-    .join(" · ");
+  const canAutofill = supportsAutofill(job.applyUrl || job.url, job.atsPlatform);
 
   return (
-    <div className="flex h-full flex-col rounded-xl border border-slate-200/70 bg-white p-4 transition hover:border-slate-300/80 hover:shadow-sm">
-      <div className="min-w-0 flex-1 space-y-2">
-        <div className="flex items-start gap-2">
-          <a
-            href={job.url}
-            target="_blank"
-            rel="noreferrer"
-            className="min-w-0 flex-1 line-clamp-2 font-semibold leading-snug text-slate-900 hover:text-emerald-600"
-          >
-            {job.title}
-          </a>
+    <article className="flex h-full flex-col rounded-2xl border border-slate-200/80 bg-white p-4 transition hover:border-emerald-200 hover:shadow-sm sm:p-5">
+      <div className="min-w-0 flex-1 space-y-3">
+        <div className="flex items-start gap-3">
+          <div className="min-w-0 flex-1">
+            <a
+              href={job.url}
+              target="_blank"
+              rel="noreferrer"
+              className="line-clamp-2 text-[15px] font-semibold leading-snug text-slate-900 hover:text-emerald-700"
+            >
+              {job.title || "Untitled role"}
+            </a>
+            <p className="mt-1 text-sm text-slate-500">
+              {[job.company, job.location].filter(Boolean).join(" · ")}
+            </p>
+          </div>
           <ScorePill score={job.matchScore} />
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          {meta && <p className="text-sm text-slate-500">{meta}</p>}
+
+        <div className="flex flex-wrap items-center gap-1.5">
+          <SponsorshipTag risk={job.visaRisk} />
+          {job.remote && (
+            <span className="rounded-md bg-slate-50 px-2 py-0.5 text-[11px] font-medium text-slate-600 ring-1 ring-slate-200/80">
+              Remote
+            </span>
+          )}
+          {canAutofill ? (
+            <span className="rounded-md bg-emerald-50/80 px-2 py-0.5 text-[11px] font-medium text-emerald-800 ring-1 ring-emerald-100">
+              Auto-fill
+            </span>
+          ) : (
+            <span className="rounded-md bg-slate-50 px-2 py-0.5 text-[11px] font-medium text-slate-500 ring-1 ring-slate-200/80">
+              Manual apply
+            </span>
+          )}
           {posted && (
-            <span className="shrink-0 rounded-md  px-2 py-0.5 text-xs font-bold text-[#009866] ">
+            <span className="text-[11px] font-medium text-slate-400">
               {posted}
             </span>
           )}
-        </div>
-        {job.salary && (
-          <p className="text-xs text-slate-400">{job.salary}</p>
-        )}
-        <div className="flex flex-wrap items-center gap-1.5">
-          <VisaTag risk={job.visaRisk} />
           {app && <Badge status={app.status} />}
         </div>
+
+        {job.salary ? (
+          <p className="text-xs text-slate-400">{job.salary}</p>
+        ) : null}
       </div>
-      {/* <div className="ml-auto flex items-center gap-1">
-        <button
-          type="button"
-          onClick={() => onSetStatus(job.id, "saved")}
-          className="px-2 text-xs font-medium text-slate-500 hover:text-slate-800"
-        >
-          Save
-        </button>
-        <button
-          type="button"
-          onClick={() => onSetStatus(job.id, "hidden")}
-          className="px-2 text-xs font-medium text-slate-500 hover:text-slate-800"
-        >
-          Hide
-        </button>
-        </div> */}
-      <div className="mt-4 flex items-center justify-end gap-3 border-t border-slate-100 pt-3">
-        
+
+      <div className="mt-4 flex items-center justify-end border-t border-slate-100 pt-3">
         {app ? (
           <Link href={`/applications/${app.id}`}>
-            <Button variant="outline" size="md" className="font-semibold border-green-500 text-green-500 hover:bg-green-500 hover:text-white">
+            <Button variant="outline" size="md">
               Open application
             </Button>
           </Link>
@@ -160,9 +162,8 @@ function JobCard({
             {tailoringId === job.id ? "Tailoring…" : "Tailor & prep"}
           </Button>
         )}
-   
       </div>
-    </div>
+    </article>
   );
 }
 
@@ -274,15 +275,6 @@ export default function JobsPage() {
     }
   }
 
-  async function setStatus(id: string, status: string) {
-    await apiFetch(`/api/jobs/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status }),
-    });
-    loadJobs();
-  }
-
   async function tailor(id: string) {
     setTailoringId(id);
     setMessage(null);
@@ -348,62 +340,91 @@ export default function JobsPage() {
     }
   }, [autofillJobs.length, manualJobs.length, jobTab]);
 
-  return (
-    <div className="space-y-5">
-      <PageHeader
-        title="Jobs"
-        description="Scan boards, score matches, and tailor applications from your profile."
-      />
+  const sponsorshipJobs = jobs.filter((j) => j.visaRisk === "none");
 
-      <Card>
+  return (
+    <div className="space-y-6">
+      <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
+            Jobs
+          </h1>
+          <p className="mt-1.5 text-[15px] text-slate-500">
+            Scan boards, score matches, and tailor applications from your{" "}
+            <Link
+              href="/profile"
+              className="font-medium text-emerald-700 hover:underline"
+            >
+              profile
+            </Link>
+            .
+          </p>
+        </div>
+        {!loading && jobs.length > 0 && (
+          <p className="text-sm text-slate-500">
+            <span className="font-semibold text-emerald-800">
+              {sponsorshipJobs.length}
+            </span>{" "}
+            sponsorship-friendly · {jobs.length} total
+          </p>
+        )}
+      </header>
+
+      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
         {targetRoles.length > 0 && (
           <div className="mb-4 flex flex-wrap items-center gap-2">
-            <span className="text-xs font-medium text-slate-400">Roles:</span>
+            <span className="text-xs font-medium text-slate-400">Roles</span>
             {targetRoles.map((t) => (
               <button
                 key={t}
                 type="button"
                 onClick={() => setQuery(t)}
-                className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-700 hover:bg-emerald-50 hover:text-emerald-800"
+                className="rounded-lg bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-900 ring-1 ring-emerald-100 hover:bg-emerald-100"
               >
                 {t}
               </button>
             ))}
             <Link
               href="/profile"
-              className="text-xs font-medium text-emerald-600 hover:underline"
+              className="text-xs font-medium text-emerald-700 hover:underline"
             >
               Edit
             </Link>
           </div>
         )}
 
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
           <div className="grid min-w-0 flex-1 grid-cols-1 gap-3 sm:grid-cols-2">
             <input
               className={field}
               placeholder="Role keywords"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") void runSearch();
+              }}
             />
             <input
               className={field}
               placeholder="Location"
               value={location}
               onChange={(e) => setLocation(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") void runSearch();
+              }}
             />
           </div>
           <Button
             onClick={runSearch}
             disabled={searching}
             size="lg"
-            className="shrink-0 sm:mb-0.5"
+            className="shrink-0 lg:min-w-[9rem]"
           >
             {searching ? "Scanning…" : "Scan jobs"}
           </Button>
         </div>
 
-        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-slate-600">
+        <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-slate-600">
           <label className="flex items-center gap-1.5">
             <input
               type="checkbox"
@@ -420,7 +441,7 @@ export default function JobsPage() {
             />
             Full-time
           </label>
-          <label className="flex items-center gap-1.5">
+          <label className="flex items-center gap-1.5 font-medium text-emerald-900">
             <input
               type="checkbox"
               checked={sponsorshipFriendly}
@@ -438,7 +459,7 @@ export default function JobsPage() {
         </div>
 
         {filtersOpen && (
-          <div className="mt-3 space-y-3 rounded-lg border border-slate-100 bg-slate-50/50 p-3">
+          <div className="mt-3 space-y-3 rounded-xl border border-slate-100 bg-slate-50/60 p-3">
             <div className="flex flex-wrap items-center gap-4">
               <label className="flex items-center gap-2 text-sm text-slate-600">
                 Posted
@@ -488,11 +509,11 @@ export default function JobsPage() {
         )}
 
         {message && (
-          <p className="mt-3 rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600">
+          <p className="mt-3 rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
             {message}
           </p>
         )}
-      </Card>
+      </div>
 
       {!loading && jobs.length > 0 && (
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -505,16 +526,14 @@ export default function JobsPage() {
               }}
               className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
                 jobTab === "autofill"
-                  ? "bg-white text-emerald-700 shadow-sm ring-1 ring-slate-200/80"
+                  ? "bg-emerald-600 text-white shadow-sm"
                   : "text-slate-600 hover:text-slate-900"
               }`}
             >
               Auto-fill
               <span
-                className={`ml-1.5 rounded-full px-1.5 py-0.5 text-xs ${
-                  jobTab === "autofill"
-                    ? "bg-emerald-100 text-emerald-700"
-                    : "bg-slate-200/80 text-slate-600"
+                className={`ml-1.5 tabular-nums ${
+                  jobTab === "autofill" ? "text-emerald-100" : "text-slate-500"
                 }`}
               >
                 {autofillJobs.length}
@@ -528,16 +547,14 @@ export default function JobsPage() {
               }}
               className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
                 jobTab === "manual"
-                  ? "bg-white text-slate-800 shadow-sm ring-1 ring-slate-200/80"
+                  ? "bg-slate-900 text-white shadow-sm"
                   : "text-slate-600 hover:text-slate-900"
               }`}
             >
               Manual
               <span
-                className={`ml-1.5 rounded-full px-1.5 py-0.5 text-xs ${
-                  jobTab === "manual"
-                    ? "bg-slate-100 text-slate-700"
-                    : "bg-slate-200/80 text-slate-600"
+                className={`ml-1.5 tabular-nums ${
+                  jobTab === "manual" ? "text-slate-300" : "text-slate-500"
                 }`}
               >
                 {manualJobs.length}
@@ -576,33 +593,30 @@ export default function JobsPage() {
       {loading ? (
         <PageLoader label="Loading jobs…" />
       ) : jobs.length === 0 ? (
-        <Card>
+        <div className="rounded-2xl border border-dashed border-slate-200 bg-white px-6 py-12 text-center">
           <p className="text-slate-500">
             No jobs yet. Configure your{" "}
-            <Link href="/profile" className="text-emerald-600 underline">
+            <Link href="/profile" className="text-emerald-700 underline">
               target roles
             </Link>{" "}
             and run a scan.
           </p>
-        </Card>
+        </div>
       ) : (
         <>
           {pageJobs.length === 0 ? (
-            <Card>
-              <p className="text-sm text-slate-500">
-                No {jobTab === "autofill" ? "auto-fill" : "manual"} jobs in this
-                list. Try the other tab or run a new scan.
-              </p>
-            </Card>
+            <div className="rounded-2xl border border-slate-200 bg-white px-6 py-10 text-center text-sm text-slate-500">
+              No {jobTab === "autofill" ? "auto-fill" : "manual"} jobs in this
+              list. Try the other tab or run a new scan.
+            </div>
           ) : (
-            <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
               {pageJobs.map((job) => (
                 <JobCard
                   key={job.id}
                   job={job}
                   tailoringId={tailoringId}
                   onTailor={tailor}
-                  onSetStatus={setStatus}
                 />
               ))}
             </div>

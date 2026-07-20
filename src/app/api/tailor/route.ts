@@ -1,5 +1,11 @@
+import { createHash } from "crypto";
 import { NextResponse } from "next/server";
-import { extractJobPosting, researchCompanyEdge } from "@/lib/ai";
+import {
+  extractJobPosting,
+  normalizeCompanyEdge,
+  researchCompanyEdge,
+} from "@/lib/ai";
+import { detectAts } from "@/lib/apply/detect";
 import { fetchJobText } from "@/lib/fetch-job";
 import { runTailorPipeline } from "@/lib/tailor-pipeline";
 import { requireAuthUser, isAuthUser } from "@/lib/auth";
@@ -9,6 +15,7 @@ import {
   UsageLimitError,
   usageLimitResponse,
 } from "@/lib/billing/usage";
+import { prisma } from "@/lib/db";
 import { getProfile } from "@/lib/profile";
 
 export const dynamic = "force-dynamic";
@@ -23,6 +30,19 @@ interface JobSeed {
   company: string;
   location: string;
   description: string;
+  url: string;
+}
+
+function tailorExternalId(url: string, job: JobSeed): string {
+  if (url.trim()) {
+    return createHash("sha256")
+      .update(url.trim().toLowerCase())
+      .digest("hex")
+      .slice(0, 32);
+  }
+  const key =
+    `${job.company}|${job.title}|${job.description.slice(0, 240)}`.toLowerCase();
+  return createHash("sha256").update(key).digest("hex").slice(0, 32);
 }
 
 async function resolveJob(req: Request): Promise<JobSeed> {
@@ -77,7 +97,7 @@ async function resolveJob(req: Request): Promise<JobSeed> {
   }
 
   if (sourceText && images.length === 0 && title && company) {
-    return { title, company, location, description: sourceText };
+    return { title, company, location, description: sourceText, url };
   }
 
   const extracted = await extractJobPosting({
@@ -90,6 +110,7 @@ async function resolveJob(req: Request): Promise<JobSeed> {
     company: company || extracted.company,
     location: location || extracted.location,
     description: extracted.description || sourceText,
+    url,
   };
 }
 
@@ -122,6 +143,43 @@ export async function POST(req: Request) {
     );
   }
 
+  const applyUrl = job.url;
+  const atsPlatform = applyUrl ? detectAts(applyUrl) : "unknown";
+  const externalId = tailorExternalId(job.url, job);
+
+  const dbJob = await prisma.job.upsert({
+    where: {
+      source_externalId: { source: "tailor", externalId },
+    },
+    create: {
+      source: "tailor",
+      externalId,
+      title: job.title || "Untitled role",
+      company: job.company || "Unknown company",
+      location: job.location || "",
+      url: job.url || "",
+      applyUrl: job.url || "",
+      description: job.description,
+      atsPlatform,
+      status: "tailored",
+    },
+    update: {
+      title: job.title || "Untitled role",
+      company: job.company || "Unknown company",
+      location: job.location || "",
+      description: job.description,
+      ...(job.url
+        ? { url: job.url, applyUrl: job.url, atsPlatform }
+        : {}),
+    },
+  });
+
+  const existing = await prisma.application.findFirst({
+    where: { jobId: dbJob.id, userId: auth.id },
+    orderBy: { createdAt: "desc" },
+  });
+  const alreadyCharged = existing?.tailorKitCharged ?? false;
+
   const scoreJob = {
     title: job.title || "the role",
     company: job.company || "the company",
@@ -147,7 +205,9 @@ export async function POST(req: Request) {
   };
 
   try {
-    await assertCanUse(auth.id, auth.email, "tailor");
+    if (!alreadyCharged) {
+      await assertCanUse(auth.id, auth.email, "tailor");
+    }
 
     const [tailored, edge] = await Promise.all([
       runTailorPipeline(job, tailorProfile),
@@ -157,10 +217,38 @@ export async function POST(req: Request) {
       }).catch(() => null),
     ]);
 
-    await consumeUsage(auth.id, auth.email, "tailor");
+    const appData = {
+      tailoredResume: tailored.tailoredResume,
+      coverLetter: tailored.coverLetter,
+      matchNotes: tailored.matchNotes,
+      beforeMatch: JSON.stringify(tailored.beforeMatch),
+      afterMatch: JSON.stringify(tailored.afterMatch),
+      companyEdge: edge ? JSON.stringify(normalizeCompanyEdge(edge)) : "",
+      status: "tailored",
+    };
+
+    const application = existing
+      ? await prisma.application.update({
+          where: { id: existing.id },
+          data: appData,
+        })
+      : await prisma.application.create({
+          data: { jobId: dbJob.id, userId: auth.id, ...appData },
+        });
+
+    if (!alreadyCharged) {
+      await consumeUsage(auth.id, auth.email, "tailor", {
+        applicationId: application.id,
+      });
+    }
 
     return NextResponse.json({
-      job,
+      applicationId: application.id,
+      job: {
+        ...job,
+        applyUrl,
+        atsPlatform,
+      },
       tailoredResume: tailored.tailoredResume,
       coverLetter: tailored.coverLetter,
       matchNotes: tailored.matchNotes,

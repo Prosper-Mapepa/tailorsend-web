@@ -6,9 +6,12 @@
     "node": ">=20.19.0"
   },
   "scripts": {
-    "dev": "prisma generate && next dev",
+    "docs:sync": "rm -rf public/docs && mkdir -p public/docs/files && cp -R docs/investor/html/. public/docs/ && cp docs/investor/*.md docs/investor/*.csv public/docs/files/",
+    "prebuild": "npm run docs:sync",
+    "dev": "npm run docs:sync && prisma generate && next dev",
     "build": "next build",
-    "start": "next start",
+    "start": "next start --hostname 0.0.0.0",
+    "start:railway": "bash scripts/railway-start.sh",
     "lint": "eslint",
     "postinstall": "prisma generate",
     "db:up": "docker compose up -d postgres",

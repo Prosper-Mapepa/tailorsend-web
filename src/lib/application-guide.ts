@@ -24,7 +24,6 @@ export interface GuideStepMeta {
   id: GuideStepId;
   number: number;
   title: string;
-  tab?: "resume" | "cover" | "edge" | "form";
   prompt: string;
   nextLabel: string;
   skipLabel?: string;
@@ -48,36 +47,31 @@ export function getStepMeta(id: GuideStepId, ctx: GuideContext): GuideStepMeta {
         id,
         number,
         title: "Review tailored resume",
-        tab: "resume",
-        prompt:
-          "Check the ATS keyword match above, then review and edit your tailored resume. Save when you're happy with it.",
-        nextLabel: "Next: Cover letter →",
+        prompt: "Skim the ATS score, edit the resume if needed, then continue.",
+        nextLabel: "Cover letter →",
       };
     case "cover":
       return {
         id,
         number,
         title: "Review cover letter",
-        tab: "cover",
-        prompt:
-          "Personalize your cover letter for this role. Tweak the tone and highlights, then save your changes.",
-        nextLabel: "Next: Your edge →",
+        prompt: "Tweak tone and highlights, save if you edit, then continue.",
+        nextLabel: "Your edge →",
       };
     case "edge":
       return {
         id,
         number,
         title: "Add your edge",
-        tab: "edge",
         prompt: ctx.edgeIncorporated
-          ? "Ideas added to your resume and cover letter. Skim the Resume and Cover letter tabs, then continue to apply."
+          ? "Talking points added — review Resume/Cover steps, then apply."
           : ctx.edgeBuildCount
-            ? `Select talking points that set you apart, then click "Add to resume & cover letter". You can skip if you prefer.`
+            ? "Pick talking points to add, or skip for now."
             : ctx.hasEdge
-              ? "Read the company research below. When you're ready, continue to the application step."
-              : "Company research is loading — you can skip and continue when ready.",
-        nextLabel: "Next: Apply →",
-        skipLabel: "Skip for now",
+              ? "Read company research below, then continue to apply."
+              : "Research loading — skip if you want to apply now.",
+        nextLabel: "Apply →",
+        skipLabel: "Skip",
         canSkip: true,
       };
     case "apply":
@@ -89,17 +83,16 @@ export function getStepMeta(id: GuideStepId, ctx: GuideContext): GuideStepMeta {
           : ctx.multiStepApply
             ? "Apply (multi-step form)"
             : "Auto-fill application",
-        tab: "form",
         prompt: ctx.manualApply
-          ? "This job requires sign-in. Use Form responses to copy answers, then apply on the company site."
+          ? "Copy answers below, then apply on the company site."
           : ctx.autofillComplete
-            ? "Autofill finished all visible steps. Review every page in the browser, submit yourself, then update your status."
+            ? "Autofill done — review in the browser, submit yourself, then update status."
             : ctx.autofillInProgress
-              ? "Auto-fill is stepping through the form. If it pauses on a step, click Continue Autofill in the panel below."
+              ? "Filling the form… use Continue Autofill if it pauses."
               : ctx.multiStepApply
-                ? 'Click "Auto-fill & open browser". TailorSend fills each step (name, email, resume upload, etc.) and clicks Save & Continue. Use Continue Autofill if more steps remain.'
-                : 'Click "Auto-fill & open browser" to fill the form. Copy any extra answers from Form responses.',
-        nextLabel: "Next: Update status →",
+                ? "Use Auto-fill & open browser. Continue Autofill if more steps remain."
+                : "Use Auto-fill & open browser, or copy answers from the form below.",
+        nextLabel: "Update status →",
       };
     case "status":
       return {
@@ -107,8 +100,8 @@ export function getStepMeta(id: GuideStepId, ctx: GuideContext): GuideStepMeta {
         number,
         title: "Update status",
         prompt: ctx.statusSubmitted
-          ? "You're all set. Track interview updates here as your application progresses."
-          : 'After submitting in the browser, mark this application as "submitted" (or another status).',
+          ? "You’re set — update again when interviews progress."
+          : "After you submit in the browser, mark this as submitted.",
         nextLabel: "Done",
       };
   }

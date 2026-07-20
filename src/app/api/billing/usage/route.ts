@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { apiRouteError } from "@/lib/api-response";
 import { requireAuthUser, isAuthUser } from "@/lib/auth";
 import { getUsageSummary } from "@/lib/billing/usage";
-import { CREDIT_PACKS } from "@/lib/billing/plans";
+import { storefrontPacks } from "@/lib/billing/plans";
 import { isStripeEnabled } from "@/lib/billing/stripe";
 import { prisma } from "@/lib/db";
 
@@ -30,7 +30,7 @@ export async function GET() {
 
     return NextResponse.json({
       usage,
-      packs: CREDIT_PACKS,
+      packs: storefrontPacks(),
       stripeEnabled: isStripeEnabled(),
       hasStripeCustomer,
       hasSubscription,

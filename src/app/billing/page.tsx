@@ -1,18 +1,17 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { apiFetch } from "@/lib/auth-client";
 import {
   getPackCatalog,
   getPlanCatalog,
-  PLAN_CATALOG,
 } from "@/lib/billing/catalog";
 import { formatCents, formatPlanLabel } from "@/lib/billing/format";
 import type { CreditPack } from "@/lib/billing/plans";
-import { CREDIT_PACKS } from "@/lib/billing/plans";
+import { storefrontPacks } from "@/lib/billing/plans";
 import type { UsageSummary } from "@/lib/billing/usage-core";
-import { Alert, Button, Card, PageHeader, PageLoader } from "@/components/ui";
+import { Alert, Button, PageHeader, PageLoader } from "@/components/ui";
 
 function CheckItem({ children }: { children: string }) {
   return (
@@ -35,83 +34,113 @@ function UsageOverview({ usage }: { usage: UsageSummary }) {
   );
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-gradient-to-br from-slate-900 via-slate-900 to-emerald-950 text-white shadow-lg">
-      <div className="px-5 py-5 sm:px-6 sm:py-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-widest text-emerald-300/90">
-              Your plan
-            </p>
-            <div className="mt-1 flex flex-wrap items-center gap-2">
-              <h2 className="text-2xl font-bold tracking-tight">
-                {formatPlanLabel(usage.plan)}
-              </h2>
-              {usage.isStudent && (
-                <span className="rounded-full bg-white/15 px-2.5 py-0.5 text-xs font-medium text-emerald-100">
-                  Student
-                </span>
-              )}
-            </div>
-            <p className="mt-2 max-w-md text-sm leading-relaxed text-slate-300">
-              {getPlanCatalog(usage.plan).tagline}
-            </p>
-          </div>
-          <div className="flex gap-6 sm:text-right">
-            {isFree ? (
-              <>
-                <div>
-                  <p className="text-3xl font-bold text-white">{tailorLeft}</p>
-                  <p className="text-xs text-slate-400">tailor left</p>
-                </div>
-                <div>
-                  <p className="text-3xl font-bold text-white">{autofillLeft}</p>
-                  <p className="text-xs text-slate-400">autofill left</p>
-                </div>
-              </>
-            ) : (
-              <div>
-                <p className="text-4xl font-bold text-emerald-300">
-                  {totalAvailable}
-                </p>
-                <p className="text-xs text-slate-400">kits available</p>
-              </div>
-            )}
-            {usage.creditBalance > 0 && (
-              <div>
-                <p className="text-3xl font-bold text-white">
-                  {usage.creditBalance}
-                </p>
-                <p className="text-xs text-slate-400">credits</p>
-              </div>
+    <div className="rounded-xl border border-slate-200 bg-white px-4 py-3.5 sm:px-5">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="text-base font-semibold text-slate-900">
+              {formatPlanLabel(usage.plan)}
+            </h2>
+            {usage.isStudent && (
+              <span className="text-xs font-medium text-emerald-700">
+                · Student
+              </span>
             )}
           </div>
+          <p className="mt-0.5 text-sm text-slate-500">
+            {isFree
+              ? `Resets ${new Date(usage.periodResetsAt).toLocaleDateString()} · ${
+                  usage.isStudent
+                    ? "4 tailor + 2 autofill / month"
+                    : "2 tailor + 1 autofill / month"
+                }`
+              : getPlanCatalog(usage.plan).tagline}
+          </p>
+          {usage.plan === "flex" && usage.flexPaused && (
+            <p className="mt-1 text-sm text-amber-700">
+              Paused until{" "}
+              {usage.flexPausedUntil
+                ? new Date(usage.flexPausedUntil).toLocaleDateString()
+                : "—"}
+            </p>
+          )}
+          {usage.plan === "season" && usage.seasonEndsAt && (
+            <p className="mt-1 text-sm text-slate-500">
+              Ends {new Date(usage.seasonEndsAt).toLocaleDateString()} ·{" "}
+              {usage.planKitsRemaining} plan kits left
+            </p>
+          )}
         </div>
 
-        {isFree && (
-          <p className="mt-4 text-xs text-slate-400">
-            Free kits reset {new Date(usage.periodResetsAt).toLocaleDateString()}
-            {usage.isStudent
-              ? " · 5 tailor + 2 autofill / month on .edu"
-              : " · 3 tailor + 1 autofill / month"}
-          </p>
-        )}
-        {!isFree && usage.plan === "flex" && usage.flexPaused && (
-          <p className="mt-4 text-sm text-amber-300">
-            Flex paused until{" "}
-            {usage.flexPausedUntil
-              ? new Date(usage.flexPausedUntil).toLocaleDateString()
-              : "—"}
-          </p>
-        )}
-        {!isFree && usage.plan === "season" && usage.seasonEndsAt && (
-          <p className="mt-4 text-xs text-slate-400">
-            Season pass ends{" "}
-            {new Date(usage.seasonEndsAt).toLocaleDateString()} ·{" "}
-            {usage.planKitsRemaining} plan kits remaining
-          </p>
-        )}
+        <div className="flex shrink-0 gap-5 sm:gap-6">
+          {isFree ? (
+            <>
+              <div className="text-left sm:text-right">
+                <p className="text-xl font-semibold tabular-nums text-slate-900">
+                  {tailorLeft}
+                </p>
+                <p className="text-xs text-slate-400">tailor left</p>
+              </div>
+              <div className="text-left sm:text-right">
+                <p className="text-xl font-semibold tabular-nums text-slate-900">
+                  {autofillLeft}
+                </p>
+                <p className="text-xs text-slate-400">autofill left</p>
+              </div>
+            </>
+          ) : (
+            <div className="text-left sm:text-right">
+              <p className="text-xl font-semibold tabular-nums text-slate-900">
+                {totalAvailable}
+              </p>
+              <p className="text-xs text-slate-400">kits available</p>
+            </div>
+          )}
+          {usage.creditBalance > 0 && (
+            <div className="text-left sm:text-right">
+              <p className="text-xl font-semibold tabular-nums text-emerald-700">
+                {usage.creditBalance}
+              </p>
+              <p className="text-xs text-slate-400">credits</p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
+  );
+}
+
+function PackageShell({
+  badge,
+  accent,
+  children,
+  footer,
+}: {
+  badge?: string;
+  accent?: boolean;
+  children: ReactNode;
+  footer: ReactNode;
+}) {
+  return (
+    <article
+      className={`flex h-full flex-col rounded-xl border bg-white p-5 ${
+        accent
+          ? "border-emerald-300 shadow-sm ring-1 ring-emerald-100"
+          : "border-slate-200"
+      }`}
+    >
+      <div className="mb-3 h-5">
+        {badge ? (
+          <span className="text-[11px] font-semibold uppercase tracking-wide text-emerald-700">
+            {badge}
+          </span>
+        ) : null}
+      </div>
+      <div className="flex flex-1 flex-col">{children}</div>
+      <div className="mt-auto flex min-h-[2.75rem] flex-col justify-end gap-2 pt-6">
+        {footer}
+      </div>
+    </article>
   );
 }
 
@@ -136,163 +165,48 @@ function PackCard({
   anyBusy: boolean;
   onBuy: () => void;
 }) {
-  const featured = Boolean(catalog.badge);
-
   return (
-    <article
-      className={`relative flex flex-col overflow-hidden rounded-2xl border transition hover:shadow-md ${
-        featured
-          ? "border-emerald-300 bg-gradient-to-b from-emerald-50/80 to-white shadow-sm ring-1 ring-emerald-100"
-          : "border-slate-200 bg-white hover:border-slate-300"
-      }`}
-    >
-      {catalog.badge && (
-        <div className="bg-emerald-600 px-4 py-1.5 text-center text-[11px] font-semibold uppercase tracking-wider text-white">
-          {catalog.badge}
-        </div>
-      )}
-      <div className="flex flex-1 flex-col p-5 sm:p-6">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
-              {pack.kits} kits
-            </p>
-            <h3 className="mt-0.5 text-xl font-bold text-slate-900">
-              {catalog.name}
-            </h3>
-            <p className="mt-1 text-sm font-medium text-slate-600">
-              {catalog.tagline}
-            </p>
-          </div>
-          <div className="shrink-0 text-right">
-            <p className="text-2xl font-bold text-slate-900">
-              {formatCents(price)}
-            </p>
-            <p className="text-xs text-slate-400">
-              {formatCents(Math.round(perKit))}/kit
-            </p>
-            {studentDeal && (
-              <p className="mt-0.5 text-xs font-semibold text-emerald-600">
-                Student price
-              </p>
-            )}
-          </div>
-        </div>
-
-        <p className="mt-4 text-sm leading-relaxed text-slate-600">
-          {catalog.description}
-        </p>
-
-        <ul className="mt-4 space-y-2">
-          {catalog.highlights.map((h) => (
-            <CheckItem key={h}>{h}</CheckItem>
-          ))}
-        </ul>
-
-        <p className="mt-4 text-xs text-slate-400">
-          <span className="font-medium text-slate-500">Ideal for:</span>{" "}
-          {catalog.idealFor}
-        </p>
-
+    <PackageShell
+      badge={catalog.badge}
+      accent={Boolean(catalog.badge)}
+      footer={
         <Button
-          className="mt-5 w-full"
+          className="w-full"
           loading={busy}
           disabled={anyBusy}
           onClick={onBuy}
         >
-          {stripeEnabled ? "Checkout" : `Buy ${catalog.name}`}
+          {stripeEnabled ? `Buy ${catalog.name}` : `Get ${catalog.name}`}
         </Button>
-      </div>
-    </article>
-  );
-}
-
-function PlanOption({
-  plan,
-  active,
-  stripeEnabled,
-  busy,
-  busyId,
-  onChoose,
-  children,
-}: {
-  plan: (typeof PLAN_CATALOG)[number];
-  active: boolean;
-  stripeEnabled: boolean;
-  busy: string | null;
-  busyId: string;
-  onChoose?: () => void;
-  children?: React.ReactNode;
-}) {
-  const isFree = plan.id === "free";
-  const selectable = !isFree && onChoose;
-
-  return (
-    <article
-      className={`relative flex flex-col rounded-2xl border p-5 sm:p-6 transition ${
-        active
-          ? "border-emerald-400 bg-emerald-50/60 shadow-sm ring-1 ring-emerald-200"
-          : "border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm"
-      }`}
+      }
     >
-      {active && (
-        <span className="absolute -top-2.5 right-5 rounded-full bg-emerald-600 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
-          Current plan
-        </span>
-      )}
-      {plan.badge && !active && (
-        <span className="mb-2 w-fit rounded-full bg-slate-100 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-600">
-          {plan.badge}
-        </span>
-      )}
-
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0 flex-1">
-          <h3 className="text-xl font-bold text-slate-900">{plan.name}</h3>
-          <p className="mt-0.5 text-sm font-medium text-emerald-700">
-            {plan.tagline}
+      <div className="flex items-baseline justify-between gap-3">
+        <h3 className="text-lg font-semibold text-slate-900">{catalog.name}</h3>
+        <div className="shrink-0 text-right">
+          <p className="text-xl font-semibold tabular-nums text-slate-900">
+            {formatCents(price)}
           </p>
-          <p className="mt-3 text-sm leading-relaxed text-slate-600">
-            {plan.description}
-          </p>
-        </div>
-        <div className="shrink-0 sm:text-right">
-          <p className="text-2xl font-bold text-slate-900">{plan.priceLabel}</p>
-          <p className="text-xs text-slate-500">{plan.kitsLabel}</p>
-          {selectable && (
-            <Button
-              size="sm"
-              className="mt-3 w-full sm:w-auto"
-              variant={active ? "secondary" : "primary"}
-              loading={busy === busyId}
-              disabled={busy !== null || active}
-              onClick={onChoose}
-            >
-              {active
-                ? "Active"
-                : stripeEnabled
-                  ? plan.id === "flex"
-                    ? "Subscribe"
-                    : "Checkout"
-                  : "Choose"}
-            </Button>
+          {studentDeal ? (
+            <p className="text-xs font-medium text-emerald-600">.edu price</p>
+          ) : (
+            <p className="text-xs text-slate-400">
+              {formatCents(Math.round(perKit))}/kit
+            </p>
           )}
         </div>
       </div>
 
-      <ul className="mt-5 grid gap-2 sm:grid-cols-3">
-        {plan.highlights.map((h) => (
+      <p className="mt-1 text-sm text-slate-500">{catalog.tagline}</p>
+      <p className="mt-1 text-xs font-medium uppercase tracking-wide text-slate-400">
+        {pack.kits} kits · one-time
+      </p>
+
+      <ul className="mt-5 space-y-2">
+        {catalog.highlights.map((h) => (
           <CheckItem key={h}>{h}</CheckItem>
         ))}
       </ul>
-
-      <p className="mt-4 border-t border-slate-100 pt-4 text-xs text-slate-400">
-        <span className="font-medium text-slate-500">Ideal for:</span>{" "}
-        {plan.idealFor}
-      </p>
-
-      {children}
-    </article>
+    </PackageShell>
   );
 }
 
@@ -328,18 +242,18 @@ export default function BillingPage() {
       }
       if (!res.ok) {
         setError(data.error ?? `Could not load billing (${res.status}).`);
-        setPacks(data.packs ?? CREDIT_PACKS);
+        setPacks(data.packs ?? storefrontPacks());
         return;
       }
       setUsage(data.usage ?? null);
-      setPacks(data.packs ?? CREDIT_PACKS);
+      setPacks(data.packs ?? storefrontPacks());
       setStripeEnabled(Boolean(data.stripeEnabled));
       setHasStripeCustomer(Boolean(data.hasStripeCustomer));
       setHasSubscription(Boolean(data.hasSubscription));
       setError(null);
     } catch (e) {
       setError((e as Error).message);
-      setPacks(CREDIT_PACKS);
+      setPacks(storefrontPacks());
     }
   }, []);
 
@@ -477,17 +391,20 @@ export default function BillingPage() {
 
   if (loading) return <PageLoader label="Loading billing…" />;
 
-  const paidPlans = PLAN_CATALOG.filter((p) => p.id !== "free");
-  const freePlan = PLAN_CATALOG.find((p) => p.id === "free")!;
+  const campus = packs.find((p) => p.id === "pack_5");
+  const sprint = packs.find((p) => p.id === "pack_15");
+  const flexPlan = getPlanCatalog("flex");
+  const onFlex = usage?.plan === "flex";
+  const onSeason = usage?.plan === "season";
 
   return (
-    <div className="space-y-8">
+    <div className="mx-auto max-w-5xl space-y-6">
       <PageHeader
         title="Billing & usage"
         description={
           <>
-            Every kit powers one tailor, autofill, or incorporate action — you
-            always review before anything is submitted.
+            Three packages for students. One kit = tailor, autofill, or
+            incorporate — you review before submit.
             {!stripeEnabled && (
               <span className="mt-1 block text-xs text-amber-700">
                 Dev mode — purchases are simulated until Stripe is configured.
@@ -524,104 +441,127 @@ export default function BillingPage() {
 
       <section>
         <div className="mb-4">
-          <h2 className="text-lg font-bold text-slate-900">Credit packs</h2>
-          <p className="mt-1 text-sm text-slate-500">
-            One-time purchases — credits never expire and stack with your plan.
-          </p>
-        </div>
-        <div className="grid gap-4 lg:grid-cols-3">
-          {packs.map((pack) => {
-            const catalog = getPackCatalog(pack);
-            const price = packPrice(pack);
-            const studentDeal =
-              Boolean(usage?.isStudent) &&
-              pack.studentPriceCents != null &&
-              pack.studentPriceCents < pack.priceCents;
-            return (
-              <PackCard
-                key={pack.id}
-                pack={pack}
-                catalog={catalog}
-                price={price}
-                perKit={price / pack.kits}
-                studentDeal={studentDeal}
-                stripeEnabled={stripeEnabled}
-                busy={busy === pack.id}
-                anyBusy={busy !== null}
-                onBuy={() => purchasePack(pack.id)}
-              />
-            );
-          })}
-        </div>
-      </section>
-
-      <section>
-        <div className="mb-4">
-          <h2 className="text-lg font-bold text-slate-900">Plans</h2>
-          <p className="mt-1 text-sm text-slate-500">
-            Subscriptions and allowances — pick what fits your search intensity.
+          <h2 className="text-base font-semibold text-slate-900">Packages</h2>
+          <p className="mt-0.5 text-sm text-slate-500">
+            Start with Campus, subscribe monthly, or buy a Sprint for season.
           </p>
         </div>
 
-        {usage?.plan === "free" && (
-          <div className="mb-4">
-            <PlanOption
-              plan={freePlan}
-              active
+        <div className="grid items-stretch gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {campus && (
+            <PackCard
+              pack={campus}
+              catalog={getPackCatalog(campus)}
+              price={packPrice(campus)}
+              perKit={packPrice(campus) / campus.kits}
+              studentDeal={false}
               stripeEnabled={stripeEnabled}
-              busy={busy}
-              busyId="free"
+              busy={busy === campus.id}
+              anyBusy={busy !== null}
+              onBuy={() => purchasePack(campus.id)}
             />
-          </div>
-        )}
+          )}
 
-        <div className="grid gap-4 lg:grid-cols-2">
-          {paidPlans.map((plan) => (
-            <PlanOption
-              key={plan.id}
-              plan={plan}
-              active={usage?.plan === plan.id}
-              stripeEnabled={stripeEnabled}
-              busy={busy}
-              busyId={plan.id}
-              onChoose={() => changePlan(plan.id as "flex" | "season")}
-            >
-              {plan.id === "flex" &&
-                usage?.plan === "flex" &&
-                !usage.flexPaused && (
+          <PackageShell
+            badge={onFlex ? "Current plan" : flexPlan.badge}
+            accent
+            footer={
+              <>
+                <Button
+                  className="w-full"
+                  loading={busy === "flex"}
+                  disabled={busy !== null || onFlex}
+                  onClick={() => changePlan("flex")}
+                >
+                  {onFlex
+                    ? "Active"
+                    : stripeEnabled
+                      ? "Subscribe"
+                      : "Get Student Monthly"}
+                </Button>
+                {onFlex && usage && !usage.flexPaused && (
                   <button
                     type="button"
-                    className="mt-3 text-left text-sm font-medium text-emerald-700 hover:text-emerald-800"
+                    className="w-full text-center text-sm text-slate-500 hover:text-slate-700"
                     disabled={busy !== null}
                     onClick={pauseFlex}
                   >
-                    Pause Flex for 30 days →
+                    Pause for 30 days
                   </button>
                 )}
-            </PlanOption>
-          ))}
+              </>
+            }
+          >
+            <div className="flex items-baseline justify-between gap-3">
+              <h3 className="text-lg font-semibold text-slate-900">
+                {flexPlan.name}
+              </h3>
+              <div className="shrink-0 text-right">
+                <p className="text-xl font-semibold tabular-nums text-slate-900">
+                  {flexPlan.priceLabel}
+                </p>
+                <p className="text-xs text-slate-400">recurring</p>
+              </div>
+            </div>
+
+            <p className="mt-1 text-sm text-slate-500">{flexPlan.tagline}</p>
+            <p className="mt-1 text-xs font-medium uppercase tracking-wide text-slate-400">
+              {flexPlan.kitsLabel}
+            </p>
+
+            <ul className="mt-5 space-y-2">
+              {flexPlan.highlights.map((h) => (
+                <CheckItem key={h}>{h}</CheckItem>
+              ))}
+            </ul>
+          </PackageShell>
+
+          {sprint && (
+            <PackCard
+              pack={sprint}
+              catalog={getPackCatalog(sprint)}
+              price={packPrice(sprint)}
+              perKit={packPrice(sprint) / sprint.kits}
+              studentDeal={
+                Boolean(usage?.isStudent) &&
+                sprint.studentPriceCents != null &&
+                sprint.studentPriceCents < sprint.priceCents
+              }
+              stripeEnabled={stripeEnabled}
+              busy={busy === sprint.id}
+              anyBusy={busy !== null}
+              onBuy={() => purchasePack(sprint.id)}
+            />
+          )}
         </div>
 
-        {usage && usage.plan !== "free" && !hasSubscription && (
-          <button
-            type="button"
-            className="mt-4 w-full text-center text-sm text-slate-500 hover:text-slate-700"
-            disabled={busy !== null}
-            onClick={() => changePlan("free")}
-          >
-            Downgrade to free
-          </button>
-        )}
+        <p className="mt-4 text-center text-xs text-slate-400">
+          A kit is one tailor, autofill, or edge-ideas action. Continuing
+          autofill on the same job is free.
+        </p>
       </section>
 
-      <Card className="border-slate-100 bg-slate-50/50">
-        <p className="text-center text-sm text-slate-600">
-          <span className="font-semibold text-slate-800">What counts as a kit?</span>{" "}
-          Tailoring a resume + cover for a role · autofilling an application ·
-          adding AI edge ideas. Continuing autofill on the same job is always
-          free.
-        </p>
-      </Card>
+      {onSeason && (
+        <Alert variant="info">
+          You still have a legacy Season Pass with{" "}
+          {usage?.planKitsRemaining ?? 0} kits left
+          {usage?.seasonEndsAt
+            ? ` through ${new Date(usage.seasonEndsAt).toLocaleDateString()}`
+            : ""}
+          . New purchases use Campus, Student Monthly, or Sprint.
+        </Alert>
+      )}
+
+      {usage && usage.plan !== "free" && !hasSubscription && (
+        <button
+          type="button"
+          className="w-full text-center text-sm text-slate-400 hover:text-slate-600"
+          disabled={busy !== null}
+          onClick={() => changePlan("free")}
+        >
+          Downgrade to free
+        </button>
+      )}
     </div>
   );
 }

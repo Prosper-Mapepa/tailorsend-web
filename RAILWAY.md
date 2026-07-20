@@ -44,7 +44,7 @@ Generate a public domain: **Settings → Networking → Generate Domain**.
 ### Web service
 
 - **Settings → Root Directory:** leave empty / `/`
-- Uses root `railway.toml` (build + `prisma migrate deploy` on start).
+- Uses root `railway.toml` (build + `npm run start:railway` which migrates then serves Next).
 - Share / set:
 
 ```
@@ -55,6 +55,8 @@ OPENAI_API_KEY=<your-key>
 OPENAI_MODEL=gpt-4o-mini
 ADMIN_EMAILS=you@example.com
 ```
+
+**Do not set `PORT` yourself** — Railway injects it. Overriding it (e.g. `PORT=8888`) is a common cause of 502s.
 
 Optional:
 
@@ -116,10 +118,12 @@ Use Railway’s **public** or TCP proxy URL only when required; prefer private n
 
 | Issue | Fix |
 |-------|-----|
+| **502 Application failed to respond** | Open Web service → **Deployments → latest → Deploy Logs**. Look for `prisma migrate deploy` errors or crash before `next start`. Confirm `DATABASE_URL` is set (Postgres variable reference). Remove any custom `PORT` variable. Redeploy. |
 | CORS errors on auth | `FRONTEND_URL` / `APP_URL` must exactly match the Web origin (including `https://`) |
 | Auth 401 after deploy | `SESSION_SECRET` must be identical on Web and API |
 | Empty dashboard / DB errors | Confirm both services reference the **same** Postgres `DATABASE_URL` |
 | Healthcheck failing (API) | Hit `https://<api>/health` — should return `{ "ok": true }` |
+| Healthcheck failing (Web) | `/` must return 200; migrate + boot can take >100s — timeout is 300s in `railway.toml` |
 | Build OOM | Raise Web service memory / use fewer concurrent builds |
 
 ### Playwright / autofill on Railway

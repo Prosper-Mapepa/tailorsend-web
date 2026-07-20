@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TailorSend — Executive Summary (Michigan SBDC)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+  .one-pager { max-width: 800px; margin: 0 auto; padding: 2rem 1.5rem 3rem; }
+  .one-pager-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; padding-bottom: 1.25rem; border-bottom: 2px solid var(--accent); margin-bottom: 1.25rem; }
+  .one-pager h1 { font-size: 1.75rem; margin: 0; }
+  .one-pager .tagline { color: var(--accent); font-weight: 500; margin: 0.25rem 0 0; }
+  .one-pager .meta-box { text-align: right; flex-shrink: 0; font-size: 0.85rem; color: var(--text-muted); }
+  .one-pager .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin: 1rem 0; }
+  .one-pager .grid-2 h3 { margin: 0 0 0.5rem; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); }
+  .one-pager .grid-2 p, .one-pager .grid-2 ul { margin: 0; font-size: 0.9rem; color: var(--text-muted); }
+  .one-pager .grid-2 ul { padding-left: 1.1rem; }
+  .one-pager .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; margin: 1.25rem 0; text-align: center; }
+  .one-pager .metrics div { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem 0.5rem; }
+  .one-pager .metrics .v { font-size: 1rem; font-weight: 700; color: var(--accent); }
+  .one-pager .metrics .l { font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; }
+  .one-pager footer { margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border); font-size: 0.85rem; color: var(--text-muted); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; }
+  @media print { .site-header, .no-print { display: none !important; } body { background: #fff; color: #111; } .one-pager { padding: 0; } }
+  @media (max-width: 600px) { .one-pager .grid-2, .one-pager .metrics { grid-template-columns: 1fr; } .one-pager-header { flex-direction: column; } }
+  </style>
+</head>
+<body>
+  <header class="site-header no-print">
+    <a class="site-logo" href="index.html"><span>🚀</span> TailorSend</a>
+    <nav class="site-nav">
+      <a href="index.html">Home</a>
+      <a href="business-plan.html">Business Plan</a>
+      <a href="one-pager.html" class="active">Summary</a>
+    </nav>
+    <div class="download-bar no-print">
+      <button type="button" class="btn-download" id="dl-self">↓ Download</button>
+    </div>
+  </header>
+
+  <div class="one-pager">
+    <p class="no-print" style="text-align: right; margin-bottom: 1rem;">
+      <button class="btn btn-primary" onclick="window.print()">Print / Save PDF</button>
+      <button type="button" class="btn-download" id="dl-self-2">↓ Download HTML</button>
+    </p>
+
+    <header class="one-pager-header">
+      <div>
+        <h1>TailorSend</h1>
+        <p class="tagline">AI-assisted job applications for students &amp; job seekers</p>
+        <p style="margin: 0.5rem 0 0; font-size: 0.9rem;"><a href="https://tailorsend.cc">tailorsend.cc</a> · Michigan · Bootstrapped SaaS</p>
+      </div>
+      <div class="meta-box">
+        Michigan SBDC<br />
+        Application summary<br />
+        July 2026
+      </div>
+    </header>
+
+    <div class="grid-2">
+      <div>
+        <h3>Business</h3>
+        <p>Online platform: search jobs → tailor resume/cover letter → autofill forms → track applications. User reviews and submits every application. Live product with Stripe billing.</p>
+      </div>
+      <div>
+        <h3>Stage</h3>
+        <p>Early-stage MVP. Solo founder. ~$12K owner capital. Pre-scale revenue. Product deployed at tailorsend.cc on Railway.</p>
+      </div>
+    </div>
+
+    <div class="metrics">
+      <div><div class="v">Michigan</div><div class="l">Based</div></div>
+      <div><div class="v">~$1.5K</div><div class="l">Yr 1 revenue</div></div>
+      <div><div class="v">$12K</div><div class="l">Bootstrap</div></div>
+      <div><div class="v">Live</div><div class="l">Product</div></div>
+    </div>
+
+    <div class="grid-2">
+      <div>
+        <h3>Target market</h3>
+        <ul>
+          <li>Michigan college students (campus recruiting)</li>
+          <li>Recent grads applying to 20–80 roles</li>
+          <li>Career changers in tech/PM/engineering</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Pricing</h3>
+        <ul>
+          <li>Campus $5 · 8 kits (impulse)</li>
+          <li>Student Monthly $8/mo · 25 kits</li>
+          <li>Sprint $12 · 25 kits ($8 .edu)</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div>
+        <h3>Year 1 goals</h3>
+        <ul>
+          <li>25+ paying customers</li>
+          <li>1–2 Michigan campus partnerships</li>
+          <li>Form LLC, separate business banking</li>
+          <li>Validate unit economics organically</li>
+        </ul>
+      </div>
+      <div>
+        <h3>SBDC support requested</h3>
+        <ul>
+          <li>Market research (MI student demand)</li>
+          <li>Tech startup commercialization</li>
+          <li>Growth / campus GTM strategy</li>
+          <li>Financial plan review</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card" style="padding: 1rem 1.25rem; margin-top: 1rem;">
+      <p style="margin: 0; font-size: 0.95rem;">
+        <strong>Why SBDC:</strong> TailorSend has a working product but needs expert guidance on market validation, Michigan go-to-market, and sustainable financial planning before scaling marketing spend or seeking a small business loan.
+      </p>
+    </div>
+
+    <footer>
+      <span>[Your Name], Founder · Michigan · [email] · [phone]</span>
+      <span>tailorsend.cc · <a href="https://michigansbdc.org/">michigansbdc.org</a></span>
+    </footer>
+  </div>
+  <script src="download.js"></script>
+  <script>
+    const FILE = "TailorSend-Executive-Summary.html";
+    [document.getElementById("dl-self"), document.getElementById("dl-self-2")].forEach((b) =>
+      b?.addEventListener("click", () => window.TailorSendDownload.download(FILE)));
+    if (new URLSearchParams(location.search).get("download") === "1")
+      window.addEventListener("load", () => setTimeout(() => window.TailorSendDownload.download(FILE), 400));
+  </script>
+</body>
+</html>

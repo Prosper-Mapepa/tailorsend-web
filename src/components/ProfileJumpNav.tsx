@@ -7,7 +7,7 @@ import { PROFILE_NAV_ITEMS } from "@/lib/profile-nav";
 export type ProfileNavCounts = Partial<Record<string, number>>;
 
 const SCROLL_OFFSET = 120;
-const CLICK_LOCK_MS = 900;
+const CLICK_LOCK_MS = 1600;
 
 function readHashId(): string | null {
   const id = window.location.hash.slice(1);
@@ -56,13 +56,16 @@ function NavItem({
   onSelect: (id: string) => void;
 }) {
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    onSelect(id);
-    // Let the browser scroll to the hash, then re-sync after scroll settles
-    requestAnimationFrame(() => {
-      window.history.replaceState(null, "", `#${id}`);
-    });
     e.preventDefault();
-    document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+    onSelect(id);
+    window.history.replaceState(null, "", `#${id}`);
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        document
+          .getElementById(id)
+          ?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    });
   };
 
   if (compact) {
@@ -156,10 +159,12 @@ export function ProfileJumpNav({
     };
   }, []);
 
+  // Single root so CSS Grid gets one sticky column (fragments break sticky).
   return (
-    <>
-      <div className="xl:hidden">
-        <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">
+    <div className="min-w-0 lg:sticky lg:top-20 lg:z-30 lg:self-start">
+      {/* Mobile / tablet: chips stay under the site nav while scrolling */}
+      <div className="sticky top-16 z-30 -mx-1 border-b border-slate-200/60 bg-[var(--background)]/95 px-1 pb-2 pt-1 backdrop-blur-md lg:hidden">
+        <div className="flex gap-1.5 overflow-x-auto">
           {PROFILE_NAV_ITEMS.map(({ id, label }) => (
             <NavItem
               key={id}
@@ -174,25 +179,27 @@ export function ProfileJumpNav({
         </div>
       </div>
 
-      <nav className="hidden xl:sticky xl:top-28 xl:block xl:self-start">
-        <div className="w-[11.5rem] rounded-xl border border-slate-200/70 bg-white p-2 shadow-sm">
-          <p className="px-2 pb-2 pt-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-            Sections
-          </p>
-          <div className="space-y-0.5">
-            {PROFILE_NAV_ITEMS.map(({ id, label }) => (
-              <NavItem
-                key={id}
-                id={id}
-                label={label}
-                active={activeId === id}
-                count={counts?.[id]}
-                onSelect={selectSection}
-              />
-            ))}
-          </div>
+      {/* Desktop: vertical sections menu */}
+      <nav
+        className="hidden w-[11.5rem] rounded-xl border border-slate-200/70 bg-white/95 p-2 shadow-sm backdrop-blur-sm lg:block"
+        aria-label="Profile sections"
+      >
+        <p className="px-2 pb-2 pt-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+          Sections
+        </p>
+        <div className="space-y-0.5">
+          {PROFILE_NAV_ITEMS.map(({ id, label }) => (
+            <NavItem
+              key={id}
+              id={id}
+              label={label}
+              active={activeId === id}
+              count={counts?.[id]}
+              onSelect={selectSection}
+            />
+          ))}
         </div>
       </nav>
-    </>
+    </div>
   );
 }

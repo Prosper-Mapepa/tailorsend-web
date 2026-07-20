@@ -7,10 +7,9 @@
 builder = "nixpacks"
 
 [deploy]
-# Migrate before serving so schema stays current on each deploy.
-startCommand = "npx prisma migrate deploy && npm run start"
+# Migrate then bind Next on 0.0.0.0:$PORT (Railway injects PORT — do not override it).
+startCommand = "npm run start:railway"
 healthcheckPath = "/"
-healthcheckTimeout = 100
+healthcheckTimeout = 300
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 5
-# Next.js `next start` binds to $PORT, which Railway injects automatically.

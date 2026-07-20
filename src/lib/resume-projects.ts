@@ -143,8 +143,8 @@ function blockToMarkdown(block: ProjectBlock): string {
   return [block.headerLine, ...block.bullets].join("\n");
 }
 
-/** Trailing "(dates/status)" — tolerates an internal em-dash date range. */
-const TRAILING_STATUS = /\s*[—–-]?\s*\*?\(([^)]+)\)\*?\s*$/;
+/** Trailing "(dates/status)" — tolerates orphan pipes and an internal em-dash range. */
+const TRAILING_STATUS = /\s*\|?\s*[—–-]?\s*\*?\(([^)]+)\)\*?\s*$/;
 
 function isDateOrStatus(text: string): boolean {
   return /\d{4}|present|in progress|building|ongoing|planned/i.test(text);
@@ -237,17 +237,16 @@ export function boldProjectHeaderLine(line: string): string {
   const { rest, status } = extractTrailingStatus(trimmed);
   let head = rest;
 
-  // Drop any trailing link-label suffix ("| [App Store](url) | ...", "| GitHub").
-  const pipeIdx = head.indexOf(" | ");
+  // Always drop pipe suffixes — links are stripped from headers, so leftover
+  // "| LinkedIn" / "| —" / bare "|" must not survive into the title.
+  const pipeIdx = head.search(/\s*\|\s*/);
   if (pipeIdx >= 0) {
-    const suffix = head.slice(pipeIdx).trim();
-    if (/\[[^\]]+\]\([^)]+\)|App Store|Play Store|GitHub/i.test(suffix)) {
-      head = head.slice(0, pipeIdx).trim();
-    }
+    head = head.slice(0, pipeIdx).trim();
   }
 
   // Unwrap any markdown link to plain text and drop the URL entirely.
   head = head.replace(/\[([^\]]+)\]\([^)]*\)/g, "$1");
+  head = head.replace(/\s*\|+\s*$/g, "").trim();
 
   // Don't bold an entire unsplit paragraph.
   const titlePlain = head.replace(/^\*+|\*+$/g, "").replace(/\*\*/g, "").trim();

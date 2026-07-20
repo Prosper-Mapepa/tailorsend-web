@@ -1,0 +1,33 @@
+TailorSend Financial Model - ANNUAL SUMMARY (Michigan SBDC realistic)
+Metric,Year 1,Year 2,Year 3
+Registered users (end of year),298,850,2200
+Paying users (end of year),24,95,280
+Paying users (average),12,55,175
+,,,
+Annual revenue,1546,11000,42000
+MRR (end of year),336,950,3200
+,,,
+COGS variable,372,2200,8400
+Gross profit,1174,8800,33600
+Gross margin %,76%,80%,80%
+,,,
+Operating expenses,,,
+  Marketing,3450,6000,12000
+  Owner compensation,10500,24000,36000
+  Infrastructure hosting AI,3150,4800,7200
+  Legal accounting,900,1200,1500
+  Total OpEx,18000,36000,56700
+,,,
+Net income (loss),-16826,-27200,-23100
+,,,
+Bootstrap capital,12000,,
+Cumulative cash Year 1 end,524,,
+,,,
+Year 2 assumptions (with SBDC growth support),,
+Campus partnerships,2-3 MI universities,,
+Conversion rate,9%,,
+Marketing,organic + modest paid,,
+,,,
+Year 3 assumptions,,
+Part-time contractor,optional,,
+Break-even target,approaching,,

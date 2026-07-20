@@ -1,0 +1,35 @@
+TailorSend Financial Model - ASSUMPTIONS (Michigan SBDC · student packages)
+Variable,Value,Unit,Notes
+Owner personal investment,12000,USD,Bootstrap capital on hand
+Outside funding sought,0,USD,Bootstrapped; SBDC guidance not equity
+,,,
+PRICING (live on tailorsend.cc),,,
+Student Monthly price,8,USD/mo,Primary recurring plan (was Flex)
+Student Monthly kits,25,kits/mo,
+Campus pack price,5,USD,8 kits · impulse buy
+Sprint pack price,12,USD,25 kits · $8 with .edu
+Sprint student price,8,USD,.edu email
+,,,
+UNIT ECONOMICS,,,
+Blended ARPU per paying user,10,USD/mo,Mix of Campus Sprint and Student Monthly
+COGS per kit,0.18,USD,OpenAI API + hosting variable
+Stripe fee rate,0.029,,
+,,,
+GROWTH (conservative Year 1),,,
+Starting registered users,5,Beta users at launch
+Free to paid conversion,10,%,Lower prices → faster trial convert
+Monthly churn Student Monthly,18,%,Job search is episodic
+,,,
+MONTHLY FIXED COSTS,,,
+Hosting Railway Postgres,120,USD/mo,
+OpenAI base budget,50,USD/mo,Grows with usage
+Domain email misc,25,USD/mo,
+Marketing organic,250,USD/mo,Campus social SEO only Year 1
+Accounting legal,75,USD/mo,
+Owner draw,0,USD/mo,Months 1-8; part-time after
+Owner draw start month,9,,
+Owner draw amount,1500,USD/mo,Part-time from revenue
+,,,
+MICHIGAN MARKET,,,
+Primary geography,Michigan,US,Founder based MI; campus focus
+Target schools,CMU U-M MSU Wayne State,,

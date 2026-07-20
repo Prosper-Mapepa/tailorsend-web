@@ -79,8 +79,8 @@ export function checkoutLineItems(
           unit_amount: FLEX_PRICE_CENTS,
           recurring: { interval: "month" },
           product_data: {
-            name: "TailorSend Flex",
-            description: `${FLEX_MONTHLY_KITS} application kits per month · pause up to 30 days`,
+            name: "TailorSend Student Monthly",
+            description: `${FLEX_MONTHLY_KITS} application kits per month · pause up to 30 days · cancel anytime`,
           },
         },
       },

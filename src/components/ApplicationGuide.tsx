@@ -5,6 +5,7 @@ import { Button } from "@/components/ui";
 import {
   GUIDE_STEP_ORDER,
   getStepMeta,
+  stepIndex,
   type GuideContext,
   type GuideStepId,
 } from "@/lib/application-guide";
@@ -20,71 +21,94 @@ const SHORT_LABELS: Record<GuideStepId, string> = {
 function GuideStepper({
   currentStep,
   completedSteps,
-  context,
   onGoToStep,
-  compact = false,
+  stepCounts,
 }: {
   currentStep: GuideStepId;
   completedSteps: Set<GuideStepId>;
-  context: GuideContext;
   onGoToStep: (step: GuideStepId) => void;
-  compact?: boolean;
+  stepCounts?: Partial<Record<GuideStepId, number>>;
 }) {
+  const currentIdx = stepIndex(currentStep);
+
   return (
-    <nav aria-label="Application progress" className="overflow-x-auto">
-      <ol
-        className={`flex min-w-max items-center ${compact ? "gap-1" : "gap-1 sm:gap-2"}`}
-      >
+    <nav aria-label="Application progress" className="w-full">
+      <ol className="relative flex items-start justify-between gap-0">
+        {/* Progress track behind the steps */}
+        <div
+          className="pointer-events-none absolute left-[10%] right-[10%] top-5 h-0.5 bg-slate-200 sm:top-6"
+          aria-hidden
+        >
+          <div
+            className="h-full bg-emerald-500 transition-all duration-500 ease-out"
+            style={{
+              width: `${(currentIdx / Math.max(GUIDE_STEP_ORDER.length - 1, 1)) * 100}%`,
+            }}
+          />
+        </div>
+
         {GUIDE_STEP_ORDER.map((id, i) => {
           const done = completedSteps.has(id);
           const active = id === currentStep;
-          const stepMeta = getStepMeta(id, context);
+          const count = stepCounts?.[id] ?? 0;
+          const reached = done || active || i < currentIdx;
+
           return (
-            <li key={id} className="flex items-center gap-1 sm:gap-2">
-              {i > 0 && (
-                <span
-                  className={`hidden h-px sm:block ${
-                    compact ? "w-3" : "w-4 sm:w-6"
-                  } ${done ? "bg-emerald-300" : "bg-slate-200"}`}
-                  aria-hidden
-                />
-              )}
+            <li key={id} className="relative z-10 flex min-w-0 flex-1 flex-col items-center">
               <button
                 type="button"
                 onClick={() => onGoToStep(id)}
-                className={`flex items-center gap-1.5 rounded-full font-medium transition outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 ${
-                  compact
-                    ? "px-2 py-1 text-xs"
-                    : "px-2 py-1 text-xs sm:px-3 sm:py-1.5 sm:text-sm"
-                } ${
-                  active
-                    ? "bg-emerald-600 text-white shadow-sm"
-                    : done
-                      ? "bg-emerald-50 text-emerald-800 hover:bg-emerald-100"
-                      : "bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-700"
-                }`}
+                className="group flex w-full flex-col items-center gap-2 outline-none"
               >
                 <span
-                  className={`flex shrink-0 items-center justify-center rounded-full font-bold ${
-                    compact
-                      ? "h-5 w-5 text-[10px]"
-                      : "h-5 w-5 text-[10px] sm:h-6 sm:w-6 sm:text-xs"
-                  } ${
+                  className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold transition duration-200 sm:h-12 sm:w-12 sm:text-base ${
                     active
-                      ? "bg-white/20 text-white"
+                      ? "scale-110 bg-emerald-600 text-white shadow-lg shadow-emerald-600/30 ring-4 ring-emerald-100"
                       : done
-                        ? "bg-emerald-200 text-emerald-900"
-                        : "bg-white text-slate-400"
+                        ? "bg-emerald-500 text-white shadow-sm group-hover:bg-emerald-600"
+                        : reached
+                          ? "bg-emerald-100 text-emerald-700 ring-2 ring-emerald-200 group-hover:bg-emerald-200"
+                          : "bg-white text-slate-400 ring-2 ring-slate-200 group-hover:ring-slate-300 group-hover:text-slate-600"
                   }`}
                 >
-                  {done ? "✓" : stepMeta.number}
+                  {done && !active ? (
+                    <svg
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                      className="h-5 w-5"
+                      aria-hidden
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  ) : (
+                    i + 1
+                  )}
                 </span>
-                <span className={compact ? "inline" : "hidden sm:inline"}>
-                  {compact ? SHORT_LABELS[id] : stepMeta.title}
+                <span className="flex flex-col items-center gap-0.5 px-0.5 text-center">
+                  <span
+                    className={`text-xs font-semibold sm:text-sm ${
+                      active
+                        ? "text-emerald-800"
+                        : done
+                          ? "text-emerald-700"
+                          : "text-slate-500 group-hover:text-slate-700"
+                    }`}
+                  >
+                    {SHORT_LABELS[id]}
+                    {count > 0 ? (
+                      <span className="ml-1 tabular-nums text-emerald-600">
+                        ({count})
+                      </span>
+                    ) : null}
+                  </span>
+                  {active && (
+                    <span className="hidden h-1 w-6 rounded-full bg-emerald-500 sm:block" />
+                  )}
                 </span>
-                {!compact && (
-                  <span className="sm:hidden">{SHORT_LABELS[id]}</span>
-                )}
               </button>
             </li>
           );
@@ -100,6 +124,7 @@ export function ApplicationGuide({
   context,
   dirty,
   saving,
+  stepCounts,
   onGoToStep,
   onNext,
   onSkip,
@@ -110,6 +135,7 @@ export function ApplicationGuide({
   context: GuideContext;
   dirty?: boolean;
   saving?: boolean;
+  stepCounts?: Partial<Record<GuideStepId, number>>;
   onGoToStep: (step: GuideStepId) => void;
   onNext: () => void;
   onSkip?: () => void;
@@ -137,71 +163,118 @@ export function ApplicationGuide({
   const stepperProps = {
     currentStep,
     completedSteps,
-    context,
     onGoToStep,
+    stepCounts,
   };
 
+  const renderActions = (compact = false) =>
+    !allDone ? (
+      <div className="flex shrink-0 flex-wrap items-center gap-2">
+        {dirty &&
+          onSave &&
+          (currentStep === "resume" || currentStep === "cover") && (
+            <Button
+              variant="secondary"
+              size={compact ? "sm" : "md"}
+              loading={saving}
+              onClick={onSave}
+            >
+              {saving ? "Saving…" : "Save"}
+            </Button>
+          )}
+        {meta.canSkip && onSkip && currentStep === "edge" && (
+          <Button
+            variant="ghost"
+            size={compact ? "sm" : "md"}
+            onClick={onSkip}
+          >
+            {meta.skipLabel}
+          </Button>
+        )}
+        <Button
+          size={compact ? "sm" : "lg"}
+          onClick={onNext}
+          disabled={saving}
+        >
+          {isLast ? "Done" : meta.nextLabel}
+        </Button>
+      </div>
+    ) : null;
+
   return (
-    <div className="mb-6 space-y-3">
+    <div className="mb-6">
       <div ref={sentinelRef} className="h-px" aria-hidden />
 
-      <GuideStepper {...stepperProps} />
+      <div className="space-y-5">
+        <GuideStepper {...stepperProps} />
 
-      {stepperPinned && (
-        <div className="fixed inset-x-0 top-14 z-40 border-b border-slate-200/80 bg-white/95 shadow-sm backdrop-blur-md">
-          <div className="mx-auto max-w-6xl px-4 py-3.5 sm:px-6">
-            <GuideStepper {...stepperProps} compact />
-          </div>
-        </div>
-      )}
-
-      {!allDone && (
-        <div className="rounded-xl border border-emerald-200/80 bg-gradient-to-r from-emerald-50/90 to-white px-4 py-3.5 sm:px-5">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        {currentStep !== "status" && (
+          <div className="flex flex-col gap-3 border-t border-slate-200/80 pt-4 sm:flex-row sm:items-end sm:justify-between sm:gap-6">
             <div className="min-w-0 flex-1">
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-700">
-                Step {meta.number} of {GUIDE_STEP_ORDER.length}
-              </p>
-              <h3 className="mt-0.5 text-sm font-semibold text-slate-900 sm:text-base">
-                {meta.title}
-              </h3>
-              <p className="mt-1 text-sm leading-relaxed text-slate-600">
-                {meta.prompt}
-              </p>
-              {dirty && (currentStep === "resume" || currentStep === "cover") && (
-                <p className="mt-2 text-xs font-medium text-amber-700">
-                  You have unsaved edits — save before continuing.
+              {!allDone ? (
+                <>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-emerald-600">
+                    Step {meta.number} of {GUIDE_STEP_ORDER.length}
+                  </p>
+                  <h2 className="mt-1 text-lg font-semibold tracking-tight text-slate-900 sm:text-xl">
+                    {meta.title}
+                  </h2>
+                  <p className="mt-1 max-w-xl text-sm leading-relaxed text-slate-500">
+                    {meta.prompt}
+                    {dirty &&
+                      (currentStep === "resume" ||
+                        currentStep === "cover") && (
+                      <span className="ml-1 font-medium text-amber-700">
+                        Unsaved edits.
+                      </span>
+                    )}
+                  </p>
+                </>
+              ) : (
+                <p className="text-sm font-medium text-emerald-700">
+                  Workflow complete — tap any step above to revisit it.
                 </p>
               )}
             </div>
-            <div className="flex shrink-0 flex-wrap items-center gap-2">
-              {dirty && onSave && (currentStep === "resume" || currentStep === "cover") && (
-                <Button
-                  variant="secondary"
-                  loading={saving}
-                  onClick={onSave}
-                >
-                  {saving ? "Saving…" : "Save"}
-                </Button>
-              )}
-              {meta.canSkip && onSkip && currentStep === "edge" && (
-                <Button variant="ghost" onClick={onSkip}>
-                  {meta.skipLabel}
-                </Button>
-              )}
-              <Button onClick={onNext} disabled={saving}>
-                {isLast ? meta.nextLabel : meta.nextLabel}
-              </Button>
+            {renderActions()}
+          </div>
+        )}
+      </div>
+
+      {stepperPinned && (
+        <div className="fixed inset-x-0 top-14 z-40 border-b border-slate-200/80 bg-white/95 shadow-md backdrop-blur-md">
+          <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-2.5 sm:px-6">
+            <div className="min-w-0 flex-1 overflow-x-auto">
+              <ol className="flex min-w-max items-center gap-1.5">
+                {GUIDE_STEP_ORDER.map((id, i) => {
+                  const done = completedSteps.has(id);
+                  const active = id === currentStep;
+                  const count = stepCounts?.[id] ?? 0;
+                  return (
+                    <li key={id}>
+                      <button
+                        type="button"
+                        onClick={() => onGoToStep(id)}
+                        className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+                          active
+                            ? "bg-emerald-600 text-white"
+                            : done
+                              ? "bg-emerald-50 text-emerald-800"
+                              : "bg-slate-100 text-slate-600"
+                        }`}
+                      >
+                        <span>{done && !active ? "✓" : i + 1}</span>
+                        {SHORT_LABELS[id]}
+                        {count > 0 ? ` · ${count}` : ""}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ol>
             </div>
+            {renderActions(true)}
           </div>
         </div>
-      )}
-
-      {allDone && (
-        <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm text-emerald-800">
-          Application workflow complete. You can revisit any step using the
-          tabs below.
-        </p>
       )}
     </div>
   );

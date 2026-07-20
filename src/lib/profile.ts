@@ -199,10 +199,17 @@ export function buildAutofillProfile(profile: ProfileView) {
 export function profileResumeContact(
   profile: Pick<
     ProfileView,
-    "email" | "phone" | "location" | "linkedin" | "github" | "website"
+    | "fullName"
+    | "email"
+    | "phone"
+    | "location"
+    | "linkedin"
+    | "github"
+    | "website"
   >,
 ): ResumeContact {
   return {
+    fullName: profile.fullName,
     email: profile.email,
     phone: profile.phone,
     location: profile.location,

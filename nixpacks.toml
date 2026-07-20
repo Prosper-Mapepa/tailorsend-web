@@ -16,4 +16,4 @@ cmds = [
 ]
 
 [start]
-cmd = "npx prisma migrate deploy && npm run start"
+cmd = "npm run start:railway"

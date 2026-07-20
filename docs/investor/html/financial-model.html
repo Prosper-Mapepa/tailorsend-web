@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TailorSend — Financial Model (Michigan SBDC)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <a class="site-logo" href="index.html"><span>🚀</span> TailorSend</a>
+    <nav class="site-nav">
+      <a href="index.html">Home</a>
+      <a href="pitch-deck.html">Overview</a>
+      <a href="business-plan.html">Business Plan</a>
+      <a href="financial-model.html" class="active">Financial Model</a>
+      <a href="one-pager.html">One-Pager</a>
+    </nav>
+    <div class="download-bar no-print">
+      <button type="button" class="btn-download" id="dl-self">↓ Download HTML</button>
+      <button type="button" class="btn-download" id="dl-csv">↓ CSV</button>
+    </div>
+  </header>
+
+  <div class="container-wide">
+    <p class="eyebrow">Financial model · 12-month projection · Michigan SBDC</p>
+    <h1>Financial Model</h1>
+    <p class="lead">$12K bootstrap · Blended ARPU $14/mo · 8% free-to-paid conversion · Organic growth</p>
+
+    <div class="card-grid">
+      <div class="stat-card">
+        <div class="label">Bootstrap capital</div>
+        <div class="value">$12K</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">MRR (Month 12)</div>
+        <div class="value">$336</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Year 1 revenue</div>
+        <div class="value">$1,546</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Cash (Month 12)</div>
+        <div class="value">$524</div>
+      </div>
+    </div>
+
+    <div class="chart-row">
+      <div class="chart-box">
+        <h4>MRR ramp</h4>
+        <canvas class="chart-canvas" id="chart-mrr"></canvas>
+      </div>
+      <div class="chart-box">
+        <h4>Cumulative cash</h4>
+        <canvas class="chart-canvas" id="chart-cash"></canvas>
+      </div>
+    </div>
+    <div class="chart-box" style="max-width: 600px;">
+      <h4>Users (blue = registered · green = paying × 10)</h4>
+      <canvas class="chart-canvas" id="chart-users"></canvas>
+    </div>
+
+    <h2>Key assumptions</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Variable</th><th class="num">Value</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>Student Monthly</td><td class="num">$8</td><td>25 kits/mo</td></tr>
+          <tr><td>Campus / Sprint</td><td class="num">$5 / $12</td><td>8 kits / 25 kits ($8 .edu)</td></tr>
+          <tr><td>Blended ARPU</td><td class="num">$10/mo</td><td>Mix of packs + Student Monthly</td></tr>
+          <tr><td>COGS per kit</td><td class="num">$0.18</td><td>OpenAI + infra</td></tr>
+          <tr><td>Free → paid conversion</td><td class="num">8%</td><td>Conservative early SaaS</td></tr>
+          <tr><td>Monthly churn (Student Monthly)</td><td class="num">18%</td><td>Job search is episodic</td></tr>
+          <tr><td>Owner draw</td><td class="num">$0 → $1,500/mo</td><td>Starts month 9</td></tr>
+          <tr><td>Marketing</td><td class="num">$250–400/mo</td><td>Organic + campus only</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2>3-year annual summary</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Metric</th><th class="num">Year 1</th><th class="num">Year 2</th><th class="num">Year 3</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Annual revenue</td><td class="num">$1,546</td><td class="num">$11,000</td><td class="num">$42,000</td></tr>
+          <tr><td>MRR (end of year)</td><td class="num">$336</td><td class="num">$950</td><td class="num">$3,200</td></tr>
+          <tr><td>Paying users (EOY)</td><td class="num">24</td><td class="num">95</td><td class="num">280</td></tr>
+          <tr><td>Gross margin</td><td class="num">76%</td><td class="num">80%</td><td class="num">80%</td></tr>
+          <tr><td>Net income</td><td class="num negative">-$16,826</td><td class="num negative">-$27,200</td><td class="num negative">-$23,100</td></tr>
+          <tr><td>Cumulative cash (Y1 end)</td><td class="num">$524</td><td class="num">—</td><td class="num">—</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2>Bootstrap capital use ($12K)</h2>
+    <div class="card-grid">
+      <div class="stat-card"><div class="label">Hosting &amp; infra</div><div class="value">~$3K</div><div class="sub">Railway, Postgres, domain</div></div>
+      <div class="stat-card"><div class="label">AI API costs</div><div class="value">~$2K</div><div class="sub">OpenAI usage Year 1</div></div>
+      <div class="stat-card"><div class="label">Marketing</div><div class="value">~$3.5K</div><div class="sub">Campus, organic, SEO</div></div>
+      <div class="stat-card"><div class="label">Legal &amp; admin</div><div class="value">~$900</div><div class="sub">LLC, accounting</div></div>
+      <div class="stat-card"><div class="label">Runway buffer</div><div class="value">~$2.6K</div><div class="sub">Cash remaining M12</div></div>
+    </div>
+
+    <h2>12-month monthly P&amp;L</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Mo</th>
+            <th class="num">Signups</th>
+            <th class="num">Users</th>
+            <th class="num">Paying</th>
+            <th class="num">MRR</th>
+            <th class="num">Revenue</th>
+            <th class="num">COGS</th>
+            <th class="num">Net burn</th>
+            <th class="num">Cash</th>
+          </tr>
+        </thead>
+        <tbody id="monthly-tbody"></tbody>
+      </table>
+    </div>
+
+    <div class="card" style="border-color: rgba(248,113,113,0.3);">
+      <h3 style="margin-top: 0; color: var(--danger);">Runway note</h3>
+      <p style="margin: 0; color: var(--text-muted);">
+        Year 1 ends with <strong>~$524 cash</strong> after owner draw starts in month 9.
+        Revenue does not yet cover full living expenses — founder works part-time on TailorSend while validating demand.
+        Year 2 assumes modest growth with SBDC guidance; break-even approached in Year 3.
+        Stress-test assumptions in the companion CSV files.
+      </p>
+    </div>
+
+    <p class="no-print" style="text-align: center; margin-top: 2rem;">
+      <button type="button" class="btn-download" id="dl-csv-monthly">Download monthly CSV</button>
+    </p>
+  </div>
+
+  <script>
+const MONTHLY_DATA = [
+  { month: 1, signups: 8, users: 8, paying: 1, mrr: 14, revenue: 14, cogs: 4, burn: -506, cash: 11994 },
+  { month: 2, signups: 12, users: 20, paying: 2, mrr: 28, revenue: 28, cogs: 7, burn: -492, cash: 11502 },
+  { month: 3, signups: 15, users: 35, paying: 3, mrr: 42, revenue: 42, cogs: 10, burn: -493, cash: 11009 },
+  { month: 4, signups: 18, users: 53, paying: 4, mrr: 56, revenue: 56, cogs: 14, burn: -489, cash: 10520 },
+  { month: 5, signups: 20, users: 73, paying: 6, mrr: 84, revenue: 84, cogs: 19, burn: -476, cash: 10044 },
+  { month: 6, signups: 22, users: 95, paying: 8, mrr: 112, revenue: 112, cogs: 26, burn: -513, cash: 9531 },
+  { month: 7, signups: 25, users: 120, paying: 10, mrr: 140, revenue: 140, cogs: 32, burn: -500, cash: 9031 },
+  { month: 8, signups: 28, users: 148, paying: 12, mrr: 168, revenue: 168, cogs: 39, burn: -487, cash: 8544 },
+  { month: 9, signups: 30, users: 178, paying: 14, mrr: 196, revenue: 196, cogs: 45, burn: -2024, cash: 6520 },
+  { month: 10, signups: 35, users: 213, paying: 17, mrr: 238, revenue: 238, cogs: 55, burn: -1997, cash: 4523 },
+  { month: 11, signups: 40, users: 253, paying: 20, mrr: 280, revenue: 280, cogs: 64, burn: -2020, cash: 2503 },
+  { month: 12, signups: 45, users: 298, paying: 24, mrr: 336, revenue: 336, cogs: 77, burn: -1979, cash: 524 },
+];
+
+function fmt(n) {
+  if (n < 0) return `-$${Math.abs(n).toLocaleString()}`;
+  return `$${n.toLocaleString()}`;
+}
+function fmtK(n) {
+  if (Math.abs(n) >= 1000) return `$${(n / 1000).toFixed(0)}K`;
+  return `$${n}`;
+}
+function drawLineChart(canvasId, labels, datasets, opts = {}) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  ctx.scale(dpr, dpr);
+  const w = rect.width, h = rect.height;
+  const pad = { top: 20, right: 16, bottom: 32, left: 52 };
+  const plotW = w - pad.left - pad.right, plotH = h - pad.top - pad.bottom;
+  const allVals = datasets.flatMap((d) => d.data);
+  const minY = opts.minY ?? Math.min(0, ...allVals);
+  const maxY = opts.maxY ?? Math.max(...allVals) * 1.1;
+  ctx.clearRect(0, 0, w, h);
+  ctx.strokeStyle = "rgba(148,163,184,0.15)";
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= 4; i++) {
+    const y = pad.top + (plotH * i) / 4;
+    ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(w - pad.right, y); ctx.stroke();
+    const val = maxY - ((maxY - minY) * i) / 4;
+    ctx.fillStyle = "#94a3b8"; ctx.font = "10px Inter, sans-serif"; ctx.textAlign = "right";
+    ctx.fillText(fmtK(Math.round(val)), pad.left - 8, y + 4);
+  }
+  if (minY < 0) {
+    const zeroY = pad.top + plotH * (maxY / (maxY - minY));
+    ctx.strokeStyle = "rgba(248,113,113,0.5)"; ctx.setLineDash([4, 4]);
+    ctx.beginPath(); ctx.moveTo(pad.left, zeroY); ctx.lineTo(w - pad.right, zeroY); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+  datasets.forEach((ds) => {
+    ctx.strokeStyle = ds.color; ctx.lineWidth = 2.5; ctx.beginPath();
+    ds.data.forEach((v, i) => {
+      const x = pad.left + (plotW * i) / (ds.data.length - 1);
+      const y = pad.top + plotH * (1 - (v - minY) / (maxY - minY));
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+  });
+  ctx.fillStyle = "#94a3b8"; ctx.font = "10px Inter, sans-serif"; ctx.textAlign = "center";
+  const step = Math.ceil(labels.length / 6);
+  labels.forEach((lb, i) => {
+    if (i % step !== 0 && i !== labels.length - 1) return;
+    const x = pad.left + (plotW * i) / (labels.length - 1);
+    ctx.fillText(lb, x, h - 8);
+  });
+}
+function renderMonthlyTable() {
+  const tbody = document.getElementById("monthly-tbody");
+  if (!tbody) return;
+  tbody.innerHTML = MONTHLY_DATA.map((r) => `
+    <tr>
+      <td>M${r.month}</td>
+      <td class="num">${r.signups}</td>
+      <td class="num">${r.users.toLocaleString()}</td>
+      <td class="num">${r.paying}</td>
+      <td class="num positive">${fmt(r.mrr)}</td>
+      <td class="num">${fmt(r.revenue)}</td>
+      <td class="num">${fmt(r.cogs)}</td>
+      <td class="num negative">${fmt(r.burn)}</td>
+      <td class="num ${r.cash < 0 ? "negative" : ""}">${fmt(r.cash)}</td>
+    </tr>`).join("");
+}
+function initCharts() {
+  const labels = MONTHLY_DATA.map((r) => `M${r.month}`);
+  drawLineChart("chart-mrr", labels, [{ data: MONTHLY_DATA.map((r) => r.mrr), color: "#10b981" }]);
+  drawLineChart("chart-cash", labels, [{ data: MONTHLY_DATA.map((r) => r.cash), color: "#10b981" }], { minY: 0 });
+  drawLineChart("chart-users", labels, [
+    { data: MONTHLY_DATA.map((r) => r.users), color: "#60a5fa" },
+    { data: MONTHLY_DATA.map((r) => r.paying * 10), color: "#10b981" },
+  ]);
+}
+document.addEventListener("DOMContentLoaded", () => {
+  renderMonthlyTable(); initCharts();
+  window.addEventListener("resize", initCharts);
+});
+  </script>
+  <script src="download.js"></script>
+  <script>
+    (function () {
+      const FILE = "TailorSend-Financial-Model.html";
+      const dl = window.TailorSendDownload;
+      const self = document.getElementById("dl-self");
+      if (self) self.addEventListener("click", () => dl.download(FILE));
+
+      function monthlyCsv() {
+        const head = "Month,New Signups,Registered Users,Paying Users,MRR,Revenue,COGS,Net Burn,Cumulative Cash";
+        const rows = MONTHLY_DATA.map((r) =>
+          [r.month, r.signups, r.users, r.paying, r.mrr, r.revenue, r.cogs, r.burn, r.cash].join(","),
+        );
+        return [head, ...rows].join("\n");
+      }
+      const csvBtn = document.getElementById("dl-csv");
+      const csvBtn2 = document.getElementById("dl-csv-monthly");
+      const doCsv = () => dl.downloadText(monthlyCsv(), "TailorSend-Financial-Monthly.csv", "text/csv");
+      if (csvBtn) csvBtn.addEventListener("click", doCsv);
+      if (csvBtn2) csvBtn2.addEventListener("click", doCsv);
+
+      if (new URLSearchParams(location.search).get("download") === "1") {
+        window.addEventListener("load", () => setTimeout(() => dl.download(FILE), 400));
+      }
+    })();
+  </script>
+</body>
+</html>

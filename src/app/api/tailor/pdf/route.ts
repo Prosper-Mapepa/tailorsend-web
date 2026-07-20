@@ -4,6 +4,7 @@ import {
   type DocumentKind,
   prepareResumeMarkdown,
 } from "@/lib/markdown";
+import { ensureCoverLetterDate } from "@/lib/cover-letter";
 import { requireAuthUser, isAuthUser } from "@/lib/auth";
 import { getProfile, profileResumeContact } from "@/lib/profile";
 
@@ -45,6 +46,8 @@ export async function POST(req: Request) {
         profile.projects,
         profileResumeContact(profile),
       );
+    } else if (kind === "cover" || /dear\s+/i.test(markdown)) {
+      htmlMd = ensureCoverLetterDate(htmlMd);
     }
 
     browser = await chromium.launch({ headless: true });

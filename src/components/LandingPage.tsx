@@ -302,7 +302,7 @@ export function LandingPage() {
                 Students · .edu emails
               </p>
               <h2 className="mt-2 text-2xl font-semibold text-white sm:text-3xl">
-                5 tailor + 2 autofill kits free every month
+                4 tailor + 2 autofill kits free every month for .edu
               </h2>
               <p className="mt-3 text-emerald-100/80">
                 No credit card. Upgrade with credit packs from $6 when you need

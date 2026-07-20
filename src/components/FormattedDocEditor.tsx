@@ -13,7 +13,15 @@ import {
   prepareResumeMarkdown,
   type ResumeContact,
 } from "@/lib/markdown";
+import { ensureCoverLetterDate } from "@/lib/cover-letter";
 import type { Project } from "@/lib/types";
+
+function needsEducationReorder(md: string): boolean {
+  const skills = md.search(/^##\s+(CORE SKILLS|SKILLS|TECHNICAL SKILLS|KEY SKILLS)\b/im);
+  const education = md.search(/^##\s+EDUCATION\b/im);
+  if (skills < 0 || education < 0) return false;
+  return education < skills;
+}
 
 type ResumeContext = {
   projects: Project[];
@@ -62,6 +70,7 @@ export function FormattedDocEditor({
         setFetchedContext({
           projects: data.projects ?? [],
           contact: {
+            fullName: data.fullName,
             email: data.email,
             phone: data.phone,
             location: data.location,
@@ -80,6 +89,7 @@ export function FormattedDocEditor({
   const activeContext = resumeContext ?? fetchedContext;
 
   const displayMd = useMemo(() => {
+    if (kind === "cover") return ensureCoverLetterDate(value);
     if (kind !== "resume") return value;
     return prepareResumeMarkdown(
       value,
@@ -88,11 +98,18 @@ export function FormattedDocEditor({
     );
   }, [kind, value, activeContext]);
 
+  // Persist fence cleanup + section reorder so the stored resume matches preview.
+  useEffect(() => {
+    if (kind !== "resume" || !activeContext) return;
+    if (!/```/.test(value) && !needsEducationReorder(value)) return;
+    if (displayMd && displayMd !== value) onChange(displayMd);
+  }, [kind, value, displayMd, activeContext, onChange]);
+
   const slug = kind === "resume" ? resumeSlug(value) : downloadSlug;
   const baseName = kind === "resume" ? "resume" : "cover-letter";
 
   async function copyContent() {
-    await navigator.clipboard.writeText(value);
+    await navigator.clipboard.writeText(displayMd);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }

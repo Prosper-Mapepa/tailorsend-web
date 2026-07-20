@@ -104,7 +104,7 @@ export async function POST(req: Request) {
     return NextResponse.json({
       ok: true,
       usage,
-      message: "Flex paused for 30 days.",
+      message: "Student Monthly paused for 30 days.",
     });
   } catch (err) {
     if (err instanceof UsageLimitError) return usageLimitResponse(err);

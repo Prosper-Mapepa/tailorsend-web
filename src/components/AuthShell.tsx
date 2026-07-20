@@ -42,7 +42,7 @@ function AuthCTACard({ className = "" }: { className?: string }) {
           Students · .edu emails
         </p>
         <p className="mt-1 text-sm leading-relaxed text-emerald-800/80">
-          5 tailor + 2 autofill kits free every month. No credit card.
+          Students get 4 tailor + 2 autofill kits free every month. No credit card.
         </p>
       </div>
     </div>

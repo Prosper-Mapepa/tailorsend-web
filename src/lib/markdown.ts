@@ -68,18 +68,133 @@ export function normalizeResumeSections(md: string): string {
 }
 
 /**
+ * Strip leading/trailing ``` / ```markdown fences the model sometimes wraps
+ * around the whole resume — including the bad persisted form `# ```markdown`.
+ * Idempotent.
+ */
+export function stripMarkdownFences(md: string): string {
+  let s = md.replace(/^\uFEFF/, "").replace(/\r/g, "").trim();
+  const wrapped = s.match(
+    /^```(?:markdown|md|text)?\s*\n([\s\S]*?)\n```\s*$/i,
+  );
+  if (wrapped) return wrapped[1].trim();
+
+  // Opening fence, optionally already promoted to H1 from an earlier bad pass.
+  s = s.replace(/^#?\s*```(?:markdown|md|text)?\s*\n?/i, "");
+  s = s.replace(/\n#?\s*```\s*$/i, "");
+
+  // Drop any remaining fence-only lines (with or without a leading #).
+  s = s
+    .split("\n")
+    .filter((l) => !/^\s*#?\s*```/.test(l.trim()))
+    .join("\n");
+
+  return s.trim();
+}
+
+function looksLikePersonName(line: string): boolean {
+  const t = line.replace(/^#\s*/, "").replace(/\*\*/g, "").trim();
+  if (!t || /@|\||\d{3}|https?:/i.test(t)) return false;
+  if (/linkedin|github|portfolio/i.test(t)) return false;
+  const words = t.split(/\s+/);
+  return (
+    words.length >= 2 &&
+    words.length <= 6 &&
+    words.every((w) => /^[A-Za-z][A-Za-z.'’-]*$/.test(w))
+  );
+}
+
+/**
+ * Canonical section order: Summary → Skills → Education → Experience → Projects → rest.
+ */
+export function reorderResumeSections(md: string): string {
+  const lines = md.replace(/\r/g, "").split("\n");
+  const preamble: string[] = [];
+  type Section = { title: string; lines: string[]; index: number };
+  const sections: Section[] = [];
+  let current: Section | null = null;
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (/^##\s+/.test(trimmed)) {
+      current = {
+        title: trimmed.replace(/^##\s+/, "").replace(/[:#*]+$/, "").trim(),
+        lines: [line],
+        index: sections.length,
+      };
+      sections.push(current);
+    } else if (current) {
+      current.lines.push(line);
+    } else {
+      preamble.push(line);
+    }
+  }
+
+  if (sections.length < 2) return md;
+
+  const rankOf = (title: string): number => {
+    const t = title.toUpperCase();
+    if (/^(PROFESSIONAL SUMMARY|SUMMARY|OBJECTIVE|PROFILE)$/.test(t)) return 0;
+    if (/^(CORE SKILLS|SKILLS|TECHNICAL SKILLS|KEY SKILLS)$/.test(t)) return 1;
+    if (/^EDUCATION$/.test(t)) return 2;
+    if (
+      /^(WORK EXPERIENCE|EXPERIENCE|PROFESSIONAL EXPERIENCE|EMPLOYMENT|EMPLOYMENT HISTORY)$/.test(
+        t,
+      )
+    ) {
+      return 3;
+    }
+    if (/^(PROJECTS|PROJECT EXPERIENCE|SELECTED PROJECTS|SELECTED INITIATIVES|INITIATIVES)$/.test(t)) {
+      return 4;
+    }
+    if (/^(CERTIFICATIONS|AWARDS|ACHIEVEMENTS|PUBLICATIONS|VOLUNTEERING)$/.test(t)) {
+      return 5;
+    }
+    return 40;
+  };
+
+  sections.sort((a, b) => {
+    const diff = rankOf(a.title) - rankOf(b.title);
+    return diff !== 0 ? diff : a.index - b.index;
+  });
+
+  // Trim trailing blanks per section, keep a blank line between sections.
+  const body: string[] = [];
+  for (const section of sections) {
+    while (section.lines.length && section.lines[section.lines.length - 1].trim() === "") {
+      section.lines.pop();
+    }
+    if (body.length) body.push("");
+    body.push(...section.lines);
+  }
+
+  const head = [...preamble];
+  while (head.length && head[head.length - 1].trim() === "") head.pop();
+  if (head.length) head.push("");
+  return [...head, ...body].join("\n").replace(/\n{3,}/g, "\n\n");
+}
+
+/**
  * Full resume normalization: repair section headings AND ensure the first line
  * (the candidate name) is an H1. Apply ONLY to resumes, never cover letters.
  */
 export function normalizeResumeMarkdown(md: string): string {
-  const lines = normalizeResumeSections(md).split("\n");
-  const firstIdx = lines.findIndex((l) => l.trim() !== "");
+  const lines = normalizeResumeSections(stripMarkdownFences(md)).split("\n");
+  const firstIdx = lines.findIndex((l) => {
+    const t = l.trim();
+    return t !== "" && !/^\s*#?\s*```/.test(t);
+  });
   if (firstIdx >= 0) {
     const first = lines[firstIdx].trim();
-    if (!first.startsWith("#")) {
+    if (/^#\s*```/.test(first)) {
+      // Fence wrongly promoted to H1 in an earlier pass — drop it.
+      lines[firstIdx] = "";
+    } else if (!first.startsWith("#") && looksLikePersonName(first)) {
       lines[firstIdx] = `# ${first.replace(/\*\*/g, "").trim()}`;
     }
   }
+  // Drop any leftover fence lines so they never become H1 or body text.
+  const cleaned = lines.filter((l) => !/^\s*#?\s*```/.test(l.trim()));
   return normalizeResumeEntries(
     normalizeProjectHeaders(
       normalizeEducationEntries(
@@ -87,7 +202,9 @@ export function normalizeResumeMarkdown(md: string): string {
           mergeOrphanRoleDates(
             normalizeProjectParagraphs(
               consolidateProjectSections(
-                normalizeSkillsLists(lines.join("\n")),
+                normalizeSkillsLists(
+                  reorderResumeSections(cleaned.join("\n")),
+                ),
               ),
             ),
           ),
@@ -98,6 +215,7 @@ export function normalizeResumeMarkdown(md: string): string {
 }
 
 export type ResumeContact = {
+  fullName?: string;
   email?: string;
   phone?: string;
   location?: string;
@@ -157,22 +275,39 @@ function expandLinkLabelSegment(segment: string): string[] {
   return [segment];
 }
 
+function looksLikeContactLine(t: string): boolean {
+  const s = t.trim();
+  if (!s || /^##\s/.test(s)) return false;
+  return (
+    /@/.test(s) ||
+    /\(?\d{3}\)?[-.\s]?\d{3}/.test(s) ||
+    /linkedin|github|portfolio/i.test(s) ||
+    /\|/.test(s) ||
+    /\[.+?\]\(.+?\)/.test(s)
+  );
+}
+
 /** Turn plain LinkedIn / GitHub / Portfolio labels into markdown links from profile. */
 export function injectContactLinks(md: string, contact: ResumeContact): string {
   const lines = md.replace(/\r/g, "").split("\n");
   const nameIdx = lines.findIndex((l) => /^#\s/.test(l.trim()));
   if (nameIdx < 0) return md;
 
-  let contactIdx = -1;
+  // Collect every consecutive contact-ish line under the name (model often
+  // emits email/phone on one line and LinkedIn/Portfolio on the next).
+  const contactIndices: number[] = [];
   for (let i = nameIdx + 1; i < lines.length; i++) {
     const t = lines[i].trim();
-    if (!t) continue;
+    if (!t) {
+      if (contactIndices.length) continue;
+      continue;
+    }
     if (/^##\s/.test(t)) break;
-    contactIdx = i;
-    break;
+    if (!looksLikeContactLine(t)) break;
+    contactIndices.push(i);
   }
 
-  const existing = contactIdx >= 0 ? lines[contactIdx] : "";
+  const existing = contactIndices.map((i) => lines[i]).join(" | ");
   const enriched: string[] = [];
 
   if (existing) {
@@ -227,12 +362,26 @@ export function injectContactLinks(md: string, contact: ResumeContact): string {
     linkParts.push(contactLinkLabel("portfolio", contact.website));
   }
 
-  const parts = [email, phone, location, ...linkParts].filter(Boolean);
+  // Dedupe identical segments (case-insensitive) while preserving order.
+  const seen = new Set<string>();
+  const parts = [email, phone, location, ...linkParts].filter((p) => {
+    if (!p) return false;
+    const key = p.toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
   const newLine = parts.join(" | ");
   if (!newLine) return md;
 
-  if (contactIdx >= 0) lines[contactIdx] = newLine;
-  else lines.splice(nameIdx + 1, 0, newLine);
+  if (contactIndices.length) {
+    lines[contactIndices[0]] = newLine;
+    for (let i = contactIndices.length - 1; i >= 1; i--) {
+      lines.splice(contactIndices[i], 1);
+    }
+  } else {
+    lines.splice(nameIdx + 1, 0, newLine);
+  }
 
   return lines.join("\n");
 }
@@ -243,7 +392,26 @@ export function prepareResumeMarkdown(
   projects: Project[] = [],
   contact?: ResumeContact,
 ): string {
-  let out = injectProjectLinks(normalizeResumeMarkdown(md), projects, {
+  let out = normalizeResumeMarkdown(md);
+
+  // Ensure a real H1 name before contact injection (fence cleanup can wipe it).
+  const name = contact?.fullName?.trim();
+  if (name) {
+    const lines = out.split("\n");
+    const nameIdx = lines.findIndex((l) => /^#\s/.test(l.trim()));
+    if (nameIdx < 0) {
+      lines.unshift(`# ${name}`);
+      out = lines.join("\n");
+    } else if (
+      /^#\s*```/.test(lines[nameIdx].trim()) ||
+      !looksLikePersonName(lines[nameIdx])
+    ) {
+      lines[nameIdx] = `# ${name}`;
+      out = lines.join("\n");
+    }
+  }
+
+  out = injectProjectLinks(out, projects, {
     profileGithub: contact?.github,
   });
   if (contact) out = injectContactLinks(out, contact);
@@ -432,7 +600,8 @@ function normalizeProjectHeaders(md: string): string {
         return raw;
       }
       if (/^##\s+/.test(trimmed) && inProjects) inProjects = false;
-      if (!inProjects || !trimmed || /^[-*]/.test(trimmed)) return raw;
+      // Require whitespace after -/* so bold **Title** is not treated as a bullet.
+      if (!inProjects || !trimmed || /^[-*]\s/.test(trimmed)) return raw;
       return ensureBoldProjectHeader(raw);
     })
     .join("\n");
@@ -673,21 +842,26 @@ function normalizeSkillsLists(md: string): string {
 /** Wrap a plain job-title line in bold; italicize the date portion. */
 function boldRoleLine(line: string): string {
   const trimmed = line.trim();
-  if (/^\*\*/.test(trimmed)) return line;
+  // Re-normalize already-bolded headers so orphan pipes / mixed separators clean up.
+  if (/^\*\*/.test(trimmed)) {
+    return boldProjectHeaderLine(trimmed);
+  }
 
   const paren = trimmed.match(/^(.+?)\s+(\([^)]+\))\s*$/);
   if (paren && DATE_IN_PARENS.test(paren[2])) {
-    return `**${paren[1].trim()}** *${paren[2]}*`;
+    const date = paren[2].replace(/^\(|\)$/g, "");
+    return `**${paren[1].trim()}** — *(${date})*`;
   }
 
   const emDash = trimmed.match(/^(.+?)\s+[—–-]\s+(.+)$/);
   if (emDash && DATE_RANGE.test(emDash[2])) {
-    return `**${emDash[1].trim()}** *(${emDash[2].trim()})*`;
+    return `**${emDash[1].trim()}** — *(${emDash[2].trim()})*`;
   }
 
   if (DATE_IN_PARENS.test(trimmed)) {
     const idx = trimmed.lastIndexOf("(");
-    return `**${trimmed.slice(0, idx).trim()}** *${trimmed.slice(idx)}*`;
+    const date = trimmed.slice(idx).replace(/^\(|\)$/g, "");
+    return `**${trimmed.slice(0, idx).trim()}** — *(${date})*`;
   }
 
   return `**${trimmed}**`;
