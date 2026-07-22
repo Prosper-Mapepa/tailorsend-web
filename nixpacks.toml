@@ -3,7 +3,8 @@
 # is not deleted by `npm ci` (causes EBUSY on /.cache).
 
 [phases.setup]
-nixPkgs = ["nodejs_20", "npm-10_x"]
+# System Chromium via Nix — avoids `playwright install --with-deps` (apt timeout on Railway).
+nixPkgs = ["nodejs_20", "npm-10_x", "chromium", "noto-fonts"]
 
 [phases.install]
 cmds = ["npm install --include=dev"]
@@ -13,6 +14,9 @@ cmds = [
   "npx prisma generate",
   "npm run build",
 ]
+
+[variables]
+PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD = "1"
 
 [start]
 cmd = "npm run start:railway"

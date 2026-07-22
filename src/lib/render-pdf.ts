@@ -1,6 +1,5 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import { chromium } from "playwright";
 import {
   documentHtml,
   type DocumentKind,
@@ -10,6 +9,7 @@ import {
 import { ensureCoverLetterDate } from "@/lib/cover-letter";
 import {
   PLAYWRIGHT_DISABLED_MESSAGE,
+  launchHeadlessChromium,
   playwrightEnabled,
 } from "@/lib/playwright-env";
 import type { Project } from "@/lib/types";
@@ -36,7 +36,7 @@ export async function writeMarkdownPdf(
         ? ensureCoverLetterDate(markdown)
         : markdown;
 
-  const browser = await chromium.launch({ headless: true });
+  const browser = await launchHeadlessChromium();
   try {
     const page = await browser.newPage();
     await page.setContent(documentHtml(htmlMd, title, kind), {

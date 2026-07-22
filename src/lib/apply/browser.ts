@@ -3,6 +3,7 @@ import path from "node:path";
 import { chromium, type Browser, type BrowserContext } from "playwright";
 import {
   PLAYWRIGHT_DISABLED_MESSAGE,
+  launchHeadlessChromium,
   playwrightEnabled,
 } from "@/lib/playwright-env";
 
@@ -95,8 +96,8 @@ export async function launchAutofillBrowser(
     );
   }
 
-  // Headless screenshot preview only — bundled Chromium is OK here.
-  const browser = await chromium.launch(launchOpts);
+  // Headless screenshot / PDF — prefer system Chromium (Railway Nixpacks).
+  const browser = await launchHeadlessChromium(launchOpts);
   return {
     browser,
     usedSystemChrome: false,

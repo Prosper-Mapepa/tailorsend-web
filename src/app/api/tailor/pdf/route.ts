@@ -1,4 +1,3 @@
-import { chromium } from "playwright";
 import {
   documentHtml,
   type DocumentKind,
@@ -7,6 +6,7 @@ import {
 import { ensureCoverLetterDate } from "@/lib/cover-letter";
 import { requireAuthUser, isAuthUser } from "@/lib/auth";
 import { getProfile, profileResumeContact } from "@/lib/profile";
+import { launchHeadlessChromium } from "@/lib/playwright-env";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -50,7 +50,7 @@ export async function POST(req: Request) {
       htmlMd = ensureCoverLetterDate(htmlMd);
     }
 
-    browser = await chromium.launch({ headless: true });
+    browser = await launchHeadlessChromium();
     const page = await browser.newPage();
     await page.setContent(documentHtml(htmlMd, title, kind), {
       waitUntil: "networkidle",

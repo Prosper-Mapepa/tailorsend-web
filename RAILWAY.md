@@ -126,8 +126,10 @@ Use Railway’s **public** or TCP proxy URL only when required; prefer private n
 | Healthcheck failing (Web) | `/` must return 200; migrate + boot can take >100s — timeout is 300s in `railway.toml` |
 | Build OOM | Raise Web service memory / use fewer concurrent builds |
 
-### Playwright / autofill on Railway
+### Playwright / PDF / autofill on Railway
 
-Do **not** install Chromium during the Railway image build — `playwright install --with-deps` downloads ~100MB of apt packages and routinely times out the build.
+Do **not** run `playwright install --with-deps` in the image build — apt downloads routinely time out Railway builds.
 
-For v1 production, run autofill from a local/dev agent (or a dedicated worker with browsers preinstalled). Tailoring, billing, and core APIs work without Playwright on Railway.
+Instead, `nixpacks.toml` installs **system Chromium** via Nix (`chromium` + `noto-fonts`). PDF preview/download uses that binary through `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` or auto-detection (`chromium` on `PATH`).
+
+Headed autofill (live apply sessions) still works best from a Mac with Google Chrome installed.
