@@ -219,7 +219,7 @@ export function AutofillPanel({
               ? `Multi-step form — advanced through ${data.stepsAdvanced ?? data.passes} step(s). Click Continue Autofill to fill remaining pages.`
               : data.verified
                 ? "Validation passed. Review in the browser before submitting."
-                : "Multi-step form? Click Continue Autofill to run another pass."}
+                : "Multi-step form? Click Continue Autofill to run another pass (reopens the apply page on the live site)."}
           </p>
         )}
 

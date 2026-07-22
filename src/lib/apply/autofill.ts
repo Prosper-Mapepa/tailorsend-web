@@ -1465,8 +1465,9 @@ async function openApplyTab(
       "continue",
     );
     if (existing) return existing;
-    throw new Error(
-      "No open application tab found. Use “Auto-fill & open browser” first, then Continue Autofill on that tab.",
+    // Railway / headless: no shared Chrome window between requests.
+    log.push(
+      "No open browser tab on this server — reopening the apply page for another autofill pass.",
     );
   }
 
