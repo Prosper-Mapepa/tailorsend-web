@@ -213,11 +213,11 @@ export function FormattedDocEditor({
       ) : (
         <div
           className={`rounded-md border border-slate-200 bg-white p-6 ${
-            kind === "cover" ? "cover-letter-preview" : ""
+            kind === "cover" ? "cover-letter-preview" : "overflow-visible"
           }`}
         >
           <div
-            className="doc-preview"
+            className="doc-preview overflow-visible"
             dangerouslySetInnerHTML={{
               __html: mdToHtml(displayMd, { kind }),
             }}

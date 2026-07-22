@@ -9,9 +9,14 @@ import {
   usageLimitResponse,
 } from "@/lib/billing/usage";
 import {
+  ANNUAL_MONTHLY_KITS,
+  ANNUAL_PRICE_CENTS,
   CREDIT_PACKS,
+  FLEX_MONTHLY_KITS,
   FLEX_PRICE_CENTS,
+  SEASON_MONTHS,
   SEASON_PRICE_CENTS,
+  SEASON_TOTAL_KITS,
   isStudentEmail,
   packById,
 } from "@/lib/billing/plans";
@@ -26,7 +31,7 @@ const schema = z.discriminatedUnion("action", [
   }),
   z.object({
     action: z.literal("set_plan"),
-    plan: z.enum(["free", "flex", "season"]),
+    plan: z.enum(["free", "flex", "annual", "season"]),
   }),
   z.object({
     action: z.literal("pause_flex"),
@@ -88,9 +93,11 @@ export async function POST(req: Request) {
       const price =
         data.plan === "flex"
           ? FLEX_PRICE_CENTS
-          : data.plan === "season"
-            ? SEASON_PRICE_CENTS
-            : 0;
+          : data.plan === "annual"
+            ? ANNUAL_PRICE_CENTS
+            : data.plan === "season"
+              ? SEASON_PRICE_CENTS
+              : 0;
       return NextResponse.json({
         ok: true,
         usage,
@@ -104,7 +111,7 @@ export async function POST(req: Request) {
     return NextResponse.json({
       ok: true,
       usage,
-      message: "Student Monthly paused for 30 days.",
+      message: "Subscription paused for 30 days.",
     });
   } catch (err) {
     if (err instanceof UsageLimitError) return usageLimitResponse(err);
@@ -119,8 +126,16 @@ export async function GET() {
   return NextResponse.json({
     packs: CREDIT_PACKS,
     plans: {
-      flex: { priceCents: FLEX_PRICE_CENTS, kitsPerMonth: 20 },
-      season: { priceCents: SEASON_PRICE_CENTS, totalKits: 60, months: 4 },
+      flex: { priceCents: FLEX_PRICE_CENTS, kitsPerMonth: FLEX_MONTHLY_KITS },
+      annual: {
+        priceCents: ANNUAL_PRICE_CENTS,
+        kitsPerMonth: ANNUAL_MONTHLY_KITS,
+      },
+      season: {
+        priceCents: SEASON_PRICE_CENTS,
+        totalKits: SEASON_TOTAL_KITS,
+        months: SEASON_MONTHS,
+      },
     },
   });
 }

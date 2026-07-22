@@ -6,9 +6,10 @@
     "node": ">=20.19.0"
   },
   "scripts": {
-    "docs:sync": "rm -rf public/docs && mkdir -p public/docs/files && cp -R docs/investor/html/. public/docs/ && cp docs/investor/*.md docs/investor/*.csv public/docs/files/",
+    "docs:sync": "rm -rf public/docs && mkdir -p public/docs/files && cp -R docs/investor/html/. public/docs/ && cp docs/investor/*.md docs/investor/*.csv public/docs/files/ && date +%s > public/docs/__reload.txt",
+    "docs:watch": "node scripts/watch-investor-docs.mjs",
     "prebuild": "npm run docs:sync",
-    "dev": "npm run docs:sync && prisma generate && next dev",
+    "dev": "npm run docs:sync && npm run db:migrate && prisma generate && sh -c 'node scripts/watch-investor-docs.mjs & watcher=$!; trap \"kill $watcher 2>/dev/null\" EXIT INT TERM; next dev'",
     "build": "next build",
     "start": "next start --hostname 0.0.0.0",
     "start:railway": "bash scripts/railway-start.sh",

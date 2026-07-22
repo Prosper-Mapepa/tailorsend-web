@@ -131,4 +131,35 @@ blockquote{margin:1.5rem 0;padding:1rem 1.25rem;border-left:3px solid var(--acce
   }
 
   window.TailorSendDownload = { download, downloadText };
+
+  // Static investor pages do not receive Next.js Fast Refresh. During local
+  // development, watch the sync marker and reload after a source file changes.
+  if (
+    window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1"
+  ) {
+    let reloadVersion;
+
+    async function checkForDocChanges() {
+      try {
+        const response = await fetch(`/docs/__reload.txt?t=${Date.now()}`, {
+          cache: "no-store",
+        });
+        if (!response.ok) return;
+
+        const nextVersion = (await response.text()).trim();
+        if (reloadVersion && nextVersion !== reloadVersion) {
+          window.location.reload();
+          return;
+        }
+
+        reloadVersion = nextVersion;
+      } catch {
+        // The dev server may be restarting; retry on the next interval.
+      }
+    }
+
+    void checkForDocChanges();
+    window.setInterval(checkForDocChanges, 750);
+  }
 })();

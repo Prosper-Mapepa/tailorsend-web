@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireAuthUser, isAuthUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import {
+  persistRecruiterOutreach,
+  hydrateApplicationOutreach,
+} from "@/lib/application-persist";
 
 export const dynamic = "force-dynamic";
 
@@ -20,7 +24,8 @@ export async function GET(
   if (!application || application.userId !== auth.id) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
-  return NextResponse.json(application);
+  const hydrated = await hydrateApplicationOutreach(prisma, application);
+  return NextResponse.json(hydrated);
 }
 
 const patchSchema = z.object({
@@ -40,6 +45,8 @@ const patchSchema = z.object({
   tailoredResume: z.string().optional(),
   coverLetter: z.string().optional(),
   matchNotes: z.string().optional(),
+  linkedInRecruiterNote: z.string().optional(),
+  recruiterEmail: z.string().optional(),
 });
 
 export async function PATCH(
@@ -60,14 +67,36 @@ export async function PATCH(
   if (!parsed.success) {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
-  const data = { ...parsed.data } as Record<string, unknown>;
+
+  const {
+    linkedInRecruiterNote,
+    recruiterEmail,
+    ...rest
+  } = parsed.data;
+
+  const data = { ...rest } as Record<string, unknown>;
   if (parsed.data.status === "submitted") {
     data.submittedAt = new Date();
   }
+
   const application = await prisma.application.update({
     where: { id },
     data,
     include: { job: true },
   });
-  return NextResponse.json(application);
+
+  if (
+    linkedInRecruiterNote !== undefined ||
+    recruiterEmail !== undefined
+  ) {
+    await persistRecruiterOutreach(
+      prisma,
+      id,
+      linkedInRecruiterNote ?? "",
+      recruiterEmail ?? "",
+    );
+  }
+
+  const hydrated = await hydrateApplicationOutreach(prisma, application);
+  return NextResponse.json(hydrated);
 }

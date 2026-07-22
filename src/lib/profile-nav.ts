@@ -27,6 +27,7 @@ export const PROFILE_NAV_GROUPS: ProfileNavGroup[] = [
     label: "Job search",
     items: [
       { id: "roles", label: "Target roles" },
+      { id: "boards", label: "Job boards" },
       { id: "visa", label: "Work auth" },
     ],
   },

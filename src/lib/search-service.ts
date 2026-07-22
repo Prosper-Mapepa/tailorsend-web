@@ -1,8 +1,10 @@
 import { prisma } from "@/lib/db";
+import { mergeSearchBoards } from "@/lib/job-boards";
 import { scoreJob } from "@/lib/match";
 import { ALL_SOURCE_IDS, searchAllSources, type SourceId } from "@/lib/sources";
 import type {
   DatePosted,
+  JobBoardSite,
   NormalizedJob,
   SearchParams,
   TargetRole,
@@ -67,6 +69,7 @@ export async function runSearch(
     : null;
   const targetRoles = safeJson<TargetRole[]>(profile?.targetRoles, []);
   const skills = safeJson<string[]>(profile?.skills, []);
+  const userSites = safeJson<JobBoardSite[]>(profile?.jobBoards, []);
 
   // F1 students will need sponsorship; default to filtering blocked jobs when
   // the profile flags it, unless the caller overrides.
@@ -84,23 +87,18 @@ export async function runSearch(
   // query per configured target role.
   const queries: SearchParams[] = [];
 
-  // Greenhouse/Lever company board slugs are curated via env so the user can
-  // point the scanner at the specific companies they care about, e.g.
-  //   GREENHOUSE_BOARDS=stripe,figma,airbnb
-  //   LEVER_BOARDS=netflix,spotify
-  const parseList = (v: string | undefined) =>
-    (v ?? "")
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean);
+  // Per-user career sites (Profile → Job boards) merged with optional env defaults.
+  const resolved = mergeSearchBoards({
+    envGreenhouse: process.env.GREENHOUSE_BOARDS,
+    envLever: process.env.LEVER_BOARDS,
+    envCompanies: process.env.TARGET_COMPANIES,
+    userSites,
+  });
   const boards = {
-    greenhouse: parseList(process.env.GREENHOUSE_BOARDS),
-    lever: parseList(process.env.LEVER_BOARDS),
+    greenhouse: resolved.greenhouse,
+    lever: resolved.lever,
   };
-
-  // Big-tech / target employers to bias JSearch toward (Workday/custom sites
-  // with no public board API). Attached to a single query to limit API usage.
-  const targetCompanies = parseList(process.env.TARGET_COMPANIES);
+  const targetCompanies = resolved.targetCompanies;
 
   if (opts.query) {
     queries.push({

@@ -1,35 +1,44 @@
-TailorSend Financial Model - ASSUMPTIONS (Michigan SBDC · student packages)
+TailorSend Financial Model - ASSUMPTIONS (Michigan SBDC · NVC-style · $25K ask)
 Variable,Value,Unit,Notes
-Owner personal investment,12000,USD,Bootstrap capital on hand
-Outside funding sought,0,USD,Bootstrapped; SBDC guidance not equity
+Ask (grant / award / seed support),25000,USD,Y1 cash source — primary raise
+Owner personal investment,0,USD,Sweat equity; cash ask is $25K
+Outside equity / VC,0,USD,Not seeking venture capital
+Loans,0,USD,No debt modeled
+Starting cash,0,USD,Working capital before Y1 ask receipt
+Tax rate,25,%,Applied to annual pre-tax cash profit when positive
 ,,,
-PRICING (live on tailorsend.cc),,,
-Student Monthly price,8,USD/mo,Primary recurring plan (was Flex)
-Student Monthly kits,25,kits/mo,
-Campus pack price,5,USD,8 kits · impulse buy
-Sprint pack price,12,USD,25 kits · $8 with .edu
-Sprint student price,8,USD,.edu email
+I. REVENUE DRIVERS,,,
+Paying users EOY Y1-Y5,24 | 95 | 280 | 700 | 1500,,Cumulative end-of-year paid customers
+Campus partnerships Y1-Y5,1 | 3 | 6 | 12 | 20,,MI schools then regional expansion
+Blended ARPU,12,USD/mo,Mix of Campus $5 / Monthly $9.99 / Yearly $89.99 / Sprint $29.99
+Student Monthly price,9.99,USD/mo,25 kits/mo primary MRR
+Campus pack,5,USD,8 kits one-time
+Sprint pack,29.99,USD,25 kits one-time
 ,,,
-UNIT ECONOMICS,,,
-Blended ARPU per paying user,10,USD/mo,Mix of Campus Sprint and Student Monthly
-COGS per kit,0.18,USD,OpenAI API + hosting variable
+UNIT ECONOMICS (COGS),,,
+COGS per kit,0.18,USD,OpenAI + variable hosting
 Stripe fee rate,0.029,,
+Gross margin target,76-80,% ,Pure SaaS — no inventory
 ,,,
-GROWTH (conservative Year 1),,,
-Starting registered users,5,Beta users at launch
-Free to paid conversion,10,%,Lower prices → faster trial convert
-Monthly churn Student Monthly,18,%,Job search is episodic
+$25K ASK — USE OF FUNDS,,,
+Platform hosting & AI runway,6000,USD,Railway Postgres OpenAI buffer
+Campus demo & sales materials,4000,USD,Career center kits demos
+Student ambassador expansion,4000,USD,CMU U-M MSU pilots
+Platform hardening & compliance,3000,USD,Security reliability
+Legal contracts & entity,2000,USD,LLC terms privacy
+Marketing & campus GTM,4000,USD,Organic SEO ambassador ads
+Runway buffer,2000,USD,Operating contingency
+Ask total,25000,USD,
 ,,,
-MONTHLY FIXED COSTS,,,
-Hosting Railway Postgres,120,USD/mo,
-OpenAI base budget,50,USD/mo,Grows with usage
-Domain email misc,25,USD/mo,
-Marketing organic,250,USD/mo,Campus social SEO only Year 1
-Accounting legal,75,USD/mo,
-Owner draw,0,USD/mo,Months 1-8; part-time after
-Owner draw start month,9,,
-Owner draw amount,1500,USD/mo,Part-time from revenue
+GROWTH LOGIC,,,
+Y1,Michigan validate,,"~300 registered · 24 paying · $336 MRR · $25K ask bridge"
+Y2,Regional proof,,2–3 campus partnerships · SBDC GTM
+Y3,Multi-state brand,,Student Monthly scale
+Y4,SaaS brand,,700 paying · founder salary scales
+Y5,National floor,,1500 paying · first staff hire
 ,,,
-MICHIGAN MARKET,,,
-Primary geography,Michigan,US,Founder based MI; campus focus
-Target schools,CMU U-M MSU Wayne State,,
+EXCLUDED UPSIDE,,,
+Enterprise API,excluded,,
+B2B campus site licenses,excluded,,
+Employer recruiting seats,excluded,,
+International expansion,excluded,,

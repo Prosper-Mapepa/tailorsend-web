@@ -104,7 +104,7 @@ Adds `stripeCustomerId`, `stripeSubscriptionId` on `UsageAccount` and `StripeChe
 
 ## Student pricing
 
-Pack 15 uses dynamic `price_data` — if the user email matches `.edu`, the checkout amount is the student price ($6). No separate Stripe Price IDs required.
+`.edu` emails still unlock higher **free** monthly allowances. Pack and subscription amounts come from `src/lib/billing/plans.ts` (Student Monthly **$9.99/mo**, Student Yearly **$89.99/yr**, Campus **$5** / 8 kits, Sprint **$29.99** / 50 kits).
 
 Promotion codes can be enabled in Checkout (`allow_promotion_codes: true`).
 

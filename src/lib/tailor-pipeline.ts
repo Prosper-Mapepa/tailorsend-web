@@ -29,6 +29,8 @@ export interface TailorPipelineResult {
   tailoredResume: string;
   coverLetter: string;
   matchNotes: string;
+  linkedInRecruiterNote: string;
+  recruiterEmail: string;
   beforeMatch: MatchScore;
   afterMatch: MatchScore;
 }
@@ -100,6 +102,8 @@ export async function runTailorPipeline(
     tailoredResume: resume,
     coverLetter: ensureCoverLetterDate(tailored.coverLetter),
     matchNotes: tailored.matchNotes,
+    linkedInRecruiterNote: tailored.linkedInRecruiterNote,
+    recruiterEmail: tailored.recruiterEmail,
     beforeMatch,
     afterMatch,
   };

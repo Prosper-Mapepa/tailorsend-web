@@ -18,7 +18,20 @@ function schemaFingerprint(): string {
       join(process.cwd(), "prisma/schema.prisma"),
       "utf8",
     );
-    return createHash("md5").update(schema).digest("hex").slice(0, 12);
+    let generated = "";
+    try {
+      generated = readFileSync(
+        join(process.cwd(), "src/generated/prisma/models/Application.ts"),
+        "utf8",
+      );
+    } catch {
+      /* client not generated yet */
+    }
+    return createHash("md5")
+      .update(schema)
+      .update(generated)
+      .digest("hex")
+      .slice(0, 12);
   } catch {
     return "unknown";
   }

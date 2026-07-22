@@ -10,6 +10,7 @@ import { AutofillPanel, type AutofillPanelData } from "@/components/AutofillPane
 import { AutofillHero } from "@/components/AutofillHero";
 import { ApplicationGuide } from "@/components/ApplicationGuide";
 import { MatchComparison } from "@/components/MatchComparison";
+import { RecruiterOutreachPanel } from "@/components/RecruiterOutreachPanel";
 import {
   autofillUrlWarning,
   isLikelyMultiStepApply,
@@ -46,6 +47,8 @@ export interface TailorWorkflowResult {
   tailoredResume: string;
   coverLetter: string;
   matchNotes: string;
+  linkedInRecruiterNote?: string;
+  recruiterEmail?: string;
   beforeMatch: MatchScore;
   afterMatch: MatchScore;
   edge?: CompanyEdge | null;
@@ -91,6 +94,12 @@ export function TailorResultWorkflow({
   const [resume, setResume] = useState(initial.tailoredResume);
   const [cover, setCover] = useState(
     ensureCoverLetterDate(initial.coverLetter),
+  );
+  const [linkedInNote, setLinkedInNote] = useState(
+    initial.linkedInRecruiterNote ?? "",
+  );
+  const [recruiterEmail, setRecruiterEmail] = useState(
+    initial.recruiterEmail ?? "",
   );
   const [dirty, setDirty] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -239,6 +248,8 @@ export function TailorResultWorkflow({
       body: JSON.stringify({
         tailoredResume: resume,
         coverLetter: datedCover,
+        linkedInRecruiterNote: linkedInNote,
+        recruiterEmail,
       }),
     });
     setSaving(false);
@@ -301,14 +312,22 @@ export function TailorResultWorkflow({
   }
 
   async function advanceGuide() {
-    if (dirty && (guideStep === "resume" || guideStep === "cover")) {
+    if (
+      dirty &&
+      (guideStep === "resume" ||
+        guideStep === "cover" ||
+        guideStep === "outreach")
+    ) {
       await saveDocs();
     }
 
     setCompletedSteps((prev) => new Set(prev).add(guideStep));
 
     const next = nextStepId(guideStep);
-    if (!next || next === "status") {
+    if (!next) {
+      return;
+    }
+    if (guideStep !== "status" && next === "status") {
       scrollToStatusUpdate();
       return;
     }
@@ -576,6 +595,22 @@ export function TailorResultWorkflow({
                 Company research isn&apos;t available for this role.
               </p>
             )
+          ) : guideStep === "outreach" ? (
+            <RecruiterOutreachPanel
+              embedded
+              jobTitle={initial.job.title}
+              company={initial.job.company}
+              linkedInNote={linkedInNote}
+              recruiterEmail={recruiterEmail}
+              onLinkedInChange={(v) => {
+                setLinkedInNote(v);
+                setDirty(true);
+              }}
+              onEmailChange={(v) => {
+                setRecruiterEmail(v);
+                setDirty(true);
+              }}
+            />
           ) : (
             <FormattedDocEditor
               label={

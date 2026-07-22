@@ -1,4 +1,6 @@
 import {
+  ANNUAL_MONTHLY_KITS,
+  ANNUAL_PRICE_CENTS,
   FLEX_MONTHLY_KITS,
   FLEX_PRICE_CENTS,
   SEASON_MONTHS,
@@ -6,6 +8,7 @@ import {
   SEASON_TOTAL_KITS,
   type CreditPack,
 } from "./plans";
+import { formatCents } from "./format";
 
 export type PackCatalogEntry = {
   id: string;
@@ -15,45 +18,56 @@ export type PackCatalogEntry = {
   description: string;
   highlights: string[];
   idealFor: string;
+  bestWhen: string;
 };
 
 export type PlanCatalogEntry = {
-  id: "free" | "flex" | "season";
+  id: "free" | "flex" | "annual" | "season";
   name: string;
   badge?: string;
   tagline: string;
   description: string;
   highlights: string[];
   idealFor: string;
+  bestWhen: string;
   priceLabel: string;
   kitsLabel: string;
 };
+
+const flexPrice = formatCents(FLEX_PRICE_CENTS);
+const annualPrice = formatCents(ANNUAL_PRICE_CENTS);
+const monthlyIfAnnual = formatCents(Math.round(ANNUAL_PRICE_CENTS / 12));
+const annualSavings = formatCents(FLEX_PRICE_CENTS * 12 - ANNUAL_PRICE_CENTS);
 
 export const PACK_CATALOG: Record<string, PackCatalogEntry> = {
   pack_5: {
     id: "pack_5",
     name: "Campus",
-    tagline: "Try it this week — no subscription",
-    description: "Eight kits for real applications today.",
+    tagline: "Small top-up · no subscription",
+    description:
+      "Eight kits for a few applications this week. Kits never expire.",
     highlights: [
-      "8 kits · never expire",
+      "8 kits that never expire",
       "One-time purchase",
-      "No card needed to stay on Free",
+      "Stay on Free after — no card required",
     ],
-    idealFor: "A few apps this week",
+    idealFor: "Trying TailorSend on 1–2 applications",
+    bestWhen: "You only need a handful of kits right now",
   },
   pack_15: {
     id: "pack_15",
     name: "Sprint",
     badge: "Best one-time",
-    tagline: "A focused hunt without renewing",
-    description: "Twenty-five kits for internship season or a two-week push.",
+    tagline: "Volume without renewing",
+    description:
+      "Fifty kits for a focused hunt. Better per-kit price than Campus.",
     highlights: [
-      "25 kits · never expire",
-      "$8 with .edu email",
-      "~2–3 weeks of applying",
+      "50 kits that never expire",
+      "Better $/kit than Campus",
+      "About 2 months of applying",
     ],
-    idealFor: "Internship / job sprint",
+    idealFor: "A serious short hunt without billing every month",
+    bestWhen: "You want volume once, then you are done",
   },
   pack_40: {
     id: "pack_40",
@@ -62,6 +76,7 @@ export const PACK_CATALOG: Record<string, PackCatalogEntry> = {
     description: "Forty kits (legacy storefront).",
     highlights: ["Credits never expire"],
     idealFor: "Existing checkout sessions only",
+    bestWhen: "Legacy fulfillment only",
   },
 };
 
@@ -71,31 +86,50 @@ export const PLAN_CATALOG: PlanCatalogEntry[] = [
     name: "Free",
     tagline: "Try TailorSend with no card",
     description:
-      "A small monthly allowance so you can set up your profile and run a couple of applications.",
+      "A small monthly allowance so you can set up your profile and run a couple of applications before upgrading.",
     highlights: [
       "2 tailor + 1 autofill / month",
       "4 tailor + 2 autofill for .edu",
       "Upgrade anytime",
     ],
     idealFor: "Getting started",
+    bestWhen: "You are exploring the product",
     priceLabel: "$0",
     kitsLabel: "Monthly tease",
   },
   {
     id: "flex",
     name: "Student Monthly",
-    badge: "Most popular",
-    tagline: "Always-on while you search",
+    badge: "Flexible",
+    tagline: "Pay month to month",
     description:
-      "Twenty-five kits every month. Pause for finals — cancel anytime.",
+      "25 kits every month. Pause or cancel anytime.",
     highlights: [
-      `${FLEX_MONTHLY_KITS} kits every month`,
-      `$${(FLEX_PRICE_CENTS / 100).toFixed(0)}/mo — less than lunch`,
-      "Pause 30 days anytime",
+      "25 kits every month",
+      "Pause up to 30 days",
+      "Cancel when your search ends",
     ],
-    idealFor: "Active student search",
-    priceLabel: `$${(FLEX_PRICE_CENTS / 100).toFixed(0)}/mo`,
+    idealFor: "Active search lasting a few months",
+    bestWhen: "You want the lowest monthly commitment",
+    priceLabel: `${flexPrice}/mo`,
     kitsLabel: `${FLEX_MONTHLY_KITS} kits / month`,
+  },
+  {
+    id: "annual",
+    name: "Student Yearly",
+    badge: "Best value",
+    tagline: "Same kits · save ~25%",
+    description:
+      `Same 25 kits/mo as Monthly, billed yearly. Save about ${annualSavings}.`,
+    highlights: [
+      "25 kits every month",
+      `${monthlyIfAnnual}/mo effective`,
+      `Save ~${annualSavings} vs Monthly`,
+    ],
+    idealFor: "Full recruiting cycle (internship + full-time)",
+    bestWhen: "You will apply for 6+ months this year",
+    priceLabel: `${annualPrice}/yr`,
+    kitsLabel: `${ANNUAL_MONTHLY_KITS} kits / month`,
   },
   {
     id: "season",
@@ -110,6 +144,7 @@ export const PLAN_CATALOG: PlanCatalogEntry[] = [
       "Manage in billing portal",
     ],
     idealFor: "Current Season Pass holders",
+    bestWhen: "Legacy plan only",
     priceLabel: `$${(SEASON_PRICE_CENTS / 100).toFixed(0)}`,
     kitsLabel: `${SEASON_TOTAL_KITS} kits total`,
   },
@@ -124,10 +159,13 @@ export function getPackCatalog(pack: CreditPack): PackCatalogEntry {
       description: `${pack.kits} kits for tailor, autofill, or incorporate actions.`,
       highlights: ["Credits never expire"],
       idealFor: "Top up when you need more kits",
+      bestWhen: "You need a credit top-up",
     }
   );
 }
 
-export function getPlanCatalog(id: "free" | "flex" | "season"): PlanCatalogEntry {
+export function getPlanCatalog(
+  id: "free" | "flex" | "annual" | "season",
+): PlanCatalogEntry {
   return PLAN_CATALOG.find((p) => p.id === id)!;
 }

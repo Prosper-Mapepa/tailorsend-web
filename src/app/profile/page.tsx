@@ -38,10 +38,15 @@ import { US_STATES } from "@/lib/us-states";
 import type {
   Certification,
   Education,
+  JobBoardSite,
   Project,
   TargetRole,
   WorkExperience,
 } from "@/lib/types";
+import {
+  defaultLabelForInput,
+  describeBoardKind,
+} from "@/lib/job-boards";
 
 interface ProfileForm {
   fullName: string;
@@ -59,6 +64,7 @@ interface ProfileForm {
   certifications: Certification[];
   projects: Project[];
   targetRoles: TargetRole[];
+  jobBoards: JobBoardSite[];
   visaStatus: string;
   needsSponsorship: boolean;
   gender: string;
@@ -95,6 +101,7 @@ const EMPTY: ProfileForm = {
   certifications: [],
   projects: [],
   targetRoles: [],
+  jobBoards: [],
   visaStatus: "",
   needsSponsorship: false,
   gender: "",
@@ -245,6 +252,27 @@ export default function ProfilePage() {
     set(
       "targetRoles",
       form.targetRoles.filter((_, idx) => idx !== i),
+    );
+  }
+
+  function addJobBoard() {
+    set("jobBoards", [...form.jobBoards, { input: "", label: "" }]);
+  }
+
+  function updateJobBoard(i: number, patch: Partial<JobBoardSite>) {
+    setForm((f) => ({
+      ...f,
+      jobBoards: f.jobBoards.map((b, idx) =>
+        idx === i ? { ...b, ...patch } : b,
+      ),
+    }));
+    setSaved(false);
+  }
+
+  function removeJobBoard(i: number) {
+    set(
+      "jobBoards",
+      form.jobBoards.filter((_, idx) => idx !== i),
     );
   }
 
@@ -461,6 +489,7 @@ export default function ProfilePage() {
       projects: form.projects.length,
       certifications: form.certifications.length,
       roles: form.targetRoles.length,
+      boards: form.jobBoards.filter((b) => b.input.trim()).length,
       skills: skillsText
         .split(",")
         .map((s) => s.trim())
@@ -472,6 +501,7 @@ export default function ProfilePage() {
       form.projects.length,
       form.certifications.length,
       form.targetRoles.length,
+      form.jobBoards,
       skillsText,
     ],
   );
@@ -1287,6 +1317,90 @@ export default function ProfilePage() {
                     </div>
                   </ItemCard>
                 ))}
+              </div>
+            )}
+          </ProfileSection>
+
+          <ProfileSection
+            id="boards"
+            expandOnId={expandSectionId}
+            title="Job boards & companies"
+            description="Career sites the scanner prioritizes for your profession — Greenhouse/Lever boards, company careers pages, or names."
+            count={form.jobBoards.filter((b) => b.input.trim()).length}
+            defaultOpen={form.jobBoards.length === 0}
+            action={
+              <Button variant="secondary" size="sm" onClick={addJobBoard}>
+                + Add site
+              </Button>
+            }
+          >
+            <p className="mb-3 text-sm text-slate-500">
+              Examples:{" "}
+              <code className="text-xs">https://boards.greenhouse.io/stripe</code>
+              ,{" "}
+              <code className="text-xs">https://jobs.lever.co/netflix</code>
+              ,{" "}
+              <code className="text-xs">careers.microsoft.com</code>
+              , or a company name like{" "}
+              <code className="text-xs">Kaiser Permanente</code>. Nurses,
+              teachers, and engineers can each save different targets.
+            </p>
+            {form.jobBoards.length === 0 ? (
+              <p className="text-sm text-slate-400">
+                No sites yet — add boards for companies you want scanned.
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {form.jobBoards.map((board, i) => {
+                  const kindHint = board.input.trim()
+                    ? describeBoardKind(board.input)
+                    : "";
+                  return (
+                    <ItemCard key={i} onRemove={() => removeJobBoard(i)}>
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        <div className="sm:col-span-2">
+                          <Label>Website or company</Label>
+                          <input
+                            className={inputClass}
+                            placeholder="https://boards.greenhouse.io/… or company name"
+                            value={board.input}
+                            onChange={(e) => {
+                              const input = e.target.value;
+                              const prevDefault = defaultLabelForInput(
+                                board.input,
+                              );
+                              const keepCustom =
+                                board.label.trim() !== "" &&
+                                board.label.trim() !== prevDefault;
+                              updateJobBoard(i, {
+                                input,
+                                label: keepCustom
+                                  ? board.label
+                                  : defaultLabelForInput(input),
+                              });
+                            }}
+                          />
+                          {kindHint ? (
+                            <p className="mt-1 text-xs text-emerald-700">
+                              {kindHint}
+                            </p>
+                          ) : null}
+                        </div>
+                        <div>
+                          <Label>Label (optional)</Label>
+                          <input
+                            className={inputClass}
+                            placeholder="Stripe"
+                            value={board.label}
+                            onChange={(e) =>
+                              updateJobBoard(i, { label: e.target.value })
+                            }
+                          />
+                        </div>
+                      </div>
+                    </ItemCard>
+                  );
+                })}
               </div>
             )}
           </ProfileSection>

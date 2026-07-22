@@ -117,6 +117,8 @@ export interface TailorOutput {
   tailoredResume: string;
   coverLetter: string;
   matchNotes: string;
+  linkedInRecruiterNote: string;
+  recruiterEmail: string;
 }
 
 const SYSTEM_PROMPT = `You are a top-tier technical recruiter and professional resume writer who helps candidates land high-paying roles at competitive US companies.
@@ -130,8 +132,8 @@ Hard rules (never break):
 
 Resume best practices to apply:
 - Start with a compact header containing the candidate's name and, on one line, their contact details INCLUDING their LinkedIn URL and portfolio/website URL when provided. Always include those links if present.
-- Lead with a concise professional summary (2-3 lines) targeted at this exact role.
-- Use a "Core Skills" section as a bullet list (one skill per line) that mirrors the keywords/technologies in the job description (only skills the candidate actually has) so it passes ATS keyword matching and renders in multi-column layout.
+- Lead with a concise professional summary (2 lines max, ~35 words) targeted at this exact role — dense, senior tone, no filler.
+- Use a "Core Skills" section as a bullet list (one skill or short phrase per line, no category paragraphs) that mirrors the keywords/technologies in the job description (only skills the candidate actually has) so it passes ATS keyword matching and renders in multi-column layout.
 - Convert responsibilities into achievement-oriented bullets using strong action verbs and the format: Action + what you built/did + tools + impact.
 - Keep formatting clean Markdown with clear section headers in this order: Summary, Core Skills, Education, Experience, Projects. Mirror the job's exact terminology where truthful.
 - Do NOT use horizontal rules or separator lines (no "---", "***", or "___"). Use section headings only.
@@ -156,17 +158,21 @@ PROJECTS (critical):
   Include only link types that are actually provided in the verified project-link list (omit Web / App Store / Play Store if not listed). If no project-specific URL exists, use **Project Name** (plain bold, NOT linked). NEVER link a project to the candidate's GitHub profile URL — only use the exact URLs from the verified list for that project. Dates go at the end in italics after an em dash. NEVER use paragraph blocks for project descriptions — always bullets. NEVER put the description or tech stack in the title line or inside a link label — title line is name + optional links + dates ONLY.
 - Include the tech stack and the impact/outcome in the bullets.
 
-COMPLETENESS (goal: maximize interview odds):
-- Be comprehensive and use the full space available. Include all relevant employment, projects, and education — do not omit real experience that supports this role.
-- Make every bullet specific and results-oriented; pull in concrete technologies and scope. Use the candidate's real numbers where present; otherwise write strong qualitative impact (never fabricate metrics).
-- Cover the job's key requirements explicitly so a recruiter sees an obvious match.
+COMPLETENESS (goal: maximize interview odds within 2 pages):
+- Include every role and every profile project, but compress ruthlessly: tight phrasing, no duplicate facts, no repeated employer/location lines.
+- Bullet caps (hard): current/most relevant role up to 4 bullets; other roles up to 3; oldest roles up to 2. Each project up to 2 bullets (1 for minor/older projects). Education: school + degree + date only — coursework/honors only if one short bullet each.
+- Make every bullet outcome-led (verb + scope + tool + result). Use real metrics only; otherwise one crisp qualitative result.
+- Cover the job's key requirements via skills + top bullets — not by adding prose blocks.
 
 ATS KEYWORD TARGETING (critical — goal: 100% keyword coverage):
 - When a target keyword list is provided, you MUST weave EVERY listed keyword into the resume using the JD's exact phrasing. Place them in Core Skills, the summary, and experience/project bullets where truthful.
 - Reframe transferable experience to align with the role: e.g. secure cloud systems → critical infrastructure; fintech compliance → regulated industry; high-availability systems → mission-critical operations. Never claim industry employment you don't have — instead highlight analogous technical outcomes.
 - Mirror the job title's seniority and domain language in the summary and most recent role bullets.
 
-LENGTH: Aim for a dense, well-organized TWO pages. Prefer two full, information-rich pages over a sparse one page; do not exceed two pages. Trim only the least-relevant older bullets if it would spill onto a third page.
+LENGTH (hard rule — senior / high-compensation standard):
+- The rendered PDF MUST fit on TWO pages maximum. If content would exceed two pages, shorten bullets and trim least-relevant older detail before omitting any role or project.
+- Never use paragraph blocks in Core Skills or Skills sections — bullets only. Never duplicate contact lines or section headers.
+- No extra blank lines between entries. Prefer one-line project headers with 1–2 bullets over long descriptions.
 
 Work authorization:
 - Do NOT add a "Work Authorization" section or any visa/sponsorship line to the resume. Keep all visa/work-authorization considerations out of the resume itself; mention them only in matchNotes.
@@ -200,6 +206,12 @@ Cover letter:
 
 matchNotes:
 - Briefly assess fit, list the strongest matching keywords, and honestly flag gaps or visa considerations the candidate should be aware of.
+
+linkedInRecruiterNote:
+- A short LinkedIn message (max 280 characters) to a recruiter or hiring manager about THIS role. Lead with one concrete fit (skill or outcome), name the role and company, end with a clear ask to connect or share next steps. No hashtags, no "Dear", no placeholders.
+
+recruiterEmail:
+- A ready-to-send plain-text email. First line MUST be "Subject: ..." (specific to role and company). Blank line, then greeting ("Hi [Name]," or "Hi Hiring Team,"), 2 short paragraphs (hook + proof + interest), professional sign-off with the candidate's full name. Under 160 words. No markdown.
 
 Respond with strict JSON matching the provided schema.`;
 
@@ -253,7 +265,8 @@ ${
 # Task
 1. Produce a tailored version of the resume (Markdown) optimized for this specific job, using ONLY information already present above (including projects). The PROJECTS section must list every project from "Candidate projects" above — all ${input.profile.projects?.length ?? 0} of them.
 2. Write a tailored cover letter addressed to the ${input.job.company} hiring team. Today's date for the letterhead is: ${formatCoverLetterDate()}.
-3. Provide honest match notes (fit + gaps + visa considerations).`;
+3. Provide honest match notes (fit + gaps + visa considerations).
+4. Write a LinkedIn recruiter note and a recruiter email for outreach about this application.`;
 
   const completion = await openai.chat.completions.create({
     model: MODEL,
@@ -270,8 +283,16 @@ ${
             tailoredResume: { type: "string" },
             coverLetter: { type: "string" },
             matchNotes: { type: "string" },
+            linkedInRecruiterNote: { type: "string" },
+            recruiterEmail: { type: "string" },
           },
-          required: ["tailoredResume", "coverLetter", "matchNotes"],
+          required: [
+            "tailoredResume",
+            "coverLetter",
+            "matchNotes",
+            "linkedInRecruiterNote",
+            "recruiterEmail",
+          ],
         },
       },
     },
@@ -287,6 +308,8 @@ ${
     tailoredResume: parsed.tailoredResume ?? "",
     coverLetter: ensureCoverLetterDate(parsed.coverLetter ?? ""),
     matchNotes: parsed.matchNotes ?? "",
+    linkedInRecruiterNote: (parsed.linkedInRecruiterNote ?? "").trim(),
+    recruiterEmail: (parsed.recruiterEmail ?? "").trim(),
   };
 }
 

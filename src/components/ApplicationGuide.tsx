@@ -16,6 +16,7 @@ const SHORT_LABELS: Record<GuideStepId, string> = {
   edge: "Edge",
   apply: "Apply",
   status: "Status",
+  outreach: "Outreach",
 };
 
 function GuideStepper({
@@ -143,7 +144,8 @@ export function ApplicationGuide({
 }) {
   const meta = getStepMeta(currentStep, context);
   const isLast = currentStep === "status";
-  const allDone = completedSteps.has("status") || context.statusSubmitted;
+  const allDone =
+    completedSteps.has("status") || context.statusSubmitted;
 
   const sentinelRef = useRef<HTMLDivElement>(null);
   const [stepperPinned, setStepperPinned] = useState(false);
@@ -172,7 +174,9 @@ export function ApplicationGuide({
       <div className="flex shrink-0 flex-wrap items-center gap-2">
         {dirty &&
           onSave &&
-          (currentStep === "resume" || currentStep === "cover") && (
+          (currentStep === "resume" ||
+            currentStep === "cover" ||
+            currentStep === "outreach") && (
             <Button
               variant="secondary"
               size={compact ? "sm" : "md"}
@@ -223,7 +227,8 @@ export function ApplicationGuide({
                     {meta.prompt}
                     {dirty &&
                       (currentStep === "resume" ||
-                        currentStep === "cover") && (
+                        currentStep === "cover" ||
+                        currentStep === "outreach") && (
                       <span className="ml-1 font-medium text-amber-700">
                         Unsaved edits.
                       </span>
@@ -236,6 +241,12 @@ export function ApplicationGuide({
                 </p>
               )}
             </div>
+            {renderActions()}
+          </div>
+        )}
+
+        {currentStep === "status" && !allDone && (
+          <div className="flex justify-end border-t border-slate-200/80 pt-4">
             {renderActions()}
           </div>
         )}

@@ -17,6 +17,12 @@ import {
 } from "@/lib/billing/usage";
 import { prisma } from "@/lib/db";
 import { getProfile } from "@/lib/profile";
+import {
+  createTailoredApplication,
+  updateTailoredApplication,
+  formatDbErrorForUser,
+  type TailoredApplicationPayload,
+} from "@/lib/application-persist";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -217,10 +223,12 @@ export async function POST(req: Request) {
       }).catch(() => null),
     ]);
 
-    const appData = {
+    const appData: TailoredApplicationPayload = {
       tailoredResume: tailored.tailoredResume,
       coverLetter: tailored.coverLetter,
       matchNotes: tailored.matchNotes,
+      linkedInRecruiterNote: tailored.linkedInRecruiterNote,
+      recruiterEmail: tailored.recruiterEmail,
       beforeMatch: JSON.stringify(tailored.beforeMatch),
       afterMatch: JSON.stringify(tailored.afterMatch),
       companyEdge: edge ? JSON.stringify(normalizeCompanyEdge(edge)) : "",
@@ -228,12 +236,11 @@ export async function POST(req: Request) {
     };
 
     const application = existing
-      ? await prisma.application.update({
-          where: { id: existing.id },
-          data: appData,
-        })
-      : await prisma.application.create({
-          data: { jobId: dbJob.id, userId: auth.id, ...appData },
+      ? await updateTailoredApplication(prisma, existing.id, appData)
+      : await createTailoredApplication(prisma, {
+          jobId: dbJob.id,
+          userId: auth.id,
+          ...appData,
         });
 
     if (!alreadyCharged) {
@@ -252,12 +259,17 @@ export async function POST(req: Request) {
       tailoredResume: tailored.tailoredResume,
       coverLetter: tailored.coverLetter,
       matchNotes: tailored.matchNotes,
+      linkedInRecruiterNote: tailored.linkedInRecruiterNote,
+      recruiterEmail: tailored.recruiterEmail,
       beforeMatch: tailored.beforeMatch,
       afterMatch: tailored.afterMatch,
       edge,
     });
   } catch (err) {
     if (err instanceof UsageLimitError) return usageLimitResponse(err);
-    return NextResponse.json({ error: (err as Error).message }, { status: 500 });
+    return NextResponse.json(
+      { error: formatDbErrorForUser(err) },
+      { status: 500 },
+    );
   }
 }

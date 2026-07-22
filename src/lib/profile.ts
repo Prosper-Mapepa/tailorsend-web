@@ -5,6 +5,7 @@ import type {
   Certification,
   Education,
   FormAnswers,
+  JobBoardSite,
   Project,
   TargetRole,
   WorkExperience,
@@ -59,6 +60,7 @@ export interface ProfileView {
   education: Education[];
   certifications: Certification[];
   targetRoles: TargetRole[];
+  jobBoards: JobBoardSite[];
   visaStatus: string;
   needsSponsorship: boolean;
   gender: string;
@@ -88,6 +90,7 @@ function toView(row: {
   education: string;
   certifications: string;
   targetRoles: string;
+  jobBoards: string;
   visaStatus: string;
   needsSponsorship: boolean;
   gender: string;
@@ -116,6 +119,9 @@ function toView(row: {
     education: safeJson<Education[]>(row.education, []),
     certifications: safeJson<Certification[]>(row.certifications, []),
     targetRoles: safeJson<TargetRole[]>(row.targetRoles, []),
+    jobBoards: safeJson<JobBoardSite[]>(row.jobBoards, []).filter((s) =>
+      Boolean(s?.input?.trim()),
+    ),
     visaStatus: row.visaStatus,
     needsSponsorship: row.needsSponsorship,
     gender: row.gender,

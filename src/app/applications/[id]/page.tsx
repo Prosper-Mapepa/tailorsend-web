@@ -11,6 +11,7 @@ import { AutofillPanel, type AutofillPanelData } from "@/components/AutofillPane
 import { AutofillHero } from "@/components/AutofillHero";
 import { ApplicationGuide } from "@/components/ApplicationGuide";
 import { MatchComparison } from "@/components/MatchComparison";
+import { RecruiterOutreachPanel } from "@/components/RecruiterOutreachPanel";
 import { autofillUrlWarning, manualApplyNotice, requiresAuthentication, isLikelyMultiStepApply, multiStepApplyHint } from "@/lib/apply/detect";
 import {
   GUIDE_STEP_ORDER,
@@ -35,6 +36,8 @@ interface ApplicationDetail {
   tailoredResume: string;
   coverLetter: string;
   matchNotes: string;
+  linkedInRecruiterNote?: string;
+  recruiterEmail?: string;
   beforeMatch?: string;
   afterMatch?: string;
   companyEdge?: string;
@@ -81,6 +84,8 @@ export default function ApplicationDetailPage() {
   const [loading, setLoading] = useState(true);
   const [resume, setResume] = useState("");
   const [cover, setCover] = useState("");
+  const [linkedInNote, setLinkedInNote] = useState("");
+  const [recruiterEmail, setRecruiterEmail] = useState("");
   const [dirty, setDirty] = useState(false);
   const [saving, setSaving] = useState(false);
   const [autofilling, setAutofilling] = useState(false);
@@ -176,6 +181,8 @@ export default function ApplicationDetailPage() {
     setApp(data);
     setResume(data.tailoredResume ?? "");
     setCover(ensureCoverLetterDate(data.coverLetter ?? ""));
+    setLinkedInNote(data.linkedInRecruiterNote ?? "");
+    setRecruiterEmail(data.recruiterEmail ?? "");
     const stored = safeJson<Record<string, unknown>>(data.formAnswers, {});
     setFormFields((stored.generatedFields as FormFieldResponse[]) ?? []);
     const cachedEdge = parseEdge(data.companyEdge);
@@ -334,6 +341,8 @@ export default function ApplicationDetailPage() {
       body: JSON.stringify({
         tailoredResume: resume,
         coverLetter: datedCover,
+        linkedInRecruiterNote: linkedInNote,
+        recruiterEmail,
       }),
     });
     setSaving(false);
@@ -397,14 +406,22 @@ export default function ApplicationDetailPage() {
   }
 
   async function advanceGuide() {
-    if (dirty && (guideStep === "resume" || guideStep === "cover")) {
+    if (
+      dirty &&
+      (guideStep === "resume" ||
+        guideStep === "cover" ||
+        guideStep === "outreach")
+    ) {
       await saveDocs();
     }
 
     setCompletedSteps((prev) => new Set(prev).add(guideStep));
 
     const next = nextStepId(guideStep);
-    if (!next || next === "status") {
+    if (!next) {
+      return;
+    }
+    if (guideStep !== "status" && next === "status") {
       scrollToStatusUpdate();
       return;
     }
@@ -675,6 +692,22 @@ export default function ApplicationDetailPage() {
               Company research isn&apos;t available for this application yet.
             </p>
           )
+        ) : guideStep === "outreach" ? (
+          <RecruiterOutreachPanel
+            embedded
+            jobTitle={app.job.title}
+            company={app.job.company}
+            linkedInNote={linkedInNote}
+            recruiterEmail={recruiterEmail}
+            onLinkedInChange={(v) => {
+              setLinkedInNote(v);
+              setDirty(true);
+            }}
+            onEmailChange={(v) => {
+              setRecruiterEmail(v);
+              setDirty(true);
+            }}
+          />
         ) : (
           <FormattedDocEditor
             label={guideStep === "resume" ? "Tailored resume" : "Cover letter"}

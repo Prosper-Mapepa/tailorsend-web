@@ -42,12 +42,12 @@ export async function writeMarkdownPdf(
     await page.setContent(documentHtml(htmlMd, title, kind), {
       waitUntil: "networkidle",
     });
-    await page.emulateMedia({ media: "screen" });
+    await page.emulateMedia({ media: "print" });
     const pdf = await page.pdf({
       format: "Letter",
       printBackground: true,
       displayHeaderFooter: false,
-      margin: { top: "0.5in", bottom: "0.5in", left: "0.5in", right: "0.5in" },
+      margin: { top: "0.42in", bottom: "0.48in", left: "0.5in", right: "0.5in" },
     });
     await fs.writeFile(filePath, pdf);
   } finally {

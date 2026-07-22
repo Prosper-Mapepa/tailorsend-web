@@ -9,14 +9,21 @@ import {
 } from "@/lib/billing/catalog";
 import { formatCents, formatPlanLabel } from "@/lib/billing/format";
 import type { CreditPack } from "@/lib/billing/plans";
-import { storefrontPacks } from "@/lib/billing/plans";
+import {
+  ANNUAL_PRICE_CENTS,
+  FLEX_PRICE_CENTS,
+  isKitSubscriptionPlan,
+  storefrontPacks,
+} from "@/lib/billing/plans";
 import type { UsageSummary } from "@/lib/billing/usage-core";
 import { Alert, Button, PageHeader, PageLoader } from "@/components/ui";
 
+type BillingTab = "subscriptions" | "packs";
+
 function CheckItem({ children }: { children: string }) {
   return (
-    <li className="flex gap-2 text-sm text-slate-600">
-      <span className="mt-0.5 shrink-0 text-emerald-600" aria-hidden>
+    <li className="flex gap-2 text-[13px] leading-snug text-slate-600">
+      <span className="shrink-0 font-semibold text-emerald-600" aria-hidden>
         ✓
       </span>
       <span>{children}</span>
@@ -34,77 +41,54 @@ function UsageOverview({ usage }: { usage: UsageSummary }) {
   );
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white px-4 py-3.5 sm:px-5">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <h2 className="text-base font-semibold text-slate-900">
-              {formatPlanLabel(usage.plan)}
-            </h2>
-            {usage.isStudent && (
-              <span className="text-xs font-medium text-emerald-700">
-                · Student
-              </span>
-            )}
-          </div>
-          <p className="mt-0.5 text-sm text-slate-500">
-            {isFree
-              ? `Resets ${new Date(usage.periodResetsAt).toLocaleDateString()} · ${
-                  usage.isStudent
-                    ? "4 tailor + 2 autofill / month"
-                    : "2 tailor + 1 autofill / month"
-                }`
-              : getPlanCatalog(usage.plan).tagline}
-          </p>
-          {usage.plan === "flex" && usage.flexPaused && (
-            <p className="mt-1 text-sm text-amber-700">
-              Paused until{" "}
-              {usage.flexPausedUntil
-                ? new Date(usage.flexPausedUntil).toLocaleDateString()
-                : "—"}
-            </p>
-          )}
-          {usage.plan === "season" && usage.seasonEndsAt && (
-            <p className="mt-1 text-sm text-slate-500">
-              Ends {new Date(usage.seasonEndsAt).toLocaleDateString()} ·{" "}
-              {usage.planKitsRemaining} plan kits left
-            </p>
-          )}
-        </div>
-
-        <div className="flex shrink-0 gap-5 sm:gap-6">
-          {isFree ? (
-            <>
-              <div className="text-left sm:text-right">
-                <p className="text-xl font-semibold tabular-nums text-slate-900">
-                  {tailorLeft}
-                </p>
-                <p className="text-xs text-slate-400">tailor left</p>
-              </div>
-              <div className="text-left sm:text-right">
-                <p className="text-xl font-semibold tabular-nums text-slate-900">
-                  {autofillLeft}
-                </p>
-                <p className="text-xs text-slate-400">autofill left</p>
-              </div>
-            </>
-          ) : (
-            <div className="text-left sm:text-right">
-              <p className="text-xl font-semibold tabular-nums text-slate-900">
-                {totalAvailable}
-              </p>
-              <p className="text-xs text-slate-400">kits available</p>
-            </div>
-          )}
-          {usage.creditBalance > 0 && (
-            <div className="text-left sm:text-right">
-              <p className="text-xl font-semibold tabular-nums text-emerald-700">
-                {usage.creditBalance}
-              </p>
-              <p className="text-xs text-slate-400">credits</p>
-            </div>
-          )}
-        </div>
+    <div className="flex flex-wrap items-center gap-x-5 gap-y-2 rounded-xl border border-slate-200/80 bg-slate-50/80 px-4 py-2.5 text-sm">
+      <div className="flex min-w-0 flex-wrap items-center gap-2">
+        <span className="font-semibold text-slate-900">
+          {formatPlanLabel(usage.plan)}
+        </span>
+        {usage.isStudent && (
+          <span className="rounded bg-emerald-50 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-800">
+            Student
+          </span>
+        )}
+        {isKitSubscriptionPlan(usage.plan) && usage.flexPaused && (
+          <span className="text-xs text-amber-700">
+            Paused until{" "}
+            {usage.flexPausedUntil
+              ? new Date(usage.flexPausedUntil).toLocaleDateString()
+              : "—"}
+          </span>
+        )}
+        {usage.plan === "season" && usage.seasonEndsAt && (
+          <span className="text-xs text-slate-500">
+            Ends {new Date(usage.seasonEndsAt).toLocaleDateString()}
+          </span>
+        )}
+      </div>
+      <div className="ml-auto flex flex-wrap items-baseline gap-4 tabular-nums">
+        {isFree ? (
+          <>
+            <span>
+              <strong className="text-slate-900">{tailorLeft}</strong>
+              <span className="ml-1 text-xs text-slate-400">tailor</span>
+            </span>
+            <span>
+              <strong className="text-slate-900">{autofillLeft}</strong>
+              <span className="ml-1 text-xs text-slate-400">autofill</span>
+            </span>
+          </>
+        ) : (
+          <span>
+            <strong className="text-slate-900">{totalAvailable}</strong>
+            <span className="ml-1 text-xs text-slate-400">kits</span>
+          </span>
+        )}
+        {usage.creditBalance > 0 && (
+          <span>
+            <strong className="text-emerald-700">{usage.creditBalance}</strong>
+            <span className="ml-1 text-xs text-slate-400">credits</span>
+          </span>
+        )}
       </div>
     </div>
   );
@@ -112,34 +96,38 @@ function UsageOverview({ usage }: { usage: UsageSummary }) {
 
 function PackageShell({
   badge,
-  accent,
+  featured,
   children,
   footer,
 }: {
   badge?: string;
-  accent?: boolean;
+  featured?: boolean;
   children: ReactNode;
   footer: ReactNode;
 }) {
   return (
     <article
-      className={`flex h-full flex-col rounded-xl border bg-white p-5 ${
-        accent
-          ? "border-emerald-300 shadow-sm ring-1 ring-emerald-100"
-          : "border-slate-200"
+      className={`relative flex h-full flex-col rounded-2xl bg-white p-6 ${
+        featured
+          ? "border-2 border-emerald-500"
+          : "border border-slate-200"
       }`}
     >
-      <div className="mb-3 h-5">
-        {badge ? (
-          <span className="text-[11px] font-semibold uppercase tracking-wide text-emerald-700">
-            {badge}
-          </span>
-        ) : null}
-      </div>
+      {badge ? (
+        <div
+          className={`mb-3 inline-flex w-fit rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+            featured
+              ? "bg-emerald-600 text-white"
+              : "bg-slate-100 text-slate-600"
+          }`}
+        >
+          {badge}
+        </div>
+      ) : (
+        <div className="mb-3 h-5" aria-hidden />
+      )}
       <div className="flex flex-1 flex-col">{children}</div>
-      <div className="mt-auto flex min-h-[2.75rem] flex-col justify-end gap-2 pt-6">
-        {footer}
-      </div>
+      <div className="mt-6 flex flex-col gap-2">{footer}</div>
     </article>
   );
 }
@@ -149,7 +137,6 @@ function PackCard({
   catalog,
   price,
   perKit,
-  studentDeal,
   stripeEnabled,
   busy,
   anyBusy,
@@ -159,7 +146,6 @@ function PackCard({
   catalog: ReturnType<typeof getPackCatalog>;
   price: number;
   perKit: number;
-  studentDeal: boolean;
   stripeEnabled: boolean;
   busy: boolean;
   anyBusy: boolean;
@@ -168,10 +154,11 @@ function PackCard({
   return (
     <PackageShell
       badge={catalog.badge}
-      accent={Boolean(catalog.badge)}
+      featured={Boolean(catalog.badge)}
       footer={
         <Button
           className="w-full"
+          variant={catalog.badge ? "primary" : "secondary"}
           loading={busy}
           disabled={anyBusy}
           onClick={onBuy}
@@ -180,33 +167,151 @@ function PackCard({
         </Button>
       }
     >
-      <div className="flex items-baseline justify-between gap-3">
-        <h3 className="text-lg font-semibold text-slate-900">{catalog.name}</h3>
-        <div className="shrink-0 text-right">
-          <p className="text-xl font-semibold tabular-nums text-slate-900">
-            {formatCents(price)}
-          </p>
-          {studentDeal ? (
-            <p className="text-xs font-medium text-emerald-600">.edu price</p>
-          ) : (
-            <p className="text-xs text-slate-400">
-              {formatCents(Math.round(perKit))}/kit
-            </p>
-          )}
-        </div>
-      </div>
-
+      <h3 className="text-xl font-semibold tracking-tight text-slate-900">
+        {catalog.name}
+      </h3>
       <p className="mt-1 text-sm text-slate-500">{catalog.tagline}</p>
-      <p className="mt-1 text-xs font-medium uppercase tracking-wide text-slate-400">
-        {pack.kits} kits · one-time
+      <div className="mt-5 flex items-baseline gap-1">
+        <span className="text-3xl font-semibold tracking-tight text-slate-900 tabular-nums">
+          {formatCents(price)}
+        </span>
+      </div>
+      <p className="mt-1 text-sm text-slate-500">
+        {pack.kits} kits · {formatCents(Math.round(perKit))}/kit · one-time
       </p>
-
-      <ul className="mt-5 space-y-2">
+      <ul className="mt-5 space-y-2.5 border-t border-slate-100 pt-5">
         {catalog.highlights.map((h) => (
           <CheckItem key={h}>{h}</CheckItem>
         ))}
       </ul>
     </PackageShell>
+  );
+}
+
+function PlanCard({
+  planId,
+  featured,
+  current,
+  stripeEnabled,
+  busy,
+  anyBusy,
+  onSubscribe,
+  onPause,
+  canPause,
+}: {
+  planId: "flex" | "annual";
+  featured?: boolean;
+  current: boolean;
+  stripeEnabled: boolean;
+  busy: boolean;
+  anyBusy: boolean;
+  onSubscribe: () => void;
+  onPause?: () => void;
+  canPause?: boolean;
+}) {
+  const plan = getPlanCatalog(planId);
+  const isAnnual = planId === "annual";
+  const amount = isAnnual ? ANNUAL_PRICE_CENTS : FLEX_PRICE_CENTS;
+  const suffix = isAnnual ? "/yr" : "/mo";
+  const meta = isAnnual
+    ? `25 kits/mo · ${formatCents(Math.round(ANNUAL_PRICE_CENTS / 12))}/mo effective`
+    : "25 kits/mo · cancel anytime";
+
+  return (
+    <PackageShell
+      badge={current ? "Current plan" : plan.badge}
+      featured={featured || current}
+      footer={
+        <>
+          <Button
+            className="w-full"
+            loading={busy}
+            disabled={anyBusy || current}
+            onClick={onSubscribe}
+          >
+            {current
+              ? "Active"
+              : stripeEnabled
+                ? isAnnual
+                  ? "Subscribe yearly"
+                  : "Subscribe monthly"
+                : `Get ${plan.name}`}
+          </Button>
+          {canPause && (
+            <button
+              type="button"
+              className="w-full text-center text-sm text-slate-500 hover:text-slate-700"
+              disabled={anyBusy}
+              onClick={onPause}
+            >
+              Pause for 30 days
+            </button>
+          )}
+        </>
+      }
+    >
+      <h3 className="text-xl font-semibold tracking-tight text-slate-900">
+        {plan.name}
+      </h3>
+      <p className="mt-1 text-sm text-slate-500">{plan.tagline}</p>
+      <div className="mt-5 flex items-baseline gap-1">
+        <span className="text-3xl font-semibold tracking-tight text-slate-900 tabular-nums">
+          {formatCents(amount)}
+        </span>
+        <span className="text-sm font-medium text-slate-500">{suffix}</span>
+      </div>
+      <p className="mt-1 text-sm text-slate-500">{meta}</p>
+      <ul
+        className={`mt-5 space-y-2.5 border-t pt-5 ${
+          featured || current ? "border-emerald-100" : "border-slate-100"
+        }`}
+      >
+        {plan.highlights.map((h) => (
+          <CheckItem key={h}>{h}</CheckItem>
+        ))}
+      </ul>
+    </PackageShell>
+  );
+}
+
+function BillingTabs({
+  tab,
+  onChange,
+}: {
+  tab: BillingTab;
+  onChange: (tab: BillingTab) => void;
+}) {
+  const tabs: { id: BillingTab; label: string }[] = [
+    { id: "subscriptions", label: "Subscriptions" },
+    { id: "packs", label: "One-time packs" },
+  ];
+
+  return (
+    <div
+      className="inline-flex rounded-xl border border-slate-200 bg-slate-50 p-1"
+      role="tablist"
+      aria-label="Billing options"
+    >
+      {tabs.map((t) => {
+        const active = tab === t.id;
+        return (
+          <button
+            key={t.id}
+            type="button"
+            role="tab"
+            aria-selected={active}
+            className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${
+              active
+                ? "bg-white text-slate-900 shadow-sm"
+                : "text-slate-500 hover:text-slate-700"
+            }`}
+            onClick={() => onChange(t.id)}
+          >
+            {t.label}
+          </button>
+        );
+      })}
+    </div>
   );
 }
 
@@ -220,6 +325,7 @@ export default function BillingPage() {
   const [busy, setBusy] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [tab, setTab] = useState<BillingTab>("subscriptions");
 
   const load = useCallback(async () => {
     try {
@@ -251,18 +357,33 @@ export default function BillingPage() {
       setHasStripeCustomer(Boolean(data.hasStripeCustomer));
       setHasSubscription(Boolean(data.hasSubscription));
       setError(null);
+      return data.usage ?? null;
     } catch (e) {
       setError((e as Error).message);
       setPacks(storefrontPacks());
+      return null;
     }
   }, []);
 
   useEffect(() => {
-    load().finally(() => setLoading(false));
+    let cancelled = false;
+    load()
+      .then((u) => {
+        if (cancelled || !u) return;
+        if (!isKitSubscriptionPlan(u.plan) && u.plan !== "season") {
+          setTab("packs");
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [load]);
 
   async function startCheckout(
-    kind: "pack" | "flex" | "season",
+    kind: "pack" | "flex" | "annual" | "season",
     packId?: string,
   ) {
     const busyId = kind === "pack" ? packId! : kind;
@@ -334,8 +455,8 @@ export default function BillingPage() {
     }
   }
 
-  async function changePlan(plan: "free" | "flex" | "season") {
-    if (plan === "flex" || plan === "season") {
+  async function changePlan(plan: "free" | "flex" | "annual" | "season") {
+    if (plan === "flex" || plan === "annual" || plan === "season") {
       if (stripeEnabled) {
         await startCheckout(plan);
         return;
@@ -393,25 +514,16 @@ export default function BillingPage() {
 
   const campus = packs.find((p) => p.id === "pack_5");
   const sprint = packs.find((p) => p.id === "pack_15");
-  const flexPlan = getPlanCatalog("flex");
   const onFlex = usage?.plan === "flex";
+  const onAnnual = usage?.plan === "annual";
+  const onSubscription = onFlex || onAnnual;
   const onSeason = usage?.plan === "season";
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6">
+    <div className="space-y-6">
       <PageHeader
-        title="Billing & usage"
-        description={
-          <>
-            Three packages for students. One kit = tailor, autofill, or
-            incorporate — you review before submit.
-            {!stripeEnabled && (
-              <span className="mt-1 block text-xs text-amber-700">
-                Dev mode — purchases are simulated until Stripe is configured.
-              </span>
-            )}
-          </>
-        }
+        title="Billing"
+        description="One kit = tailor, autofill, or incorporate."
         actions={
           <div className="flex flex-wrap gap-2">
             {hasStripeCustomer && stripeEnabled && (
@@ -439,129 +551,101 @@ export default function BillingPage() {
 
       {usage && <UsageOverview usage={usage} />}
 
-      <section>
-        <div className="mb-4">
-          <h2 className="text-base font-semibold text-slate-900">Packages</h2>
-          <p className="mt-0.5 text-sm text-slate-500">
-            Start with Campus, subscribe monthly, or buy a Sprint for season.
+      <section className="space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <BillingTabs tab={tab} onChange={setTab} />
+          <p className="text-sm text-slate-500">
+            {tab === "subscriptions"
+              ? "Best value while you search"
+              : "No renewal · kits never expire"}
           </p>
         </div>
 
-        <div className="grid items-stretch gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {campus && (
-            <PackCard
-              pack={campus}
-              catalog={getPackCatalog(campus)}
-              price={packPrice(campus)}
-              perKit={packPrice(campus) / campus.kits}
-              studentDeal={false}
-              stripeEnabled={stripeEnabled}
-              busy={busy === campus.id}
-              anyBusy={busy !== null}
-              onBuy={() => purchasePack(campus.id)}
-            />
-          )}
-
-          <PackageShell
-            badge={onFlex ? "Current plan" : flexPlan.badge}
-            accent
-            footer={
-              <>
-                <Button
-                  className="w-full"
-                  loading={busy === "flex"}
-                  disabled={busy !== null || onFlex}
-                  onClick={() => changePlan("flex")}
-                >
-                  {onFlex
-                    ? "Active"
-                    : stripeEnabled
-                      ? "Subscribe"
-                      : "Get Student Monthly"}
-                </Button>
-                {onFlex && usage && !usage.flexPaused && (
-                  <button
-                    type="button"
-                    className="w-full text-center text-sm text-slate-500 hover:text-slate-700"
-                    disabled={busy !== null}
-                    onClick={pauseFlex}
-                  >
-                    Pause for 30 days
-                  </button>
-                )}
-              </>
-            }
+        {tab === "subscriptions" ? (
+          <div
+            role="tabpanel"
+            className="grid items-stretch gap-5 md:grid-cols-2"
           >
-            <div className="flex items-baseline justify-between gap-3">
-              <h3 className="text-lg font-semibold text-slate-900">
-                {flexPlan.name}
-              </h3>
-              <div className="shrink-0 text-right">
-                <p className="text-xl font-semibold tabular-nums text-slate-900">
-                  {flexPlan.priceLabel}
-                </p>
-                <p className="text-xs text-slate-400">recurring</p>
-              </div>
-            </div>
-
-            <p className="mt-1 text-sm text-slate-500">{flexPlan.tagline}</p>
-            <p className="mt-1 text-xs font-medium uppercase tracking-wide text-slate-400">
-              {flexPlan.kitsLabel}
-            </p>
-
-            <ul className="mt-5 space-y-2">
-              {flexPlan.highlights.map((h) => (
-                <CheckItem key={h}>{h}</CheckItem>
-              ))}
-            </ul>
-          </PackageShell>
-
-          {sprint && (
-            <PackCard
-              pack={sprint}
-              catalog={getPackCatalog(sprint)}
-              price={packPrice(sprint)}
-              perKit={packPrice(sprint) / sprint.kits}
-              studentDeal={
-                Boolean(usage?.isStudent) &&
-                sprint.studentPriceCents != null &&
-                sprint.studentPriceCents < sprint.priceCents
-              }
+            <PlanCard
+              planId="flex"
+              current={Boolean(onFlex)}
               stripeEnabled={stripeEnabled}
-              busy={busy === sprint.id}
+              busy={busy === "flex"}
               anyBusy={busy !== null}
-              onBuy={() => purchasePack(sprint.id)}
+              onSubscribe={() => changePlan("flex")}
+              canPause={Boolean(onFlex && usage && !usage.flexPaused)}
+              onPause={pauseFlex}
             />
-          )}
-        </div>
-
-        <p className="mt-4 text-center text-xs text-slate-400">
-          A kit is one tailor, autofill, or edge-ideas action. Continuing
-          autofill on the same job is free.
-        </p>
+            <PlanCard
+              planId="annual"
+              featured
+              current={Boolean(onAnnual)}
+              stripeEnabled={stripeEnabled}
+              busy={busy === "annual"}
+              anyBusy={busy !== null}
+              onSubscribe={() => changePlan("annual")}
+              canPause={Boolean(onAnnual && usage && !usage.flexPaused)}
+              onPause={pauseFlex}
+            />
+          </div>
+        ) : (
+          <div
+            role="tabpanel"
+            className="grid items-stretch gap-5 md:grid-cols-2"
+          >
+            {campus && (
+              <PackCard
+                pack={campus}
+                catalog={getPackCatalog(campus)}
+                price={packPrice(campus)}
+                perKit={packPrice(campus) / campus.kits}
+                stripeEnabled={stripeEnabled}
+                busy={busy === campus.id}
+                anyBusy={busy !== null}
+                onBuy={() => purchasePack(campus.id)}
+              />
+            )}
+            {sprint && (
+              <PackCard
+                pack={sprint}
+                catalog={getPackCatalog(sprint)}
+                price={packPrice(sprint)}
+                perKit={packPrice(sprint) / sprint.kits}
+                stripeEnabled={stripeEnabled}
+                busy={busy === sprint.id}
+                anyBusy={busy !== null}
+                onBuy={() => purchasePack(sprint.id)}
+              />
+            )}
+          </div>
+        )}
       </section>
 
       {onSeason && (
         <Alert variant="info">
-          You still have a legacy Season Pass with{" "}
-          {usage?.planKitsRemaining ?? 0} kits left
+          Legacy Season Pass: {usage?.planKitsRemaining ?? 0} kits left
           {usage?.seasonEndsAt
             ? ` through ${new Date(usage.seasonEndsAt).toLocaleDateString()}`
             : ""}
-          . New purchases use Campus, Student Monthly, or Sprint.
+          .
         </Alert>
       )}
 
-      {usage && usage.plan !== "free" && !hasSubscription && (
-        <button
-          type="button"
-          className="w-full text-center text-sm text-slate-400 hover:text-slate-600"
-          disabled={busy !== null}
-          onClick={() => changePlan("free")}
-        >
-          Downgrade to free
-        </button>
-      )}
+      <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs text-slate-400">
+        {usage && usage.plan !== "free" && !hasSubscription && (
+          <button
+            type="button"
+            className="hover:text-slate-600"
+            disabled={busy !== null}
+            onClick={() => changePlan("free")}
+          >
+            Downgrade to free
+          </button>
+        )}
+        {onSubscription && hasSubscription && stripeEnabled && (
+          <span>Cancel or change interval via Manage billing</span>
+        )}
+      </div>
     </div>
   );
 }

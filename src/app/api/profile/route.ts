@@ -26,6 +26,11 @@ const targetRoleSchema = z.object({
   minSalary: z.number().optional(),
 });
 
+const jobBoardSiteSchema = z.object({
+  input: z.string().min(1),
+  label: z.string().default(""),
+});
+
 const projectSchema = z.object({
   name: z.string().default(""),
   role: z.string().default(""),
@@ -83,6 +88,7 @@ const updateSchema = z.object({
   education: z.array(educationSchema).optional(),
   certifications: z.array(certificationSchema).optional(),
   targetRoles: z.array(targetRoleSchema).optional(),
+  jobBoards: z.array(jobBoardSiteSchema).optional(),
   visaStatus: z.string().optional(),
   needsSponsorship: z.boolean().optional(),
   gender: z.string().optional(),
@@ -107,8 +113,16 @@ export async function PUT(req: Request) {
       { status: 400 },
     );
   }
-  const { skills, projects, workExperience, education, certifications, targetRoles, ...rest } =
-    parsed.data;
+  const {
+    skills,
+    projects,
+    workExperience,
+    education,
+    certifications,
+    targetRoles,
+    jobBoards,
+    ...rest
+  } = parsed.data;
   const jsonFields = {
     ...(skills ? { skills: JSON.stringify(skills) } : {}),
     ...(projects ? { projects: JSON.stringify(projects) } : {}),
@@ -116,6 +130,18 @@ export async function PUT(req: Request) {
     ...(education ? { education: JSON.stringify(education) } : {}),
     ...(certifications ? { certifications: JSON.stringify(certifications) } : {}),
     ...(targetRoles ? { targetRoles: JSON.stringify(targetRoles) } : {}),
+    ...(jobBoards
+      ? {
+          jobBoards: JSON.stringify(
+            jobBoards
+              .map((s) => ({
+                input: s.input.trim(),
+                label: (s.label || "").trim(),
+              }))
+              .filter((s) => s.input),
+          ),
+        }
+      : {}),
   };
   await prisma.profile.upsert({
     where: { userId: auth.id },

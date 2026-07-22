@@ -6,6 +6,7 @@ export function formatCents(cents: number): string {
 
 export function formatPlanLabel(plan: string): string {
   if (plan === "flex") return "Student Monthly";
+  if (plan === "annual") return "Student Yearly";
   if (plan === "season") return "Season Pass";
   return "Free";
 }
@@ -38,5 +39,8 @@ export function parseUsageError(data: {
   if (data.code === "USAGE_LIMIT") {
     return data.error ?? "Usage limit reached.";
   }
-  return data.error ?? "Request failed.";
+  const raw = data.error ?? "Request failed.";
+  if (raw.length <= 320) return raw;
+  const first = raw.split("\n")[0]?.trim() ?? raw;
+  return first.length > 320 ? `${first.slice(0, 317)}…` : first;
 }

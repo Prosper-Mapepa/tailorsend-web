@@ -79,6 +79,17 @@ export interface TargetRole {
   minSalary?: number;
 }
 
+/**
+ * A career site or company the user wants the scanner to prioritize.
+ * Paste a Greenhouse/Lever board URL, careers page, or company name.
+ */
+export interface JobBoardSite {
+  /** Raw URL or company name as entered by the user. */
+  input: string;
+  /** Short display label (defaults from host/slug when empty). */
+  label: string;
+}
+
 /** Normalized job returned by every source adapter before persistence. */
 export interface NormalizedJob {
   source: string;

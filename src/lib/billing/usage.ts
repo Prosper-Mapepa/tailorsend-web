@@ -237,7 +237,7 @@ export async function setPlan(
     const end = new Date(now);
     end.setUTCMonth(end.getUTCMonth() + SEASON_MONTHS);
     next.seasonEndsAt = end;
-  } else if (plan === "flex") {
+  } else if (plan === "flex" || plan === "annual") {
     next.seasonEndsAt = null;
     next.seasonKitsTotal = 0;
     next.planKitsUsed = 0;
@@ -257,8 +257,8 @@ export async function pauseFlex(
   email: string,
 ): Promise<UsageSummary> {
   const account = await getOrCreateUsageAccount(userId, email);
-  if (account.plan !== "flex") {
-    throw new Error("Only Flex plan can be paused.");
+  if (account.plan !== "flex" && account.plan !== "annual") {
+    throw new Error("Only Student Monthly or Yearly can be paused.");
   }
   const until = new Date();
   until.setUTCDate(until.getUTCDate() + 30);

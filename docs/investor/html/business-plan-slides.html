@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TailorSend — Business Plan Slides (Michigan SBDC)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    /* Page-specific: business plan deck */
+    .ps-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1.5rem;
+      margin: 2rem 0;
+      text-align: left;
+    }
+    .ps-grid article {
+      padding: 2rem 2.25rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+    .ps-grid .label {
+      display: block;
+      margin-bottom: 0.75rem;
+      color: var(--accent);
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .ps-grid h3 { margin: 0 0 0.6rem; color: var(--text); font-size: clamp(1.2rem, 2.2vw, 1.5rem); line-height: 1.3; }
+    .ps-grid p { margin: 0; color: var(--text-muted); font-size: clamp(1rem, 1.8vw, 1.15rem); line-height: 1.65; }
+    @media (max-width: 700px) { .ps-grid { grid-template-columns: 1fr; } }
+
+    .flow-line {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem 1rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.9rem 2.5rem;
+      margin: 2rem 0 0;
+    }
+    .flow-line .step { font-weight: 700; font-size: clamp(1.2rem, 2.4vw, 1.7rem); letter-spacing: -0.01em; color: var(--text); white-space: nowrap; }
+    .flow-line .arrow { color: var(--accent); font-size: clamp(1.1rem, 2vw, 1.5rem); font-weight: 600; }
+    .flow-caption { text-align: center; color: var(--text-muted); font-size: 1rem; margin: 1rem 0 0; }
+
+    .edge-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1.25rem;
+      margin: 1.75rem 0;
+      text-align: left;
+    }
+    .edge-grid .edge {
+      position: relative;
+      padding: 1.75rem 1.6rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .edge-grid .edge::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: var(--accent);
+      opacity: 0.7;
+    }
+    .edge-grid .edge .ico {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 2.7rem; height: 2.7rem;
+      font-size: 1.35rem;
+      background: var(--accent-glow);
+      border-radius: 12px;
+    }
+    .edge-grid .edge b { display: block; margin-top: 0.85rem; color: var(--text); font-size: 1.15rem; }
+    .edge-grid .edge p { margin: 0.45rem 0 0; color: var(--text-muted); font-size: 1rem; line-height: 1.6; }
+    @media (max-width: 700px) { .edge-grid { grid-template-columns: 1fr; } }
+
+    .ask-banner {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 1.25rem 2.25rem;
+      background: var(--accent-glow);
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      border-radius: var(--radius);
+      padding: 1.75rem 2rem;
+      margin: 1.75rem 0 0;
+      text-align: left;
+    }
+    .ask-banner .amount { flex-shrink: 0; text-align: center; }
+    .ask-banner .amount .big { display: block; font-size: 2.4rem; font-weight: 700; color: var(--accent); line-height: 1.1; }
+    .ask-banner .amount .lbl { display: block; margin-top: 0.25rem; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-muted); }
+    .ask-banner .detail { flex: 1; min-width: 240px; }
+    .ask-banner .detail p { margin: 0; color: var(--text); font-size: 1.05rem; line-height: 1.6; }
+    .ask-banner .detail p + p { margin-top: 0.45rem; color: var(--text-muted); font-size: 0.95rem; }
+
+    .slide table { font-size: 1.02rem; }
+    .slide th, .slide td { padding: 0.8rem 1.15rem; }
+
+    /* Title slide — two-column cover */
+    .slide-title .slide-inner { max-width: 1150px; }
+    .title-cover {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 3rem;
+      text-align: left;
+    }
+    .title-cover .copy { flex: 1; min-width: 0; }
+    .slide-title .eyebrow { font-size: 0.9rem; letter-spacing: 0.1em; }
+    .slide-title .plan-name {
+      margin: 0.5rem 0 1rem;
+      font-size: clamp(2.8rem, 6vw, 4.5rem);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      color: var(--text);
+      line-height: 1.05;
+    }
+    .slide-title .plan-tagline {
+      margin: 0 0 2rem;
+      max-width: 36rem;
+      color: var(--text-muted);
+      font-size: clamp(1.15rem, 2.2vw, 1.4rem);
+      line-height: 1.5;
+    }
+    .slide-title .ask-line {
+      display: inline-block;
+      margin: 0 0 2.25rem;
+      padding-bottom: 0.2rem;
+      border-bottom: 3px solid var(--accent);
+      color: var(--accent);
+      font-size: clamp(1.25rem, 2.2vw, 1.5rem);
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+    .slide-title .meta {
+      color: var(--text-muted);
+      font-size: 1.02rem;
+      line-height: 1.8;
+    }
+    .slide-title .meta a { color: var(--accent); }
+    .title-cover .brand-mark {
+      flex-shrink: 0;
+      line-height: 0;
+    }
+    .title-cover .brand-mark img {
+      display: block;
+      width: clamp(240px, 28vw, 340px);
+      height: auto;
+      border-radius: 26px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+    }
+    @media (max-width: 820px) {
+      .title-cover { flex-direction: column-reverse; align-items: flex-start; gap: 1.75rem; }
+      .title-cover .brand-mark img { width: 160px; }
+    }
+    .slide .two-col {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1.25rem;
+      text-align: left;
+    }
+    .slide .two-col > div {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.75rem 1.9rem;
+    }
+    .slide .two-col h3 { margin-top: 0; }
+    .slide .two-col ul { font-size: 1.05rem; line-height: 1.7; }
+    .slide .two-col p { font-size: 1.05rem; }
+    @media (max-width: 700px) { .slide .two-col { grid-template-columns: 1fr; } }
+
+    /* Consistent slide system */
+    .slide-inner { max-width: 1120px; }
+    .slide .kicker {
+      margin: 0 0 0.75rem;
+      color: var(--accent);
+      font-size: 0.95rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+    .slide .kicker .k-num { opacity: 0.6; margin-right: 0.6rem; }
+    .slide h2 { margin-top: 0; font-size: clamp(2rem, 4.5vw, 3rem); }
+    .slide h3 { font-size: 1.3rem; }
+    .slide .footnote {
+      margin-top: 1.75rem;
+      color: var(--text-muted);
+      font-size: 1.05rem;
+    }
+
+    /* Logo on every slide */
+    .slide .corner-logo {
+      position: absolute;
+      top: 1.4rem;
+      left: 2rem;
+      width: 52px;
+      height: auto;
+      border-radius: 12px;
+    }
+    .slide-title .corner-logo { display: none; }
+
+    /* Company facts */
+    .fact-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1.25rem;
+      margin: 1.75rem 0 0;
+      text-align: left;
+    }
+    .fact-grid .fact {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem 1.6rem;
+    }
+    .fact-grid .fact .label {
+      display: block;
+      margin-bottom: 0.45rem;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+    }
+    .fact-grid .fact .value { color: var(--text); font-size: 1.15rem; font-weight: 600; line-height: 1.45; }
+    .fact-grid .fact.span-3 { grid-column: 1 / -1; }
+    @media (max-width: 700px) { .fact-grid { grid-template-columns: 1fr; } }
+
+    /* Feature grid */
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1.1rem;
+      margin: 1.75rem 0 0;
+      text-align: left;
+    }
+    .feature-grid .feature {
+      display: flex;
+      align-items: baseline;
+      gap: 0.9rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem 1.5rem;
+    }
+    .feature-grid .feature b { color: var(--text); font-size: 1.1rem; white-space: nowrap; }
+    .feature-grid .feature span { color: var(--text-muted); font-size: 1rem; line-height: 1.55; }
+    @media (max-width: 700px) { .feature-grid { grid-template-columns: 1fr; } }
+
+    /* Checklist */
+    .check-list { list-style: none; padding: 0; margin: 1.75rem 0 0; text-align: left; }
+    .check-list li {
+      display: flex;
+      gap: 0.9rem;
+      padding: 0.95rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 1.15rem;
+      line-height: 1.6;
+    }
+    .check-list li:last-child { border-bottom: none; }
+    .check-list li::before { content: "✓"; color: var(--accent); font-weight: 700; }
+
+    /* Stat cards sizing */
+    .slide .stat-card { padding: 1.6rem 1.75rem; }
+    .slide .stat-card .label { font-size: 0.85rem; }
+    .slide .stat-card .value { font-size: 2.1rem; }
+    .slide .stat-card .sub { font-size: 0.95rem; }
+    .slide .principle { font-size: 1.05rem; }
+    .slide .subtitle { font-size: 1.2rem; }
+
+    /* Pill row (solution) */
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.75rem;
+      margin: 2rem 0 0;
+    }
+    .pill-row .pill {
+      padding: 0.6rem 1.4rem;
+      background: var(--accent-glow);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      border-radius: 999px;
+      color: var(--accent);
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    /* Statement slides (vision / thank you / demo) */
+    .statement-slide .slide-inner { text-align: center; }
+    .statement {
+      margin: 0 auto;
+      max-width: 54rem;
+      font-size: clamp(1.5rem, 3.2vw, 2.3rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.35;
+      color: var(--text);
+    }
+    .statement .hl { color: var(--accent); }
+    .statement-list { list-style: none; padding: 0; margin: 2.25rem auto 0; max-width: 44rem; text-align: left; }
+    .statement-list li {
+      display: flex;
+      gap: 1rem;
+      padding: 1rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: clamp(1.1rem, 2vw, 1.35rem);
+      line-height: 1.55;
+      color: var(--text-muted);
+    }
+    .statement-list li:last-child { border-bottom: none; }
+    .statement-list li::before { content: "→"; color: var(--accent); font-weight: 700; }
+    .statement-list strong { color: var(--text); }
+    .big-link {
+      display: inline-block;
+      margin-top: 2.25rem;
+      padding-bottom: 0.25rem;
+      border-bottom: 3px solid var(--accent);
+      color: var(--accent);
+      font-size: clamp(1.5rem, 3vw, 2.2rem);
+      font-weight: 700;
+    }
+    .big-link:hover { text-decoration: none; }
+  </style>
+</head>
+<body class="deck-body">
+  <header class="site-header no-print">
+    <a class="site-logo" href="index.html"><span>🚀</span> TailorSend</a>
+    <nav class="site-nav">
+      <a href="index.html">Home</a>
+      <a href="pitch-deck.html">Overview</a>
+      <a href="business-plan.html">Business Plan</a>
+      <a href="business-plan-slides.html" class="active">Plan Slides</a>
+      <a href="financial-model.html">Financials</a>
+    </nav>
+    <div class="download-bar no-print">
+      <a class="btn-download" href="business-plan.html">📄 Document view</a>
+      <button type="button" class="btn-download" id="dl-self">↓ Download HTML</button>
+    </div>
+  </header>
+
+  <div class="slides" id="slides">
+    <!-- Slide 1 · Title -->
+    <section class="slide slide-title active" data-slide="1">
+      <img class="corner-logo" src="/logo.JPG" alt="TailorSend" /><span class="slide-num">1 / 16</span>
+      <div class="slide-inner">
+        <div class="title-cover">
+          <div class="copy">
+            <p class="eyebrow">Business plan · Michigan SBDC · July 2026</p>
+            <h1 class="plan-name">TailorSend</h1>
+            <p class="plan-tagline">
+              The full-loop job application platform for students — search, tailor, apply, and follow up in one place.
+            </p>
+            <div class="ask-line">Ask $25,000 · Live at <a href="https://tailorsend.cc" target="_blank" rel="noopener" style="color: inherit;">tailorsend.cc</a></div>
+            <p class="meta">
+              Prosper Mapepa, Founder · <a href="https://mapepallc.netlify.app/">Mapepa Innovation LLC</a> · Michigan<br />
+              mapepapro@gmail.com · (989) 332-8050<br />
+              <span style="font-size: 0.85rem;">© 2026 Mapepa Innovation LLC</span>
+            </p>
+          </div>
+          <div class="brand-mark"><img src="/logo.JPG" alt="TailorSend" /></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 2 · Problem -->
+    <section class="slide" data-slide="2">
+      <img class="corner-logo" src="/logo.JPG" alt="TailorSend" /><span class="slide-num">2 / 16</span>
+      <div class="slide-inner">
+        <p class="kicker"><span class="k-num">01</span>Problem</p>
+        <h2>The application gap</h2>
+        <ul class="check-list">
+          <li><span><strong>Students apply to 50–200+ roles</strong> per search cycle — each quality application takes 30–60 minutes</span></li>
+          <li><span><strong>98% of Fortune 500 companies use ATS</strong> — generic resumes get filtered before a human sees them</span></li>
+          <li><span><strong>The tools are fragmented</strong> — job boards, ChatGPT, resume builders, trackers — and auto-apply bots submit without review</span></li>
+        </ul>
+        <blockquote style="margin-top: 2rem; font-size: 1.1rem;">"I spent more time customizing applications than interviewing."</blockquote>
+      </div>
+    </section>
+
+    <!-- Slide 3 · Solution -->
+    <section class="slide" data-slide="3">
+      <img class="corner-logo" src="/logo.JPG" alt="TailorSend" /><span class="slide-num">3 / 16</span>
+      <div class="slide-inner">
+        <p class="kicker"><span class="k-num">02</span>Solution</p>
+        <h2>One guided workflow, start to hired</h2>
+        <div class="flow-line">
+          <span class="step">Search</span><span class="arrow">→</span>
+          <span class="step">Tailor</span><span class="arrow">→</span>
+          <span class="step">Edge</span><span class="arrow">→</span>
+          <span class="step">Autofill</span><span class="arrow">→</span>
+          <span class="step">Outreach</span><span class="arrow">→</span>
+          <span class="step">Track</span>
+        </div>
+        <div class="pill-row">
+          <span class="pill">Guided</span>
+          <span class="pill">User-controlled</span>
+          <span class="pill">Measurable</span>
+        </div>
+        <p class="footnote" style="text-align: center;">One "application kit" = one job, start to finish. The user reviews and submits everything.</p>
+      </div>
+    </section>
+
+    <!-- Slide 4 · Product -->
+    <section class="slide" data-slide="4">
+      <img class="corner-logo" src="/logo.JPG" alt="TailorSend" /><span class="slide-num">4 / 16</span>
+      <div class="slide-inner">
+        <p class="kicker"><span class="k-num">03</span>Product</p>
+        <h2>Everything shipped, everything live</h2>
+        <div class="feature-grid">
+          <div class="feature"><b>Job search</b><span>Roles from Greenhouse, Lever, remote boards, job APIs</span></div>
+          <div class="feature"><b>AI tailoring</b><span>Resume + cover letter with before/after ATS scores</span></div>
+          <div class="feature"><b>Company edge</b><span>Research, fit gaps &amp; talking points folded into docs</span></div>
+          <div class="feature"><b>Autofill</b><span>Fills forms on Greenhouse, Lever, Ashby — user submits</span></div>
+          <div class="feature"><b>Outreach</b><span>Recruiter LinkedIn note + follow-up email drafts</span></div>
+          <div class="feature"><b>Tracker</b><span>Pipeline: tailored → submitted → interview → offer</span></div>
+          <div class="feature"><b>Resume import</b><span>PDF/DOCX upload with AI field extraction</span></div>
+          <div class="feature"><b>Billing</b><span>Stripe subscriptions and one-time credit packs</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 5 · Demo -->
+    <section class="slide statement-slide" data-slide="5">
+      <img class="corner-logo" src="/logo.JPG" alt="TailorSend" /><span class="slide-num">5 / 16</span>
+      <div class="slide-inner">
+        <p class="kicker" style="text-align: center;"><span class="k-num">04</span>Live demo</p>
+        <p class="statement">This is not a prototype.<br />Try the <span class="hl">live product</span> right now.</p>
+        <a class="big-link" href="https://tailorsend.cc" target="_blank" rel="noopener">tailorsend.cc</a>
+        <p class="footnote" style="text-align: center;">User accounts · Stripe billing · full search → tailor → apply → outreach → track loop</p>
+      </div>
+    </section>
+
+    <!-- Slide 6 · Customer & pricing -->
+    <section class="slide" data-slide="6">
+      <img class="corner-logo" src="/logo.JPG" alt="TailorSend" /><span class="slide-num">6 / 16</span>
+      <div class="slide-inner">
+        <p class="kicker"><span class="k-num">05</span>Customer</p>
+        <h2>Who pays, and what they pay</h2>
+        <div class="two-col">
+          <div>
+            <h3>Primary customer</h3>
+            <ul>
+              <li><strong>Michigan college students</strong> — seniors &amp; grad students at CMU, U-M, MSU, Wayne State</li>
+              <li><strong>Recent graduates</strong> — 20–80 applications in the first 6 months</li>
+              <li><strong>Career changers</strong> — retooling for tech, PM, engineering</li>
+            </ul>
+          </div>
+          <div>
+            <h3>Usage-based pricing</h3>
+            <ul>
+              <li><strong>Free</strong> — 2 tailor + 1 autofill/mo (funnel)</li>
+              <li><strong>Campus $5</strong> — 8 kits, first purchase</li>
+              <li><strong>Monthly $9.99 / Yearly $89.99</strong> — 25 kits/mo</li>
+              <li><strong>Sprint $29.99</strong> — 50 kits, one-time</li>
+            </ul>
+          </div>
+        </div>
+        <p class="footnote"><strong style="color: var(--text);">Kit</strong> = tailor, autofill, or incorporate · COGS ~$0.18/kit · gross margin ~78%</p>
+      </div>
+    </section>
+
+    <!-- Slide 7 · Competitive positioning -->
+    <section class="slide" data-slide="7">
+      <img class="corner-logo" src="/logo.JPG" alt="TailorSend" /><span class="slide-num">7 / 16</span>
+      <div class="slide-inner">
+        <p class="kicker"><span class="k-num">06</span>Competitive positioning</p>
+        <h2>We own the full loop — with trust</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Competitor</th><th>What they do</th><th>TailorSend difference</th></tr></thead>
+            <tbody>
+              <tr><td>Jobscan, Teal</td><td>Resume optimization / tracking</td><td>We add job search + autofill + full workflow</td></tr>
+              <tr><td>ChatGPT</td><td>Generic AI writing</td><td>Purpose-built workflow, ATS scoring, no hallucinated experience</td></tr>
+              <tr><td>Simplify, LazyApply</td><td>Mass auto-apply</td><td>We never auto-submit; user reviews every application</td></tr>
+              <tr><td>Career centers</td><td>Free advising</td><td>Complements — faster execution between sessions</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="principle">We are not a resume checker or an auto-apply bot. We are the full, user-controlled application workflow.</p>
+      </div>
+    </section>
+
+    <!-- Slide 8 · Why now -->
+    <section class="slide" data-slide="8">
+      <img class="corner-logo" src="/logo.JPG" alt="TailorSend" /><span class="slide-num">8 / 16</span>
+      <div class="slide-inner">
+        <p class="kicker"><span class="k-num">07</span>Why now</p>
+        <h2>Three forces converging</h2>
+        <div class="card-grid">
+          <div class="stat-card">
+            <div class="label">ATS everywhere</div>
+            <div class="value">98%</div>
+            <div class="sub">of Fortune 500 filter with ATS — tailoring is now mandatory</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Application volume</div>
+            <div class="value">50–200+</div>
+            <div class="sub">applications per student search cycle and rising</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">AI expectations</div>
+            <div class="value">Mainstream</div>
+            <div class="sub">students already use AI — but generic tools break trust</div>
+          </div>
+        </div>
+        <p class="footnote">The window: students need honest, purpose-built AI before auto-apply spam poisons the market.</p>
+      </div>
+    </section>
+
+    <!-- Slide 9 · Traction -->
+    <section class="slide" data-slide="9">
+      <img class="corner-logo" src="/logo.JPG" alt="TailorSend" /><span class="slide-num">9 / 16</span>
+      <div class="slide-inner">
+        <p class="kicker"><span class="k-num">08</span>Traction &amp; momentum</p>
+        <h2>Built. Live. Validating.</h2>
+        <div class="card-grid">
+          <div class="stat-card">
+            <div class="label">Product</div>
+            <div class="value">Live MVP</div>
+            <div class="sub">tailorsend.cc on Railway</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Revenue engine</div>
+            <div class="value">Stripe live</div>
+            <div class="sub">Campus · Monthly · Yearly · Sprint</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Workflow</div>
+            <div class="value">Full loop</div>
+            <div class="sub">search → tailor → apply → outreach → track</div>
+          </div>
+        </div>
+        <ul class="check-list">
+          <li><span>Multi-source search with match scores and visa filters</span></li>
+          <li><span>AI tailor with before/after ATS scoring and PDF export</span></li>
+          <li><span>Autofill, recruiter outreach, and application tracker shipped</span></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Slide 10 · Market opportunity -->
+    <section class="slide" data-slide="10">
+      <img class="corner-logo" src="/logo.JPG" alt="TailorSend" /><span class="slide-num">10 / 16</span>
+      <div class="slide-inner">
+        <p class="kicker"><span class="k-num">09</span>Market opportunity</p>
+        <h2>Michigan first, national online</h2>
+        <div class="card-grid">
+          <div class="stat-card">
+            <div class="label">TAM · US college students</div>
+            <div class="value">19M+</div>
+            <div class="sub">plus recent grads &amp; career changers</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">SAM · Michigan students</div>
+            <div class="value">300K+</div>
+            <div class="sub">~50K+ job-seeking annually</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">SOM · 5-year target</div>
+            <div class="value">1,500</div>
+            <div class="sub">paying users · 20 campus communities</div>
+          </div>
+        </div>
+        <p class="footnote">
+          <strong style="color: var(--text);">The math:</strong> 1,500 paying users × ~$11/mo blended ARPU ≈
+          <strong style="color: var(--accent);">$280K revenue in Year 5</strong> — B2B campus licenses and employer seats are excluded upside.
+        </p>
+      </div>
+    </section>
+
+    <!-- Slide 11 · Land & expand -->
+    <section class="slide" data-slide="11">
+      <img class="corner-logo" src="/logo.JPG" alt="TailorSend" /><span class="slide-num">11 / 16</span>
+      <div class="slide-inner">
+        <p class="kicker"><span class="k-num">10</span>Go-to-market</p>
+        <h2>Land and expand — campus by campus</h2>
+        <div class="edge-grid">
+          <div class="edge"><span class="ico">🏫</span><b>1 · Pilot (now)</b><p>CMU + 1–2 Michigan campuses. Ambassadors, career center workshops, .edu pricing.</p></div>
+          <div class="edge"><span class="ico">🗺️</span><b>2 · Regional (Y2–Y3)</b><p>4+ Michigan universities → Midwest. Referral program: give kits, get kits.</p></div>
+          <div class="edge"><span class="ico">🌎</span><b>3 · National (Y4–Y5)</b><p>Online growth beyond campuses. Paid marketing only after unit economics are proven.</p></div>
+        </div>
+        <p class="footnote"><strong style="color: var(--text);">Year 1 budget:</strong> ~$250–400/month, organic only — SEO content, student communities, word-of-mouth.</p>
+      </div>
+    </section>
+
+    <!-- Slide 12 · Revenue trajectory -->
+    <section class="slide" data-slide="12">
+      <img class="corner-logo" src="/logo.JPG" alt="TailorSend" /><span class="slide-num">12 / 16</span>
+      <div class="slide-inner">
+        <p class="kicker"><span class="k-num">11</span>Revenue trajectory</p>
+        <h2>Cash-positive every year with the $25K bridge</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th></th><th class="num">Year 1</th><th class="num">Year 2</th><th class="num">Year 3</th></tr></thead>
+            <tbody>
+              <tr><td>Paying users (end of year)</td><td class="num">24</td><td class="num">95</td><td class="num">280</td></tr>
+              <tr><td>Revenue</td><td class="num">$1,546</td><td class="num">$11,000</td><td class="num">$42,000</td></tr>
+              <tr><td>Ask (grant / award / seed)</td><td class="num">$25,000</td><td class="num">—</td><td class="num">—</td></tr>
+              <tr><td>Total spending</td><td class="num">$13,022</td><td class="num">$8,800</td><td class="num">$34,350</td></tr>
+              <tr><td><strong>Ending cash</strong></td><td class="num positive"><strong>$13.5K</strong></td><td class="num positive"><strong>$15.7K</strong></td><td class="num positive"><strong>$23.4K</strong></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="footnote">Reaching <strong style="color: var(--accent);">~$86K cash by Year 5</strong> with no additional capital. <a href="financial-model.html">Full projections →</a></p>
+      </div>
+    </section>
+
+    <!-- Slide 13 · Team -->
+    <section class="slide" data-slide="13">
+      <img class="corner-logo" src="/logo.JPG" alt="TailorSend" /><span class="slide-num">13 / 16</span>
+      <div class="slide-inner">
+        <p class="kicker"><span class="k-num">12</span>Team &amp; support</p>
+        <h2>Founder-built, SBDC-backed</h2>
+        <div class="two-col">
+          <div>
+            <h3>Founder</h3>
+            <p><strong>Prosper Mapepa</strong> — <a href="https://mapepallc.netlify.app/">Mapepa Innovation LLC</a></p>
+            <ul>
+              <li>MBA candidate in Cybersecurity, Central Michigan University</li>
+              <li>7+ years software engineering, full-stack/mobile, app security</li>
+              <li>Shipped multiple production apps (iOS/Android)</li>
+              <li>Built TailorSend end-to-end</li>
+            </ul>
+          </div>
+          <div>
+            <h3>Michigan SBDC support</h3>
+            <ul>
+              <li><strong>Market research</strong> — pricing &amp; MI student market</li>
+              <li><strong>Tech commercialization</strong> — SaaS metrics, scaling, IP</li>
+              <li><strong>Growth consulting</strong> — campus partnership playbook</li>
+              <li><strong>Financial review</strong> — plan, projections, LLC/tax structure</li>
+            </ul>
+          </div>
+        </div>
+        <p class="footnote">No employees in Year 1; possible part-time marketing help in Year 2 if revenue supports it.</p>
+      </div>
+    </section>
+
+    <!-- Slide 14 · Vision -->
+    <section class="slide statement-slide" data-slide="14">
+      <img class="corner-logo" src="/logo.JPG" alt="TailorSend" /><span class="slide-num">14 / 16</span>
+      <div class="slide-inner">
+        <p class="kicker" style="text-align: center;"><span class="k-num">13</span>Vision</p>
+        <p class="statement">If every student applies with <span class="hl">TailorSend</span>:</p>
+        <ul class="statement-list">
+          <li><span><strong>Students</strong> graduate with interviews — not just a stack of unanswered applications</span></li>
+          <li><span><strong>Employers</strong> receive honest, tailored applications instead of AI spam</span></li>
+          <li><span><strong>Career centers</strong> get faster execution and measurable outcomes between advising sessions</span></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Slide 15 · The ask -->
+    <section class="slide" data-slide="15">
+      <img class="corner-logo" src="/logo.JPG" alt="TailorSend" /><span class="slide-num">15 / 16</span>
+      <div class="slide-inner">
+        <p class="kicker"><span class="k-num">14</span>Funding</p>
+        <h2>We are asking for $25,000</h2>
+        <p class="subtitle">To prove Michigan demand and reach sustainable unit economics · not a venture round</p>
+        <div class="use-of-funds">
+          <div class="fund-bar">
+            <div class="pct">$6K</div>
+            <div class="bar"><div class="bar-fill" style="height: 85%;"></div></div>
+            <div>Hosting &amp; AI</div>
+          </div>
+          <div class="fund-bar">
+            <div class="pct">$8K</div>
+            <div class="bar"><div class="bar-fill" style="height: 95%;"></div></div>
+            <div>Campus &amp; ambassadors</div>
+          </div>
+          <div class="fund-bar">
+            <div class="pct">$5K</div>
+            <div class="bar"><div class="bar-fill" style="height: 70%;"></div></div>
+            <div>Hardening &amp; legal</div>
+          </div>
+          <div class="fund-bar">
+            <div class="pct">$6K</div>
+            <div class="bar"><div class="bar-fill" style="height: 75%;"></div></div>
+            <div>GTM &amp; buffer</div>
+          </div>
+        </div>
+        <p class="footnote">
+          <strong style="color: var(--text);">12-month milestones:</strong> 25+ paying customers · 1–2 Michigan campus pilots · business banking under the LLC · LTV &gt; CAC on organic channels
+        </p>
+      </div>
+    </section>
+
+    <!-- Slide 16 · Thank you -->
+    <section class="slide statement-slide" data-slide="16">
+      <img class="corner-logo" src="/logo.JPG" alt="TailorSend" /><span class="slide-num">16 / 16</span>
+      <div class="slide-inner">
+        <p class="statement">Thank <span class="hl">you</span>.</p>
+        <a class="big-link" href="https://tailorsend.cc" target="_blank" rel="noopener">tailorsend.cc</a>
+        <p class="footnote" style="text-align: center; margin-top: 2.5rem;">
+          Prosper Mapepa · <a href="mailto:mapepapro@gmail.com">mapepapro@gmail.com</a> · (989) 332-8050<br />
+          <a href="https://mapepallc.netlify.app/">mapepallc.netlify.app</a> · <a href="https://michigansbdc.org/">michigansbdc.org</a><br />
+          <span style="font-size: 0.85rem;">© 2026 Mapepa Innovation LLC. All rights reserved.</span>
+        </p>
+      </div>
+    </section>
+  </div>
+
+  <div class="deck-controls no-print">
+    <button type="button" id="prev" aria-label="Previous slide">←</button>
+    <span id="counter">1 / 16</span>
+    <button type="button" id="next" aria-label="Next slide">→</button>
+  </div>
+
+  <script>
+    const slides = [...document.querySelectorAll(".slide")];
+    let current = 0;
+
+    function show(i) {
+      current = Math.max(0, Math.min(i, slides.length - 1));
+      slides.forEach((s, j) => s.classList.toggle("active", j === current));
+      document.getElementById("counter").textContent = `${current + 1} / ${slides.length}`;
+    }
+
+    document.getElementById("prev").onclick = () => show(current - 1);
+    document.getElementById("next").onclick = () => show(current + 1);
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowRight" || e.key === " ") { e.preventDefault(); show(current + 1); }
+      if (e.key === "ArrowLeft") show(current - 1);
+    });
+  </script>
+  <script src="download.js"></script>
+  <script>
+    (function () {
+      const FILE = "TailorSend-Business-Plan-Slides.html";
+      const self = document.getElementById("dl-self");
+      if (self) self.addEventListener("click", () => window.TailorSendDownload.download(FILE));
+      if (new URLSearchParams(location.search).get("download") === "1") {
+        window.addEventListener("load", () => setTimeout(() => window.TailorSendDownload.download(FILE), 400));
+      }
+    })();
+  </script>
+</body>
+</html>

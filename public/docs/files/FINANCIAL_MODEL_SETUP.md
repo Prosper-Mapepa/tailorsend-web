@@ -1,218 +1,87 @@
-# TailorSend Financial Model — Google Sheets Setup
+# TailorSend Financial Model — NVC-Style Structure (Michigan SBDC)
 
-**Michigan SBDC · Bootstrap scenario**
+**Template reference:** TalentHub NVC Financials 2026 (campus SaaS cash-flow format).  
+**Product:** TailorSend — student job-application SaaS (live at tailorsend.cc).  
+**Ask:** **$25,000** grant / award / seed support (Y1 cash-source bridge).
 
-Import the three CSV files into one Google Sheet workbook (one tab each):
+Import CSVs into one Google Sheet workbook:
 
 | Tab name | File |
 |----------|------|
 | `Assumptions` | `financial-model-assumptions.csv` |
-| `Monthly` | `financial-model-monthly.csv` |
-| `Annual` | `financial-model-annual.csv` |
-
-**File → Import → Upload** each CSV, or create a new Sheet and paste.
+| `CashFlow5Y` | `financial-model-annual.csv` |
+| `MonthlyY1` | `financial-model-monthly.csv` |
 
 ---
 
-## Option A — Use pre-filled monthly data (fastest)
+## Document structure (match NVC PDF)
 
-The `financial-model-monthly.csv` tab already contains **12 months** of conservative Year 1 projections. Edit **Assumptions** and manually adjust Monthly if you change growth rates.
+### I. Revenue detail
+- **Drivers:** Paying users (EOY) · Campus partnerships · Blended ARPU  
+- **Formula:** Product revenue ≈ paying base × blended ARPU × months active (+ one-time Campus/Sprint packs)  
+- **Live pricing:** Free · Campus $5 · Student Monthly $9.99/mo · Student Yearly $89.99/yr · Sprint $29.99 (50 kits)
 
-Highlight these columns in **yellow** on the Monthly tab (your editable inputs if you rebuild formulas):
+### II. Cash flow & balance (Years 1–5)
+Columns: **Year 1 … Year 5**
 
-- New Signups (column B) — or drive from growth formula below
+1. **Revenue drivers** (users, campuses, ARPU)  
+2. **Cash sources** — Product revenue · Loans · **Ask $25K** (Y1 only)  
+3. **Cash uses** — Founder salary · Staff · Hosting · AI/COGS · Hardening · Legal · Campus materials · Ambassadors · Rent · G&A · Marketing · Taxes (25%) · CapEx · Debt service  
+4. **Cash flow** = Sources − Uses  
+5. **Starting cash → Ending cash balance**
 
----
-
-## Option B — Formula-driven Monthly tab (recommended)
-
-Delete data rows 2–13 on the Monthly tab and rebuild with formulas. Assumptions live in tab `Assumptions` (use `$B$` absolute refs).
-
-### Row 1 headers (already in CSV)
-`Month | New Signups | Registered Users | Paying Users | MRR | Monthly Revenue | COGS | Stripe Fees | Gross Profit | Marketing | Owner Draw | Infrastructure | Other Fixed | Total OpEx | Net Income | Cumulative Cash`
-
-### Key assumption cells
-
-| Assumption | Cell |
-|------------|------|
-| Bootstrap capital | `Assumptions!B2` |
-| Student Monthly price | `Assumptions!B8` |
-| Blended ARPU | `Assumptions!B16` |
-| COGS per kit | `Assumptions!B17` |
-| Stripe rate | `Assumptions!B18` |
-| Starting users | `Assumptions!B21` |
-| Conversion | `Assumptions!B22` |
-| Churn | `Assumptions!B23` |
-| Marketing (organic) | `Assumptions!B29` |
-| Owner draw start month | `Assumptions!B32` |
-| Owner draw amount | `Assumptions!B33` |
-| Hosting | `Assumptions!B26` |
-| OpenAI base | `Assumptions!B27` |
-| Legal / misc | `Assumptions!B30` |
-
-### Column formulas (row 2 = month 1, copy down to row 13)
-
-**A2 (Month):**
-```
-=ROW()-1
-```
-
-**B2 (New Signups):**
-```
-=IF(A2=1, Assumptions!B21, ROUND(B1*1.15))
-```
-*~15% month-over-month signup growth after launch; tune to taste.*
-
-**C2 (Registered Users):**
-```
-=IF(A2=1, B2, C1+B2)
-```
-
-**D2 (Paying Users):**
-```
-=MIN(C2*Assumptions!B22, IF(A2=1, B2*Assumptions!B22, D1*(1-Assumptions!B23)+B2*Assumptions!B22*0.3))
-```
-
-**E2 (MRR):**
-```
-=D2*Assumptions!B16
-```
-
-**F2 (Monthly Revenue):**
-```
-=E2
-```
-
-**G2 (COGS):**
-```
-=D2*12*Assumptions!B17/12
-```
-
-**H2 (Stripe Fees):**
-```
-=F2*Assumptions!B18
-```
-
-**I2 (Gross Profit):**
-```
-=F2-G2-H2
-```
-
-**J2 (Marketing):**
-```
-=Assumptions!B29 + IF(A2>6, 50, 0)
-```
-
-**K2 (Owner Draw):**
-```
-=IF(A2>=Assumptions!B32, Assumptions!B33, 0)
-```
-
-**L2 (Infrastructure):**
-```
-=Assumptions!B26 + Assumptions!B27 + G2*0.5
-```
-
-**M2 (Other Fixed):**
-```
-=Assumptions!B30
-```
-
-**N2 (Total OpEx):**
-```
-=J2+K2+L2+M2
-```
-
-**O2 (Net Income):**
-```
-=I2-N2
-```
-
-**P2 (Cumulative Cash):**
-```
-=IF(A2=1, Assumptions!B2+O2, P1+O2)
-```
-
-Copy **A2:P2** down through row 13 (month 12).
+### III. Cost detail / notes
+- Pure SaaS COGS (AI + hosting variable); no inventory  
+- University/campus motion is **partnership + student kits**, not $15–40K institutional licenses (excluded upside)
 
 ---
 
-## Annual tab formulas
+## $25K ask — use of funds
 
-Link to Monthly totals (Year 1 = months 1–12):
-
-**Year 1 Revenue:**
-```
-=SUM(Monthly!F2:F13)
-```
-
-**Year 1 COGS:**
-```
-=SUM(Monthly!G2:G13)
-```
-
-**Year 1 Marketing:**
-```
-=SUM(Monthly!J2:J13)
-```
-
-**Year 1 Owner compensation:**
-```
-=SUM(Monthly!K2:K13)
-```
-
-**Year 1 Net income:**
-```
-=SUM(Monthly!O2:O13)
-```
-
-**Cash at end of Year 1:**
-```
-=Monthly!P13
-```
-
-Year 2 and Year 3 figures in `financial-model-annual.csv` are directional projections assuming SBDC-supported growth.
+| Category | Amount |
+|----------|--------|
+| Platform hosting & AI runway | $6,000 |
+| Campus demos + student ambassadors | $8,000 |
+| Hardening, compliance & legal | $5,000 |
+| Marketing / campus GTM + buffer | $6,000 |
+| **Total** | **$25,000** |
 
 ---
 
-## Unit economics tab (optional 4th sheet)
+## Five-year cash summary (from `CashFlow5Y`)
 
-| Metric | Formula |
-|--------|---------|
-| ARPU | `=Assumptions!B16` |
-| COGS/kit | `=Assumptions!B17` |
-| Gross margin % | `=(ARPU-12*COGS_per_kit)/ARPU` assuming 12 kits/mo |
-| LTV (months) | `=1/Assumptions!B23` |
-| LTV ($) | `=LTV_months*ARPU*0.76` |
-| CAC | `=SUM(Monthly!J2:J13)/MAX(Monthly!D13-Monthly!D1,1)` Year 1 |
-| LTV:CAC | `=LTV/CAC` |
+| | Y1 | Y2 | Y3 | Y4 | Y5 |
+|--|----|----|----|----|-----|
+| Paying users (EOY) | 24 | 95 | 280 | 700 | 1,500 |
+| Product revenue | $1,546 | $11,000 | $42,000 | $120,000 | $280,000 |
+| Ask | $25,000 | — | — | — | — |
+| Cash flow | $13,524 | $2,200 | $7,650 | $16,500 | $46,500 |
+| Ending cash | $13,524 | $15,724 | $23,374 | $39,874 | $86,374 |
 
----
-
-## Bootstrap capital use ($12K)
-
-| Category | Est. Year 1 |
-|----------|-------------|
-| Hosting & infra | ~$3,000 |
-| AI API costs | ~$2,000 |
-| Marketing (organic) | ~$3,450 |
-| Legal & accounting | ~$900 |
-| Runway buffer (M12) | ~$524 remaining |
+Y1 monthly detail still shows ~$336 MRR; cumulative cash ends ~**$13,524** with the $25K ask applied at the start.
 
 ---
 
-## Charts to add in Google Sheets
+## Narrative checklist (NVC page-2 style)
 
-1. **MRR ramp** — Line chart: Month (A) vs MRR (E)
-2. **Cash runway** — Line chart: Month (A) vs Cumulative Cash (P)
-3. **User growth** — Area chart: Registered (C) + Paying (D)
-4. **Bootstrap use** — Pie chart from table above
+| Topic | TailorSend answer |
+|-------|-------------------|
+| Revenue formula | Paying users × blended ARPU (+ packs); Y1 from monthly model |
+| Growth logic | Y1 MI validate → Y2 campus proof → Y3 multi-state → Y4 brand → Y5 national floor |
+| Ask / bridge | **$25K** grant/award/seed (TalentHub NVC analogue) |
+| Founder salary | $4.5K Y1 cash · $0 Y2 sweat · scales to $60K by Y5 |
+| Staff hiring | $0 until Y5 |
+| COGS | Pure SaaS kits (~$0.18) + hosting |
+| Tax model | 25% on pre-tax cash profit |
+| Excluded upside | B2B campus licenses, employer seats, API, international |
+| Live validation | Product live at tailorsend.cc · Stripe billing |
+| Source | TailorSend internal projections · Michigan SBDC · July 2026 |
 
 ---
 
-## Tips for SBDC meetings
+## Tips for SBDC / NVC meetings
 
-- Yellow cells = assumptions you can stress-test live ("what if conversion is 10%?")
-- Show honest Year 1 numbers: ~$336 MRR, 24 paying users, ~$524 cash remaining
-- Discuss when owner draw starts (month 9) and that revenue does not yet cover full living expenses
-- Ask SBDC consultant to review conversion assumptions and Michigan campus GTM strategy
+- Lead with **Ask $25K** and the use-of-funds table  
+- Walk cash flow **top → bottom** (drivers → sources → uses → ending cash)  
+- Stress-test conversion and campus partnership pace  
+- Offer live demo: tailor + ATS lift  

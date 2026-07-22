@@ -70,6 +70,8 @@ model Profile {
   education        String   @default("[]")
   certifications   String   @default("[]")
   targetRoles      String   @default("[]")
+  /// JSON: user career sites / ATS boards for job search [{ input, label }]
+  jobBoards        String   @default("[]")
   visaStatus       String   @default("")
   needsSponsorship Boolean  @default(false)
   // Voluntary EEO / OFCCP disclosures (used by autofill when asked)
@@ -124,6 +126,8 @@ model Application {
   tailoredResume   String    @default("")
   coverLetter      String    @default("")
   matchNotes       String    @default("")
+  linkedInRecruiterNote String @default("")
+  recruiterEmail   String    @default("")
   beforeMatch      String    @default("")
   afterMatch       String    @default("")
   companyEdge      String    @default("")

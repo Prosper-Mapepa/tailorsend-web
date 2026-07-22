@@ -16,6 +16,7 @@ export const dynamic = "force-dynamic";
 const schema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("pack"), packId: z.string() }),
   z.object({ kind: z.literal("flex") }),
+  z.object({ kind: z.literal("annual") }),
   z.object({ kind: z.literal("season") }),
 ]);
 

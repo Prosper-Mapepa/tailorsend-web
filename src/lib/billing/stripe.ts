@@ -3,8 +3,10 @@ import Stripe from "stripe";
 import {
   CREDIT_PACKS,
   FLEX_PRICE_CENTS,
+  ANNUAL_PRICE_CENTS,
   SEASON_PRICE_CENTS,
   FLEX_MONTHLY_KITS,
+  ANNUAL_MONTHLY_KITS,
   SEASON_TOTAL_KITS,
   SEASON_MONTHS,
   isStudentEmail,
@@ -12,7 +14,7 @@ import {
   type CreditPack,
 } from "./plans";
 
-export type CheckoutKind = "pack" | "flex" | "season";
+export type CheckoutKind = "pack" | "flex" | "annual" | "season";
 
 let stripeClient: Stripe | null = null;
 
@@ -87,6 +89,23 @@ export function checkoutLineItems(
     ];
   }
 
+  if (kind === "annual") {
+    return [
+      {
+        quantity: 1,
+        price_data: {
+          currency: "usd",
+          unit_amount: ANNUAL_PRICE_CENTS,
+          recurring: { interval: "year" },
+          product_data: {
+            name: "TailorSend Student Yearly",
+            description: `${ANNUAL_MONTHLY_KITS} application kits per month · billed annually · pause up to 30 days`,
+          },
+        },
+      },
+    ];
+  }
+
   return [
     {
       quantity: 1,
@@ -105,7 +124,7 @@ export function checkoutLineItems(
 export function checkoutMode(
   kind: CheckoutKind,
 ): Stripe.Checkout.SessionCreateParams.Mode {
-  return kind === "flex" ? "subscription" : "payment";
+  return kind === "flex" || kind === "annual" ? "subscription" : "payment";
 }
 
 export { CREDIT_PACKS };

@@ -10,6 +10,12 @@ import {
 import { prisma } from "@/lib/db";
 import { getProfile } from "@/lib/profile";
 import { runTailorPipeline } from "@/lib/tailor-pipeline";
+import {
+  createTailoredApplication,
+  updateTailoredApplication,
+  formatDbErrorForUser,
+  type TailoredApplicationPayload,
+} from "@/lib/application-persist";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -86,10 +92,12 @@ export async function POST(
       }).catch(() => null),
     ]);
 
-    const data = {
+    const appData: TailoredApplicationPayload = {
       tailoredResume: tailored.tailoredResume,
       coverLetter: tailored.coverLetter,
       matchNotes: tailored.matchNotes,
+      linkedInRecruiterNote: tailored.linkedInRecruiterNote,
+      recruiterEmail: tailored.recruiterEmail,
       beforeMatch: JSON.stringify(tailored.beforeMatch),
       afterMatch: JSON.stringify(tailored.afterMatch),
       companyEdge: edge ? JSON.stringify(normalizeCompanyEdge(edge)) : "",
@@ -97,9 +105,11 @@ export async function POST(
     };
 
     const application = existing
-      ? await prisma.application.update({ where: { id: existing.id }, data })
-      : await prisma.application.create({
-          data: { jobId: id, userId: auth.id, ...data },
+      ? await updateTailoredApplication(prisma, existing.id, appData)
+      : await createTailoredApplication(prisma, {
+          jobId: id,
+          userId: auth.id,
+          ...appData,
         });
 
     if (!alreadyCharged) {
@@ -112,7 +122,7 @@ export async function POST(
   } catch (err) {
     if (err instanceof UsageLimitError) return usageLimitResponse(err);
     return NextResponse.json(
-      { error: (err as Error).message },
+      { error: formatDbErrorForUser(err) },
       { status: 500 },
     );
   }

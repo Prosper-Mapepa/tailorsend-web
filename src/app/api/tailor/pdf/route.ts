@@ -55,7 +55,7 @@ export async function POST(req: Request) {
     await page.setContent(documentHtml(htmlMd, title, kind), {
       waitUntil: "networkidle",
     });
-    await page.emulateMedia({ media: "screen" });
+    await page.emulateMedia({ media: "print" });
     await page.evaluate(() => {
       document.querySelectorAll<HTMLAnchorElement>("a[href]").forEach((a) => {
         let href = a.getAttribute("href") ?? "";
@@ -75,7 +75,7 @@ export async function POST(req: Request) {
       format: "Letter",
       printBackground: true,
       displayHeaderFooter: false,
-      margin: { top: "0.5in", bottom: "0.5in", left: "0.5in", right: "0.5in" },
+      margin: { top: "0.42in", bottom: "0.48in", left: "0.5in", right: "0.5in" },
     });
 
     return new Response(new Uint8Array(pdf), {

@@ -203,7 +203,9 @@ export function normalizeResumeMarkdown(md: string): string {
             normalizeProjectParagraphs(
               consolidateProjectSections(
                 normalizeSkillsLists(
-                  reorderResumeSections(cleaned.join("\n")),
+                  reorderResumeSections(
+                    collapseExcessBlankLines(cleaned.join("\n")),
+                  ),
                 ),
               ),
             ),
@@ -212,6 +214,15 @@ export function normalizeResumeMarkdown(md: string): string {
       ),
     ),
   );
+}
+
+/** Collapse extra vertical whitespace so PDFs stay within two pages. */
+function collapseExcessBlankLines(md: string): string {
+  return md
+    .replace(/\r/g, "")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
 }
 
 export type ResumeContact = {
@@ -827,6 +838,23 @@ function normalizeSkillsLists(md: string): string {
       continue;
     }
 
+    const labeled = trimmed.match(/^([^:]+):\s*(.+)$/);
+    if (labeled) {
+      const body = labeled[2];
+      const chunks = body.split(/,\s*/);
+      if (chunks.length >= 2) {
+        for (const part of chunks) {
+          let skill = part.trim().replace(/\.\s*$/, "");
+          skill = skill.replace(
+            /^(Proficient in|Expertise in|Skilled in|Experienced with|Certified in|Deep knowledge of)\s+/i,
+            "",
+          );
+          if (skill) pushSkill(out, skill);
+        }
+        continue;
+      }
+    }
+
     if (trimmed.includes(",")) {
       for (const part of trimmed.split(",")) {
         pushSkill(out, part);
@@ -965,7 +993,7 @@ function inline(s: string): string {
 }
 
 // A skills list with at least this many items renders in multiple columns.
-const MULTI_COLUMN_THRESHOLD = 8;
+const MULTI_COLUMN_THRESHOLD = 6;
 
 const CLOSING_RE =
   /^(sincerely|best regards|warm regards|respectfully|kind regards|thank you|yours truly),?\.?$/i;
@@ -1096,7 +1124,7 @@ function mdToResumeHtml(md: string): string {
     if (!inList) return;
     let cls = "";
     if (listIsSkills && listItems.length >= MULTI_COLUMN_THRESHOLD) {
-      cls = listItems.length >= 14 ? ' class="cols-3"' : ' class="cols-2"';
+      cls = listItems.length >= 10 ? ' class="cols-3"' : ' class="cols-2"';
     }
     html.push(`<ul${cls}>`);
     html.push(...listItems);
@@ -1206,115 +1234,141 @@ export function documentHtml(
   return resumeDocumentHtml(md, title);
 }
 
+const RESUME_FONT_LINK =
+  "https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;0,500;1,400&display=swap";
+
 const DOCUMENT_BASE_CSS = `
-  @page { margin: 0.55in 0.6in; }
+  @page { margin: 0.42in 0.5in 0.48in; size: letter; }
   * { box-sizing: border-box; }
   body {
-    font-family: Calibri, "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
-    color: #000;
-    line-height: 1.38;
+    font-family: Roboto, "Helvetica Neue", Helvetica, Arial, sans-serif;
+    color: #000000;
+    line-height: 1.26;
     margin: 0;
     padding: 0;
-    font-size: 10.5px;
+    font-size: 9pt;
+    font-weight: 400;
+    -webkit-font-smoothing: auto;
+    -moz-osx-font-smoothing: auto;
+    text-rendering: geometricPrecision;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
+  body, body * {
+    color: #000000;
+  }
   a {
-    color: #000;
     text-decoration: underline;
-    text-underline-offset: 2px;
+    text-underline-offset: 1px;
     font-weight: inherit;
   }
+  strong { font-weight: 500; }
 `;
 
 const RESUME_PRINT_CSS = `
   ${DOCUMENT_BASE_CSS}
   h1 {
-    font-size: 16px;
-    font-weight: 700;
+    font-size: 14pt;
+    font-weight: 500;
     letter-spacing: 0.02em;
-    text-transform: none;
-    margin: 0 0 2px;
-    line-height: 1.2;
-    color: #000;
+    text-transform: uppercase;
+    margin: 0 0 1px;
+    line-height: 1.15;
   }
   p.contact-line {
-    margin: 0 0 9px;
+    margin: 0 0 10px;
     padding-bottom: 0;
     border-bottom: none;
-    font-size: 9.5px;
-    color: #1a1a1a;
-    line-height: 1.45;
+    font-size: 9pt;
+    font-weight: 400;
+    line-height: 1.26;
   }
-  p.contact-line a { text-decoration: underline; color: #000; }
+  p.contact-line a { text-decoration: underline; }
   h2 {
-    font-size: 10.5px;
-    font-weight: 700;
+    font-size: 10pt;
+    font-weight: 500;
     text-transform: uppercase;
-    letter-spacing: 0.07em;
-    border-bottom: 0.5px solid #9ca3af;
+    letter-spacing: 0.06em;
+    border-bottom: 1px solid #000000;
     padding-bottom: 2px;
-    margin: 11px 0 5px;
-    color: #000;
+    margin: 10px 0 4px;
     break-after: avoid;
     page-break-after: avoid;
   }
-  h3 { font-size: 10.5px; margin: 8px 0 2px; font-weight: 700; color: #000; }
-  p { margin: 1px 0; font-size: 10.5px; color: #000; }
+  h2:first-of-type { margin-top: 14px; }
+  h2 + p,
+  h2 + ul { margin-top: 4px; }
+  h3 { font-size: 9pt; margin: 6px 0 2px; font-weight: 500; }
+  p { margin: 0; font-size: 9pt; }
   p.entry-company,
-  p.entry-school {
-    margin: 9px 0 0;
-    font-size: 10.5px;
-    font-weight: 700;
-    color: #000;
+  p.entry-school,
+  p.entry-project,
+  p.entry {
+    margin: 6px 0 0;
+    font-size: 9pt;
+    font-weight: 500;
     break-after: avoid;
     page-break-after: avoid;
   }
+  h2 + p.entry-company,
+  h2 + p.entry-school,
+  h2 + p.entry-project,
+  h2 + p.entry { margin-top: 4px; }
   p.entry-company + p.entry-role,
   p.entry-school + p.entry-degree {
     margin-top: 0;
+    margin-bottom: 0;
   }
   p.entry-role,
   p.entry-degree {
-    margin: 0 0 3px;
-    font-size: 10.5px;
-    font-weight: 700;
-    color: #000;
+    margin: 0 0 2px;
+    font-size: 9pt;
+    font-weight: 500;
     font-style: normal;
     break-after: avoid;
     page-break-after: avoid;
   }
   p.entry-role strong,
-  p.entry-degree strong { font-weight: 700; }
+  p.entry-degree strong { font-weight: 500; }
   p.entry-role em,
-  p.entry-degree em { font-weight: 400; font-style: italic; color: #333; }
-  p.entry-project {
-    margin: 8px 0 1px;
-    font-size: 10.5px;
-    font-weight: 700;
-    color: #000;
-    break-after: avoid;
-    page-break-after: avoid;
+  p.entry-degree em { font-weight: 400; font-style: italic; }
+  p.entry-project strong { font-weight: 500; text-decoration: none; }
+  p.entry-project a { font-weight: 500; text-decoration: underline; }
+  h3 + p.entry { margin-top: 4px; }
+  ul {
+    margin: 0 0 4px;
+    padding-left: 1.35em;
+    list-style: disc outside;
+    overflow: visible;
   }
-  p.entry-project strong { font-weight: 700; color: #000; text-decoration: none; }
-  p.entry-project a { font-weight: 700; color: #000; text-decoration: underline; }
-  h2 + p.entry-company,
-  h2 + p.entry-school,
-  h2 + p.entry-project { margin-top: 2px; }
-  p.entry { margin: 8px 0 1px; font-size: 10.5px; font-weight: 700; color: #000; }
-  h2 + p.entry, h3 + p.entry { margin-top: 2px; }
-  ul { margin: 2px 0 4px; padding-left: 14px; }
-  li { font-size: 10.5px; margin: 1px 0; line-height: 1.32; color: #000; }
-  ul.cols-2 { column-count: 2; column-gap: 20px; }
-  ul.cols-3 { column-count: 3; column-gap: 14px; }
-  ul.cols-2 li, ul.cols-3 li { break-inside: avoid; -webkit-column-break-inside: avoid; }
+  li {
+    font-size: 9pt;
+    margin: 0 0 2px;
+    padding-left: 0.25em;
+    line-height: 1.28;
+  }
+  ul:not(.cols-2):not(.cols-3) li {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  p.entry-role + ul,
+  p.entry-degree + ul,
+  p.entry-project + ul,
+  p.entry-company + ul { margin-top: 2px; }
+  ul.cols-2 { column-count: 2; column-gap: 16px; padding-left: 1.15em; }
+  ul.cols-3 { column-count: 3; column-gap: 12px; padding-left: 1.15em; }
+  ul.cols-2 li, ul.cols-3 li {
+    break-inside: auto;
+    page-break-inside: auto;
+    padding-left: 0.35em;
+  }
   p.entry-project, p.entry-company, p.entry-role, p.entry-school, p.entry-degree, p.entry { text-decoration: none; }
   p.entry-company + ul,
   p.entry-role + ul,
   p.entry-project + ul,
   p.entry-degree + ul {
-    break-inside: avoid;
-    page-break-inside: avoid;
+    break-inside: auto;
+    page-break-inside: auto;
   }
 `;
 
@@ -1363,7 +1417,7 @@ export function coverLetterDocumentHtml(md: string, title: string): string {
 
 /** Wrap rendered resume markdown in a print-optimized HTML document. */
 export function resumeDocumentHtml(md: string, title: string): string {
-  return `<!doctype html><html><head><meta charset="utf-8"><title>${escapeHtml(
+  return `<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="${RESUME_FONT_LINK}"><title>${escapeHtml(
     title,
   )}</title>
 <style>${RESUME_PRINT_CSS}</style></head><body>${mdToHtml(normalizeResumeMarkdown(md), { kind: "resume" })}</body></html>`;

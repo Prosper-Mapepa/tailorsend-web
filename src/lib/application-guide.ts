@@ -1,10 +1,17 @@
-export type GuideStepId = "resume" | "cover" | "edge" | "apply" | "status";
+export type GuideStepId =
+  | "resume"
+  | "cover"
+  | "edge"
+  | "apply"
+  | "status"
+  | "outreach";
 
 export const GUIDE_STEP_ORDER: GuideStepId[] = [
   "resume",
   "cover",
   "edge",
   "apply",
+  "outreach",
   "status",
 ];
 
@@ -92,6 +99,15 @@ export function getStepMeta(id: GuideStepId, ctx: GuideContext): GuideStepMeta {
               : ctx.multiStepApply
                 ? "Use Auto-fill & open browser. Continue Autofill if more steps remain."
                 : "Use Auto-fill & open browser, or copy answers from the form below.",
+        nextLabel: "Recruiter outreach →",
+      };
+    case "outreach":
+      return {
+        id,
+        number,
+        title: "Recruiter outreach",
+        prompt:
+          "Copy the LinkedIn note and email below — edit tone if needed, then send.",
         nextLabel: "Update status →",
       };
     case "status":

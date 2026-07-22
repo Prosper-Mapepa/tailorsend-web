@@ -351,7 +351,16 @@ export function LandingPage() {
             </nav>
           </div>
           <p className="text-xs text-slate-400">
-            © {new Date().getFullYear()} TailorSend. All rights reserved.
+            © {new Date().getFullYear()} TailorSend · A product of{" "}
+            <a
+              href="https://mapepallc.netlify.app/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-slate-600"
+            >
+              Mapepa Innovation LLC
+            </a>
+            . All rights reserved.
           </p>
         </div>
       </footer>

@@ -98,11 +98,21 @@ test("flex plan uses plan kits", () => {
 
 test("flex exhausted falls back to credits", () => {
   const summary = buildUsageSummary(
-    baseAccount({ plan: "flex", planKitsUsed: 20, creditBalance: 2 }),
+    baseAccount({ plan: "flex", planKitsUsed: 25, creditBalance: 2 }),
   );
   const d = canConsume(summary, "autofill", false);
   assert.equal(d.allowed, true);
   assert.equal(d.source, "credits");
+});
+
+test("annual plan uses plan kits", () => {
+  const summary = buildUsageSummary(
+    baseAccount({ plan: "annual", planKitsUsed: 3 }),
+  );
+  const d = canConsume(summary, "tailor", false);
+  assert.equal(d.allowed, true);
+  assert.equal(d.source, "flex_plan");
+  assert.equal(summary.planKitsRemaining, 22);
 });
 
 test("incorporate blocked on free without credits", () => {

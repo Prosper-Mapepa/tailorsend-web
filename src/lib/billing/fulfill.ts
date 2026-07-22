@@ -70,12 +70,12 @@ export async function fulfillCheckoutSession(
       where: { userId },
       data: { stripeSubscriptionId: null },
     });
-  } else if (kind === "flex") {
+  } else if (kind === "flex" || kind === "annual") {
     const subId =
       typeof session.subscription === "string"
         ? session.subscription
         : session.subscription?.id;
-    await setPlan(userId, user.email, "flex");
+    await setPlan(userId, user.email, kind === "annual" ? "annual" : "flex");
     if (subId) {
       await prisma.usageAccount.update({
         where: { userId },

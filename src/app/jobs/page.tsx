@@ -16,6 +16,7 @@ import { parseUsageError } from "@/lib/billing/format";
 import { supportsAutofill } from "@/lib/apply/detect";
 import type { DatePosted, VisaRisk } from "@/lib/types";
 import { visaRiskLabel } from "@/lib/visa";
+import { CompanyLogo } from "@/components/CompanyLogo";
 
 interface JobRow {
   id: string;
@@ -98,26 +99,41 @@ function JobCard({
   const canAutofill = supportsAutofill(job.applyUrl || job.url, job.atsPlatform);
 
   return (
-    <article className="flex h-full flex-col rounded-2xl border border-slate-200/80 bg-white p-4 transition hover:border-emerald-200 hover:shadow-sm sm:p-5">
-      <div className="min-w-0 flex-1 space-y-3">
-        <div className="flex items-start gap-3">
+    <article className="flex h-full flex-col rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm transition hover:border-emerald-200 hover:shadow-md sm:p-5">
+      <div className="min-w-0 flex-1">
+        <div className="flex items-start gap-3.5">
+          <CompanyLogo
+            company={job.company}
+            url={job.url}
+            applyUrl={job.applyUrl}
+            size={56}
+          />
           <div className="min-w-0 flex-1">
-            <a
-              href={job.url}
-              target="_blank"
-              rel="noreferrer"
-              className="line-clamp-2 text-[15px] font-semibold leading-snug text-slate-900 hover:text-emerald-700"
-            >
-              {job.title || "Untitled role"}
-            </a>
-            <p className="mt-1 text-sm text-slate-500">
-              {[job.company, job.location].filter(Boolean).join(" · ")}
-            </p>
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold text-slate-900">
+                  {job.company || "Company"}
+                </p>
+                <p className="mt-0.5 line-clamp-1 text-xs text-slate-500">
+                  {[job.location, posted].filter(Boolean).join(" · ") ||
+                    "Location TBD"}
+                </p>
+              </div>
+              <ScorePill score={job.matchScore} />
+            </div>
           </div>
-          <ScorePill score={job.matchScore} />
         </div>
 
-        <div className="flex flex-wrap items-center gap-1.5">
+        <a
+          href={job.url}
+          target="_blank"
+          rel="noreferrer"
+          className="mt-3.5 block line-clamp-2 text-[15px] font-semibold leading-snug tracking-tight text-slate-900 hover:text-emerald-700"
+        >
+          {job.title || "Untitled role"}
+        </a>
+
+        <div className="mt-3 flex flex-wrap items-center gap-1.5">
           <SponsorshipTag risk={job.visaRisk} />
           {job.remote && (
             <span className="rounded-md bg-slate-50 px-2 py-0.5 text-[11px] font-medium text-slate-600 ring-1 ring-slate-200/80">
@@ -133,29 +149,25 @@ function JobCard({
               Manual apply
             </span>
           )}
-          {posted && (
-            <span className="text-[11px] font-medium text-slate-400">
-              {posted}
-            </span>
-          )}
           {app && <Badge status={app.status} />}
         </div>
 
         {job.salary ? (
-          <p className="text-xs text-slate-400">{job.salary}</p>
+          <p className="mt-2 text-xs font-medium text-slate-500">{job.salary}</p>
         ) : null}
       </div>
 
-      <div className="mt-4 flex items-center justify-end border-t border-slate-100 pt-3">
+      <div className="mt-4 border-t border-slate-100 pt-3">
         {app ? (
-          <Link href={`/applications/${app.id}`}>
-            <Button variant="outline" size="md">
+          <Link href={`/applications/${app.id}`} className="block">
+            <Button variant="outline" size="md" className="w-full">
               Open application
             </Button>
           </Link>
         ) : (
           <Button
             size="md"
+            className="w-full"
             loading={tailoringId === job.id}
             onClick={() => onTailor(job.id)}
           >
@@ -189,15 +201,26 @@ export default function JobsPage() {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const router = useRouter();
   const [targetRoles, setTargetRoles] = useState<string[]>([]);
+  const [jobBoards, setJobBoards] = useState<
+    { input: string; label: string }[]
+  >([]);
   const [clearing, setClearing] = useState(false);
 
   useEffect(() => {
     apiFetch("/api/profile")
       .then((r) => r.json())
-      .then((p: { targetRoles?: { title: string }[] }) =>
-        setTargetRoles(
-          (p.targetRoles ?? []).map((r) => r.title).filter(Boolean),
-        ),
+      .then(
+        (p: {
+          targetRoles?: { title: string }[];
+          jobBoards?: { input: string; label: string }[];
+        }) => {
+          setTargetRoles(
+            (p.targetRoles ?? []).map((r) => r.title).filter(Boolean),
+          );
+          setJobBoards(
+            (p.jobBoards ?? []).filter((b) => b.input?.trim()),
+          );
+        },
       )
       .catch(() => {});
   }, []);
@@ -371,25 +394,70 @@ export default function JobsPage() {
       </header>
 
       <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-        {targetRoles.length > 0 && (
-          <div className="mb-4 flex flex-wrap items-center gap-2">
-            <span className="text-xs font-medium text-slate-400">Roles</span>
-            {targetRoles.map((t) => (
-              <button
-                key={t}
-                type="button"
-                onClick={() => setQuery(t)}
-                className="rounded-lg bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-900 ring-1 ring-emerald-100 hover:bg-emerald-100"
+        {(targetRoles.length > 0 || jobBoards.length > 0) && (
+          <div className="mb-4 space-y-2">
+            {targetRoles.length > 0 && (
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-xs font-medium text-slate-400">Roles</span>
+                {targetRoles.map((t) => (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => setQuery(t)}
+                    className="rounded-lg bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-900 ring-1 ring-emerald-100 hover:bg-emerald-100"
+                  >
+                    {t}
+                  </button>
+                ))}
+                <Link
+                  href="/profile#roles"
+                  className="text-xs font-medium text-emerald-700 hover:underline"
+                >
+                  Edit
+                </Link>
+              </div>
+            )}
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs font-medium text-slate-400">
+                Boards
+              </span>
+              {jobBoards.length === 0 ? (
+                <span className="text-xs text-slate-400">
+                  None — add company career sites for your field
+                </span>
+              ) : (
+                jobBoards.map((b) => (
+                  <span
+                    key={b.input}
+                    className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700 ring-1 ring-slate-200"
+                    title={b.input}
+                  >
+                    {b.label.trim() || b.input}
+                  </span>
+                ))
+              )}
+              <Link
+                href="/profile#boards"
+                className="text-xs font-medium text-emerald-700 hover:underline"
               >
-                {t}
-              </button>
-            ))}
-            <Link
-              href="/profile"
-              className="text-xs font-medium text-emerald-700 hover:underline"
-            >
-              Edit
-            </Link>
+                {jobBoards.length ? "Edit" : "Add sites"}
+              </Link>
+            </div>
+          </div>
+        )}
+        {targetRoles.length === 0 && jobBoards.length === 0 && (
+          <div className="mb-4 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+            <span>
+              Tip: add{" "}
+              <Link
+                href="/profile#boards"
+                className="font-medium text-emerald-700 hover:underline"
+              >
+                job boards &amp; companies
+              </Link>{" "}
+              on your profile so Scan targets the right employers for your
+              profession.
+            </span>
           </div>
         )}
 

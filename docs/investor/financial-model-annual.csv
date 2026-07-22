@@ -1,33 +1,41 @@
-TailorSend Financial Model - ANNUAL SUMMARY (Michigan SBDC realistic)
-Metric,Year 1,Year 2,Year 3
-Registered users (end of year),298,850,2200
-Paying users (end of year),24,95,280
-Paying users (average),12,55,175
-,,,
-Annual revenue,1546,11000,42000
-MRR (end of year),336,950,3200
-,,,
-COGS variable,372,2200,8400
-Gross profit,1174,8800,33600
-Gross margin %,76%,80%,80%
-,,,
-Operating expenses,,,
-  Marketing,3450,6000,12000
-  Owner compensation,10500,24000,36000
-  Infrastructure hosting AI,3150,4800,7200
-  Legal accounting,900,1200,1500
-  Total OpEx,18000,36000,56700
-,,,
-Net income (loss),-16826,-27200,-23100
-,,,
-Bootstrap capital,12000,,
-Cumulative cash Year 1 end,524,,
-,,,
-Year 2 assumptions (with SBDC growth support),,
-Campus partnerships,2-3 MI universities,,
-Conversion rate,9%,,
-Marketing,organic + modest paid,,
-,,,
-Year 3 assumptions,,
-Part-time contractor,optional,,
-Break-even target,approaching,,
+TailorSend — CASH FLOW & BALANCE (NVC structure · Years 1–5 · $25K ask)
+Line,Year 1,Year 2,Year 3,Year 4,Year 5
+I. REVENUE DRIVERS,,,,,
+Paying users (EOY),24,95,280,700,1500
+Campus partnerships (cumulative),1,3,6,12,20
+Blended ARPU ($/mo),10,10,10,10,11
+,,,,,
+II. CASH SOURCES,,,,,
+Product revenue (subs + packs),1546,11000,42000,120000,280000
+Loans / other debt receipts,0,0,0,0,0
+Ask — grant / award / seed support,25000,0,0,0,0
+Subtotal — Cash Sources,26546,11000,42000,120000,280000
+,,,,,
+III. CASH USES,,,,,
+Founder salary (annual),4500,0,9000,36000,60000
+Additional staff wages,0,0,0,0,45000
+Platform hosting & maintenance,2400,3000,4800,9000,14000
+AI API / variable COGS,372,2000,6500,16000,30000
+Platform hardening & compliance,400,400,1000,2500,4000
+Legal contracts & SaaS agreements,900,800,1200,2500,4500
+Campus demo & sales materials,400,500,1500,4000,7000
+Student ambassador expansion,400,500,1800,5000,9000
+Rent,0,0,0,0,6000
+General & administrative,450,400,1200,3000,5000
+Marketing,3000,1000,4000,18000,30000
+Estimated income taxes (25%),0,0,2550,5500,15500
+Capital expenditures,200,200,800,2000,3500
+Mortgage / loan / debt payments,0,0,0,0,0
+Subtotal — Cash Uses,13022,8800,34350,103500,233500
+,,,,,
+IV. CASH FLOW,,,,,
+Cash flow (Sources − Uses),13524,2200,7650,16500,46500
+Starting cash,0,13524,15724,23374,39874
+Ending cash balance,13524,15724,23374,39874,86374
+,,,,,
+Notes,,,,,
+Ask $25K is the Y1 capital bridge (TalentHub NVC grant analogue).,
+Y1 product revenue + monthly path unchanged (~$336 MRR EOY); ending cash rises with the ask.,
+Y2 founder salary $0 cash (sweat equity) while validating campus GTM.,
+First staff hire Year 5 only after revenue confirmed.,
+Tax = 25% of pre-tax profit (Sources − Uses before tax line).,

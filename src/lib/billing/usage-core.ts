@@ -1,6 +1,7 @@
 import {
-  FLEX_MONTHLY_KITS,
   SEASON_TOTAL_KITS,
+  isKitSubscriptionPlan,
+  subscriptionKitsPerMonth,
   type BillingPlan,
   type FreeLimits,
   freeLimits,
@@ -107,8 +108,11 @@ export function buildUsageSummary(
   const seasonActive = isSeasonActive(normalized, now);
 
   let planKitsRemaining = 0;
-  if (normalized.plan === "flex" && !flexPaused) {
-    planKitsRemaining = Math.max(0, FLEX_MONTHLY_KITS - normalized.planKitsUsed);
+  if (isKitSubscriptionPlan(normalized.plan) && !flexPaused) {
+    planKitsRemaining = Math.max(
+      0,
+      subscriptionKitsPerMonth(normalized.plan) - normalized.planKitsUsed,
+    );
   } else if (seasonActive) {
     const total = normalized.seasonKitsTotal || SEASON_TOTAL_KITS;
     planKitsRemaining = Math.max(0, total - normalized.planKitsUsed);
@@ -170,23 +174,23 @@ export function canConsume(
       return {
         allowed: false,
         reason:
-          "Add edge ideas is included with credits or a Flex/Season plan. Get a credit pack from Billing.",
+          "Add edge ideas is included with credits or a paid plan. Get a pack from Billing.",
       };
     }
     const label = action === "tailor" ? "tailor" : "autofill";
     return {
       allowed: false,
-      reason: `Monthly ${label} limit reached. Get credits ($5 for 15) or upgrade on Billing.`,
+      reason: `Monthly ${label} limit reached. Get kits or upgrade on Billing.`,
     };
   }
 
-  if (summary.plan === "flex" && summary.flexPaused) {
+  if (isKitSubscriptionPlan(summary.plan) && summary.flexPaused) {
     if (summary.creditBalance > 0) {
       return { allowed: true, source: "credits" };
     }
     return {
       allowed: false,
-      reason: "Flex plan is paused. Use credits or resume Flex on Billing.",
+      reason: "Subscription is paused. Use credits or resume on Billing.",
     };
   }
 

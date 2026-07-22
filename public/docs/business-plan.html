@@ -8,6 +8,170 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
+  <style>
+    /* Page-specific: wider page + easier reading */
+    .container { max-width: 1150px; }
+    .container > p, .container li {
+      font-size: 1.02rem;
+      line-height: 1.75;
+    }
+    .container ul { margin: 0.75rem 0 1.25rem; }
+    .container li { margin-bottom: 0.35rem; }
+    .container h2 {
+      margin-top: 3.25rem;
+      padding-top: 1.75rem;
+      border-top: 1px solid var(--border);
+    }
+    .container h2:first-of-type { border-top: none; padding-top: 0; }
+    .lead { max-width: 52rem; }
+    table { font-size: 0.95rem; }
+    th, td { padding: 0.75rem 1.1rem; }
+
+    /* Page-specific: executive summary visuals */
+    .problem-solution {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1rem;
+      margin: 1.25rem 0 1.5rem;
+    }
+    .problem-solution article {
+      padding: 1.35rem 1.5rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+    .problem-solution .label {
+      display: block;
+      margin-bottom: 0.5rem;
+      color: var(--accent);
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .problem-solution h3 {
+      margin: 0 0 0.45rem;
+      color: var(--text);
+      font-size: 1.1rem;
+    }
+    .problem-solution p {
+      margin: 0;
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      line-height: 1.6;
+    }
+    @media (max-width: 700px) {
+      .problem-solution { grid-template-columns: 1fr; }
+    }
+
+    .flow-line {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem 1rem;
+      width: 100%;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2rem 2.5rem;
+      margin: 1.75rem 0;
+    }
+    .flow-line .step {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: 700;
+      font-size: clamp(1.15rem, 2.2vw, 1.5rem);
+      letter-spacing: -0.01em;
+      color: var(--text);
+      white-space: nowrap;
+    }
+    .flow-line .arrow { color: var(--accent); font-size: clamp(1.1rem, 2vw, 1.4rem); font-weight: 600; }
+    @media (max-width: 700px) {
+      .flow-line { justify-content: center; padding: 1.5rem 1.25rem; }
+    }
+    .flow-caption {
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.88rem;
+      margin: -0.5rem 0 1.5rem;
+    }
+    .edge-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.25rem;
+      margin: 1.5rem 0 2rem;
+    }
+    .edge-grid .edge {
+      position: relative;
+      padding: 1.6rem 1.5rem 1.5rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .edge-grid .edge::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--accent);
+      opacity: 0.7;
+    }
+    .edge-grid .edge .ico {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 2.6rem;
+      height: 2.6rem;
+      font-size: 1.3rem;
+      background: var(--accent-glow);
+      border-radius: 10px;
+    }
+    .edge-grid .edge b { display: block; margin-top: 0.9rem; color: var(--text); font-size: 1.08rem; letter-spacing: -0.01em; }
+    .edge-grid .edge p { margin: 0.45rem 0 0; color: var(--text-muted); font-size: 0.92rem; line-height: 1.6; }
+
+    .ask-banner {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 1.25rem 2rem;
+      background: var(--accent-glow);
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      border-radius: var(--radius);
+      padding: 1.5rem 1.75rem;
+      margin: 1.75rem 0 0.5rem;
+    }
+    .ask-banner .amount {
+      flex-shrink: 0;
+      text-align: center;
+    }
+    .ask-banner .amount .big {
+      display: block;
+      font-size: 2.1rem;
+      font-weight: 700;
+      color: var(--accent);
+      line-height: 1.1;
+    }
+    .ask-banner .amount .lbl {
+      display: block;
+      margin-top: 0.2rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+    .ask-banner .detail {
+      flex: 1;
+      min-width: 260px;
+    }
+    .ask-banner .detail p { margin: 0; color: var(--text); font-size: 0.98rem; line-height: 1.65; }
+    .ask-banner .detail p + p { margin-top: 0.4rem; color: var(--text-muted); font-size: 0.9rem; }
+  </style>
 </head>
 <body>
   <header class="site-header">
@@ -20,6 +184,7 @@
       <a href="one-pager.html">Summary</a>
     </nav>
     <div class="download-bar no-print">
+      <a class="btn-download" href="business-plan-slides.html">▶ View as slides</a>
       <button type="button" class="btn-download" id="dl-self">↓ Download</button>
     </div>
   </header>
@@ -30,25 +195,63 @@
     <p class="lead">Submitted in support of consulting with the <a href="https://michigansbdc.org/">Michigan Small Business Development Center</a>.</p>
 
     <div class="card-grid">
-      <div class="stat-card"><div class="label">Legal structure</div><div class="value" style="font-size:1rem;">LLC (planned)</div></div>
+      <div class="stat-card"><div class="label">Legal structure</div><div class="value" style="font-size:1rem;"><a href="https://mapepallc.netlify.app/">Mapepa Innovation LLC</a></div></div>
       <div class="stat-card"><div class="label">Location</div><div class="value" style="font-size:1rem;">Michigan</div></div>
       <div class="stat-card"><div class="label">Website</div><div class="value" style="font-size:1rem;"><a href="https://tailorsend.cc">tailorsend.cc</a></div></div>
     </div>
 
     <h2>1. Executive Summary</h2>
-    <p><strong>TailorSend</strong> is a Michigan-based software company offering an online platform that helps job seekers — especially college students and recent graduates — search for roles, tailor resumes and cover letters with AI, and auto-fill application forms while keeping full control of every submission.</p>
-    <p>The product is <strong>live</strong> at tailorsend.cc with user accounts, Stripe billing, and core features operational. The business is <strong>bootstrapped</strong> with approximately $12,000 in owner capital. Year 1 projected revenue is conservative (~$1,500) while the founder validates product-market fit and builds campus partnerships in Michigan.</p>
-    <p><strong>SBDC support requested:</strong> market research validation, tech startup commercialization guidance, Michigan campus go-to-market strategy, and review of financial projections.</p>
+    <div class="problem-solution">
+      <article>
+        <span class="label">The problem</span>
+        <h3>Job seekers manage a fragmented process</h3>
+        <p>Students and recent graduates jump between job boards, resume tools, AI writers, application forms, and trackers. The result is slower applications, inconsistent quality, and missed follow-up.</p>
+      </article>
+      <article>
+        <span class="label">The solution</span>
+        <h3>One guided workflow from search to follow-up</h3>
+        <p><strong>TailorSend</strong> brings job search, honest AI tailoring, ATS scoring, autofill, recruiter outreach, and application tracking into one user-controlled platform.</p>
+      </article>
+    </div>
+
+    <div class="flow-line">
+      <span class="step"> Search</span><span class="arrow">→</span>
+      <span class="step">Tailor</span><span class="arrow">→</span>
+      <span class="step">Edge</span><span class="arrow">→</span>
+      <span class="step">Autofill</span><span class="arrow">→</span>
+      <span class="step">Outreach</span><span class="arrow">→</span>
+      <span class="step">Track</span>
+    </div>
+    <p class="flow-caption">One "application kit" = one job, start to finish. Live today at tailorsend.cc with Stripe billing.</p>
+
+    <h3>What makes it unique</h3>
+    <div class="edge-grid">
+      <div class="edge"><span class="ico">🧩</span><b>The whole job hunt, one tool</b><p>Competitors do one slice. TailorSend goes search → tailor → apply → follow-up.</p></div>
+      <div class="edge"><span class="ico">🛡️</span><b>Honest AI, user in control</b><p>Never invents experience. Never auto-submits — the user reviews and sends everything.</p></div>
+      <div class="edge"><span class="ico">📈</span><b>Proof on every application</b><p>Before → after ATS scores show the lift. Priced for students, from $5.</p></div>
+    </div>
+
+    <div class="ask-banner">
+      <div class="amount">
+        <span class="big">$25,000</span>
+        <span class="lbl">One-time ask</span>
+      </div>
+      <div class="detail">
+        <p>Grant / award / seed to bridge Year 1 runway while validating product-market fit and building campus partnerships in Michigan.</p>
+        <p>Plus SBDC support: market research, tech commercialization, Michigan campus go-to-market, and financial plan review.</p>
+      </div>
+    </div>
 
     <h2>2. Company Description</h2>
     <table>
       <tbody>
-        <tr><td><strong>Business name</strong></td><td>TailorSend</td></tr>
+        <tr><td><strong>Business name</strong></td><td>TailorSend (product of Mapepa Innovation LLC)</td></tr>
+        <tr><td><strong>Legal entity</strong></td><td><a href="https://mapepallc.netlify.app/">Mapepa Innovation LLC</a> · mapepallc.netlify.app</td></tr>
         <tr><td><strong>Product</strong></td><td>Web-based SaaS (Software as a Service)</td></tr>
         <tr><td><strong>Industry</strong></td><td>Career technology / EdTech</td></tr>
         <tr><td><strong>Stage</strong></td><td>Early stage — MVP live, acquiring first users</td></tr>
         <tr><td><strong>Employees</strong></td><td>1 (founder); no employees Year 1</td></tr>
-        <tr><td><strong>Formation</strong></td><td>LLC formation in Michigan (in progress / planned)</td></tr>
+        <tr><td><strong>Contact</strong></td><td>Prosper Mapepa · mapepapro@gmail.com · (989) 332-8050</td></tr>
       </tbody>
     </table>
 
@@ -58,9 +261,11 @@
         <thead><tr><th>Feature</th><th>Description</th><th>Status</th></tr></thead>
         <tbody>
           <tr><td>Job search</td><td>Aggregates roles from Greenhouse, Lever, remote boards, and job APIs</td><td>Live</td></tr>
-          <tr><td>AI resume tailoring</td><td>Custom resume + cover letter per job with ATS keyword scoring</td><td>Live</td></tr>
-          <tr><td>Application autofill</td><td>Browser-based form fill; user reviews and submits manually</td><td>Live</td></tr>
-          <tr><td>Application tracker</td><td>Pipeline from draft to submitted</td><td>Live</td></tr>
+          <tr><td>AI resume tailoring</td><td>Custom resume + cover letter per job with before/after ATS keyword scoring</td><td>Live</td></tr>
+          <tr><td>Company edge</td><td>Company research, fit gaps, and talking points incorporated into documents</td><td>Live</td></tr>
+          <tr><td>Application autofill</td><td>Form fill on Greenhouse, Lever, Ashby incl. multi-step wizards; user reviews and submits</td><td>Live</td></tr>
+          <tr><td>Recruiter outreach</td><td>LinkedIn note + follow-up email drafts per application</td><td>Live</td></tr>
+          <tr><td>Application tracker</td><td>Pipeline from tailored to submitted, interview, and offer</td><td>Live</td></tr>
           <tr><td>Resume import</td><td>PDF/DOCX upload with AI field extraction</td><td>Live</td></tr>
           <tr><td>Billing</td><td>Stripe subscriptions and one-time credit packs</td><td>Live</td></tr>
         </tbody>
@@ -73,8 +278,9 @@
       <tbody>
         <tr><td>Free</td><td>$0</td><td>3 tailor + 1 autofill/month (extra for .edu emails)</td></tr>
         <tr><td>Campus</td><td>$5 one-time</td><td>8 kits — cheap first purchase</td></tr>
-        <tr><td>Student Monthly</td><td>$8/month</td><td>25 kits/month — primary MRR</td></tr>
-        <tr><td>Sprint</td><td>$12 ($8 .edu)</td><td>25 kits one-time — serious hunt push</td></tr>
+        <tr><td>Student Monthly</td><td>$9.99/month</td><td>25 kits/month — flexible MRR</td></tr>
+        <tr><td>Student Yearly</td><td>$89.99/year</td><td>25 kits/month — ~25% off, cash upfront</td></tr>
+        <tr><td>Sprint</td><td>$29.99</td><td>50 kits one-time — serious hunt push</td></tr>
       </tbody>
     </table>
 
@@ -125,11 +331,13 @@
     </ul>
 
     <h2>8. Management</h2>
-    <p><strong>[Your Name], Founder</strong></p>
+    <p><strong>Prosper Mapepa, Founder</strong> — Mapepa Innovation LLC</p>
     <ul>
+      <li>MBA candidate in Cybersecurity, Central Michigan University</li>
+      <li>7+ years in software engineering, full-stack/mobile development, and application security</li>
+      <li>Shipped multiple production apps (iOS/Android)</li>
       <li>Built TailorSend end-to-end (product, engineering, deployment)</li>
-      <li>[Add: your degree, school, relevant work experience]</li>
-      <li>Based in Michigan</li>
+      <li>Based in Michigan · mapepapro@gmail.com · (989) 332-8050</li>
     </ul>
     <p>No employees planned in Year 1. Possible part-time marketing help in Year 2 if revenue supports it.</p>
 
@@ -141,15 +349,27 @@
           <tr><td>Revenue</td><td class="num">~$1,550</td><td class="num">~$11,000</td><td class="num">~$42,000</td></tr>
           <tr><td>Paying users (EOY)</td><td class="num">24</td><td class="num">95</td><td class="num">280</td></tr>
           <tr><td>Net income</td><td class="num negative">~($17K)</td><td class="num negative">~($27K)</td><td class="num negative">~($23K)</td></tr>
-          <tr><td>Owner capital</td><td class="num">$12,000</td><td>—</td><td>—</td></tr>
+          <tr><td>Ask (grant / award / seed)</td><td class="num">$25,000</td><td>—</td><td>—</td></tr>
         </tbody>
       </table>
     </div>
-    <p>Year 1 losses reflect bootstrap stage: founder takes no salary months 1–8, minimal marketing spend, and infrastructure costs. Cash remains positive through month 12 on $12K starting capital. <a href="financial-model.html">Full projections →</a></p>
+    <p>Year 1 is bridged by a <strong>$25K ask</strong> while product revenue is still small. Founder takes limited cash salary early; marketing stays lean; infrastructure and campus GTM are the primary uses of funds. Ending Year 1 cash ~$13.5K under the base case. <a href="financial-model.html">Full projections →</a></p>
 
     <h2>10. Funding</h2>
-    <p><strong>Current:</strong> $12,000 owner investment. No outside investors. No debt.</p>
-    <p><strong>Future (if needed):</strong> SBA microloan or revenue-based financing only after demonstrating paying customers and positive unit economics. Not seeking venture capital at this stage.</p>
+    <p><strong>Ask:</strong> <strong>$25,000</strong> grant / award / seed support (not a venture round).</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Use of funds</th><th class="num">Amount</th></tr></thead>
+        <tbody>
+          <tr><td>Platform hosting &amp; AI runway</td><td class="num">$6,000</td></tr>
+          <tr><td>Campus demos + student ambassadors</td><td class="num">$8,000</td></tr>
+          <tr><td>Hardening, compliance &amp; legal</td><td class="num">$5,000</td></tr>
+          <tr><td>Marketing / campus GTM + buffer</td><td class="num">$6,000</td></tr>
+          <tr><td><strong>Total</strong></td><td class="num"><strong>$25,000</strong></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p><strong>Not seeking:</strong> venture capital at this stage. Optional future path: SBA microloan or revenue-based financing after paying customers and unit economics are proven.</p>
 
     <h2>11. Goals &amp; SBDC Support Needed</h2>
     <div class="table-wrap">
@@ -167,7 +387,7 @@
 
     <h3>12-month milestones</h3>
     <ul>
-      <li>Form Michigan LLC and separate business banking</li>
+      <li>Separate business banking under Mapepa Innovation LLC</li>
       <li>25+ paying customers</li>
       <li>1–2 campus pilot partnerships in Michigan</li>
       <li>Prove unit economics (LTV &gt; CAC on organic channels)</li>
@@ -179,6 +399,7 @@
       <a class="btn btn-primary" href="financial-model.html">Financial projections</a>
       <a class="btn btn-secondary" href="one-pager.html">Executive summary</a>
     </p>
+    <p style="margin-top: 2rem; font-size: 0.8rem; color: var(--text-muted); text-align: center;">© 2026 <a href="https://mapepallc.netlify.app/">Mapepa Innovation LLC</a>. All rights reserved.</p>
   </div>
   <script src="download.js"></script>
   <script>

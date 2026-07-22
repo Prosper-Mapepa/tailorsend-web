@@ -60,135 +60,151 @@ body {
 
 /* On-page rendered preview of tailored resume / cover letter (mirrors the PDF). */
 .doc-preview {
-  color: #000;
-  font-family: Calibri, "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
-  font-size: 13px;
-  line-height: 1.38;
+  color: #000000;
+  font-family: var(--font-resume), Roboto, "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 9pt;
+  line-height: 1.26;
   max-width: 8.5in;
+  overflow: visible;
+  -webkit-font-smoothing: auto;
+  -moz-osx-font-smoothing: auto;
+  text-rendering: geometricPrecision;
+}
+.doc-preview,
+.doc-preview * {
+  color: #000000;
 }
 .doc-preview h1 {
-  font-size: 18px;
-  font-weight: 700;
+  font-size: 14pt;
+  font-weight: 500;
   letter-spacing: 0.02em;
-  text-transform: none;
-  margin: 0 0 3px;
-  line-height: 1.2;
-  color: #000;
+  text-transform: uppercase;
+  margin: 0 0 1px;
+  line-height: 1.15;
 }
 .doc-preview p.contact-line,
 .doc-preview h1 + p {
-  margin: 0 0 12px;
+  margin: 0 0 10px;
   padding-bottom: 0;
   border-bottom: none;
-  font-size: 12px;
-  color: #1a1a1a;
-  line-height: 1.45;
+  font-size: 9pt;
+  font-weight: 400;
+  line-height: 1.26;
 }
 .doc-preview p.contact-line a,
 .doc-preview h1 + p a {
-  color: #000;
   text-decoration: underline;
-  text-underline-offset: 2px;
+  text-underline-offset: 1px;
 }
 .doc-preview h2 {
-  font-size: 12px;
-  font-weight: 700;
+  font-size: 10pt;
+  font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.07em;
-  border-bottom: 0.5px solid #9ca3af;
-  padding-bottom: 3px;
-  margin: 18px 0 8px;
-  color: #000;
+  letter-spacing: 0.06em;
+  border-bottom: 1px solid #000000;
+  padding-bottom: 2px;
+  margin: 10px 0 4px;
+}
+.doc-preview h2:first-of-type {
+  margin-top: 14px;
+}
+.doc-preview h2 + p,
+.doc-preview h2 + ul {
+  margin-top: 4px;
 }
 .doc-preview h3 {
-  font-size: 13px;
-  font-weight: 700;
-  margin: 12px 0 3px;
-  color: #000;
+  font-size: 9pt;
+  font-weight: 500;
+  margin: 6px 0 2px;
 }
 .doc-preview p {
-  margin: 2px 0;
-  color: #000;
+  margin: 0;
+  font-size: 9pt;
 }
 .doc-preview p.entry-company,
-.doc-preview p.entry-school {
-  font-weight: 700;
-  margin: 12px 0 0;
-  color: #000;
+.doc-preview p.entry-school,
+.doc-preview p.entry-project,
+.doc-preview p.entry {
+  font-weight: 500;
+  margin: 6px 0 0;
+}
+.doc-preview h2 + p.entry-company,
+.doc-preview h2 + p.entry-school,
+.doc-preview h2 + p.entry-project,
+.doc-preview h2 + p.entry {
+  margin-top: 4px;
 }
 .doc-preview p.entry-company + p.entry-role,
 .doc-preview p.entry-school + p.entry-degree {
   margin-top: 0;
+  margin-bottom: 0;
 }
 .doc-preview p.entry-role,
 .doc-preview p.entry-degree {
-  font-weight: 700;
-  color: #000;
+  font-weight: 500;
   font-style: normal;
-  margin: 0 0 4px;
+  margin: 0 0 2px;
 }
 .doc-preview p.entry-role em,
 .doc-preview p.entry-degree em {
   font-weight: 400;
   font-style: italic;
-  color: #333;
-}
-.doc-preview p.entry-project {
-  font-weight: 700;
-  margin: 12px 0 3px;
-  color: #000;
 }
 .doc-preview p.entry-project strong {
-  font-weight: 700;
-  color: #000;
+  font-weight: 500;
   text-decoration: none;
 }
 .doc-preview p.entry-project a {
-  font-weight: 700;
-  color: #000;
+  font-weight: 500;
   text-decoration: underline;
 }
-.doc-preview p.entry {
-  font-weight: 700;
-  margin: 12px 0 2px;
-  color: #000;
-}
-.doc-preview h2 + p.entry-company,
-.doc-preview h2 + p.entry-school,
-.doc-preview h2 + p.entry-project,
-.doc-preview h2 + p.entry,
 .doc-preview h3 + p.entry {
-  margin-top: 3px;
+  margin-top: 4px;
 }
 .doc-preview ul {
-  margin: 3px 0 6px;
-  padding-left: 18px;
-  list-style: disc;
+  margin: 0 0 4px;
+  padding-left: 1.35em;
+  list-style: disc outside;
+  overflow: visible;
 }
 .doc-preview li {
-  margin: 1px 0;
-  line-height: 1.32;
-  color: #000;
+  margin: 0 0 2px;
+  padding-left: 0.25em;
+  font-size: 9pt;
+  line-height: 1.28;
+}
+.doc-preview ul:not(.cols-2):not(.cols-3) li {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+.doc-preview p.entry-role + ul,
+.doc-preview p.entry-degree + ul,
+.doc-preview p.entry-project + ul,
+.doc-preview p.entry-company + ul {
+  margin-top: 2px;
 }
 .doc-preview ul.cols-2 {
   column-count: 2;
-  column-gap: 28px;
+  column-gap: 16px;
+  padding-left: 1.15em;
 }
 .doc-preview ul.cols-3 {
   column-count: 3;
-  column-gap: 20px;
+  column-gap: 12px;
+  padding-left: 1.15em;
 }
 .doc-preview ul.cols-2 li,
 .doc-preview ul.cols-3 li {
-  break-inside: avoid;
+  break-inside: auto;
+  page-break-inside: auto;
+  padding-left: 0.35em;
 }
 .doc-preview a {
-  color: #000;
   text-decoration: underline;
   text-underline-offset: 2px;
 }
 .doc-preview strong {
-  font-weight: 700;
+  font-weight: 500;
 }
 
 /* Cover letter preview */
