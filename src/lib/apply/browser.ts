@@ -5,6 +5,7 @@ import {
   PLAYWRIGHT_DISABLED_MESSAGE,
   launchHeadlessChromium,
   playwrightEnabled,
+  resolveChromiumExecutable,
 } from "@/lib/playwright-env";
 
 const STEALTH_ARGS = ["--disable-blink-features=AutomationControlled"];
@@ -17,7 +18,7 @@ const MAC_CHROME_PATHS = [
   ),
 ];
 
-function findSystemChrome(): string | null {
+function findMacChrome(): string | null {
   for (const p of MAC_CHROME_PATHS) {
     try {
       if (fs.existsSync(p)) return p;
@@ -28,16 +29,28 @@ function findSystemChrome(): string | null {
   return null;
 }
 
+/** True when a visible Chrome window can open on this machine (local Mac). */
+export function headedAutofillAvailable(): boolean {
+  if (process.env.FORCE_HEADLESS_AUTOFILL === "1") return false;
+  if (process.env.RAILWAY_ENVIRONMENT || process.env.RAILWAY_SERVICE_NAME) {
+    return false;
+  }
+  return Boolean(findMacChrome());
+}
+
 export interface LaunchResult {
   browser: Browser;
   /** User's installed Google Chrome (not "Chrome for Testing"). */
   usedSystemChrome: boolean;
   browserName: string;
+  /** Requested headed but fell back to headless (e.g. Railway). */
+  headlessFallback?: boolean;
 }
 
 /**
- * Launch a browser for auto-fill. Headed mode requires installed Google Chrome —
- * we never open "Google Chrome for Testing" for real apply sessions.
+ * Launch a browser for auto-fill.
+ * Headed mode needs Google Chrome on the local Mac.
+ * On Railway / remote Linux, falls back to system Chromium headless.
  */
 export async function launchAutofillBrowser(
   headless: boolean,
@@ -46,20 +59,40 @@ export async function launchAutofillBrowser(
     throw new Error(PLAYWRIGHT_DISABLED_MESSAGE);
   }
 
+  const wantHeaded = !headless;
+  const canHeaded = wantHeaded && headedAutofillAvailable();
+  const effectiveHeadless = !canHeaded;
+
   const launchOpts = {
-    headless,
-    ignoreDefaultArgs: ["--enable-automation"],
+    headless: effectiveHeadless,
+    ignoreDefaultArgs: ["--enable-automation"] as string[],
     args: STEALTH_ARGS,
   };
 
-  const chromePath = findSystemChrome();
   const attempts: string[] = [];
 
-  if (chromePath) {
+  if (canHeaded) {
+    const chromePath = findMacChrome();
+    if (chromePath) {
+      try {
+        const browser = await chromium.launch({
+          ...launchOpts,
+          executablePath: chromePath,
+        });
+        return {
+          browser,
+          usedSystemChrome: true,
+          browserName: "Google Chrome",
+        };
+      } catch (err) {
+        attempts.push(`executablePath: ${(err as Error).message}`);
+      }
+    }
+
     try {
       const browser = await chromium.launch({
         ...launchOpts,
-        executablePath: chromePath,
+        channel: "chrome",
       });
       return {
         browser,
@@ -67,27 +100,9 @@ export async function launchAutofillBrowser(
         browserName: "Google Chrome",
       };
     } catch (err) {
-      attempts.push(`executablePath: ${(err as Error).message}`);
+      attempts.push(`channel chrome: ${(err as Error).message}`);
     }
-  } else {
-    attempts.push("Google Chrome not found in /Applications");
-  }
 
-  try {
-    const browser = await chromium.launch({
-      ...launchOpts,
-      channel: "chrome",
-    });
-    return {
-      browser,
-      usedSystemChrome: true,
-      browserName: "Google Chrome",
-    };
-  } catch (err) {
-    attempts.push(`channel chrome: ${(err as Error).message}`);
-  }
-
-  if (!headless) {
     throw new Error(
       "Auto-fill needs Google Chrome installed on your Mac. " +
         "Install from https://www.google.com/chrome/ then try again. " +
@@ -96,13 +111,25 @@ export async function launchAutofillBrowser(
     );
   }
 
-  // Headless screenshot / PDF — prefer system Chromium (Railway Nixpacks).
-  const browser = await launchHeadlessChromium(launchOpts);
-  return {
-    browser,
-    usedSystemChrome: false,
-    browserName: "Chromium (preview only)",
-  };
+  // Remote / production (Railway): headless system Chromium.
+  try {
+    const browser = await launchHeadlessChromium(launchOpts);
+    const exe = resolveChromiumExecutable();
+    return {
+      browser,
+      usedSystemChrome: Boolean(exe),
+      browserName: wantHeaded
+        ? "Chromium (headless — no local Chrome window on this server)"
+        : "Chromium (headless)",
+      headlessFallback: wantHeaded,
+    };
+  } catch (err) {
+    throw new Error(
+      "Could not start Chromium for auto-fill on this server. " +
+        "PDF/autofill needs system Chromium (Railway Nixpacks) or run TailorSend locally with Google Chrome. " +
+        `Details: ${(err as Error).message}`,
+    );
+  }
 }
 
 export async function newAutofillContext(
@@ -138,13 +165,15 @@ export interface AutofillSession {
   context: BrowserContext;
   browserName: string;
   reusedBrowser: boolean;
+  headlessFallback?: boolean;
 }
 
 /** Get or create a browser session. Headed mode shares one Chrome instance. */
 export async function acquireAutofillSession(
   headless: boolean,
 ): Promise<AutofillSession> {
-  if (!headless && sharedHeadedSession?.browser.isConnected()) {
+  const useShared = !headless && headedAutofillAvailable();
+  if (useShared && sharedHeadedSession?.browser.isConnected()) {
     return {
       browser: sharedHeadedSession.browser,
       context: sharedHeadedSession.context,
@@ -156,7 +185,7 @@ export async function acquireAutofillSession(
   const launched = await launchAutofillBrowser(headless);
   const context = await newAutofillContext(launched.browser);
 
-  if (!headless) {
+  if (!launched.headlessFallback && !headless) {
     sharedHeadedSession = {
       browser: launched.browser,
       context,
@@ -168,6 +197,7 @@ export async function acquireAutofillSession(
     context,
     browserName: launched.browserName,
     reusedBrowser: false,
+    headlessFallback: launched.headlessFallback,
   };
 }
 

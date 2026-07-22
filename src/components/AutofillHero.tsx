@@ -27,11 +27,13 @@ export function AutofillHero({
             Signature feature
           </div>
           <h3 className="mt-2.5 text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
-            Auto-fill &amp; open browser
+            Auto-fill application
           </h3>
           <p className="mt-1.5 max-w-lg text-sm leading-relaxed text-slate-600">
-            TailorSend opens the company apply page and fills it with your
-            tailored resume answers. You review everything, then submit yourself.
+            Fills the company apply page with your tailored answers. Locally it
+            opens Chrome so you can review and submit; on the live site it runs
+            headless — use the screenshot and form-answers backup, then submit
+            yourself.
           </p>
           {disabled && disabledReason && (
             <p className="mt-2 text-sm font-medium text-amber-700">

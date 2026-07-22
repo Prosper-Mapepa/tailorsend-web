@@ -1574,6 +1574,7 @@ export async function autofillApplication(
   const platform = detectAts(opts.applyUrl);
   const headless = opts.headless ?? false;
   const urlWarning = autofillUrlWarning(opts.applyUrl);
+  let effectiveHeadless = headless;
 
   let browser: Browser | null = null;
   try {
@@ -1582,13 +1583,19 @@ export async function autofillApplication(
 
     const session = await acquireAutofillSession(headless);
     browser = session.browser;
+    effectiveHeadless = headless || Boolean(session.headlessFallback);
+    if (session.headlessFallback) {
+      log.push(
+        "No local Chrome window on this server — running headless Chromium. Review the screenshot and form-answers backup, then submit on the company site.",
+      );
+    }
     log.push(
       session.reusedBrowser
         ? `Reusing open ${session.browserName} (new tab).`
         : `Opened ${session.browserName}.`,
     );
 
-    if (!headless) trackBrowser(browser);
+    if (!effectiveHeadless) trackBrowser(browser);
 
     let page = await openApplyTab(
       session.context,
@@ -1616,7 +1623,7 @@ export async function autofillApplication(
         "Bot-detection wall detected. Review the page manually or use View posting in your normal browser.",
       );
     } else {
-      const verifyRounds = headless ? 1 : HEADED_VERIFY_ROUNDS;
+      const verifyRounds = effectiveHeadless ? 1 : HEADED_VERIFY_ROUNDS;
 
       for (let round = 1; round <= verifyRounds; round++) {
         log.push(`=== Verification round ${round}/${verifyRounds} ===`);
@@ -1699,7 +1706,7 @@ export async function autofillApplication(
 
     const multiStep = stepsAdvanced > 0 || totalPasses > 1;
 
-    if (headless) {
+    if (effectiveHeadless) {
       await browser.close();
       return {
         ok,
@@ -1755,7 +1762,7 @@ export async function autofillApplication(
           : undefined,
     };
   } catch (err) {
-    if (browser && headless) await browser.close().catch(() => {});
+    if (browser && effectiveHeadless) await browser.close().catch(() => {});
     return emptyResult(platform, log, {
       error: (err as Error).message,
     });
