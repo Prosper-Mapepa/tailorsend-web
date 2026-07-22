@@ -360,6 +360,13 @@ export function TailorResultWorkflow({
   }
 
   async function autofill(headless: boolean, continueSession = false) {
+    // Open in the user's browser immediately (before any await) so popup blockers
+    // allow it. Server-side headed Chrome only works on a local Mac; on Railway
+    // this is how the application tab appears for review/submit.
+    if (applyUrl && !headless) {
+      window.open(applyUrl, "_blank", "noopener,noreferrer");
+    }
+
     if (dirty) await saveDocs();
     setAutofilling(true);
     setShowAutofill(true);

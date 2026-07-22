@@ -470,6 +470,14 @@ export default function ApplicationDetailPage() {
   }, [guideStep, statusHighlight]);
 
   async function autofill(headless: boolean, continueSession = false) {
+    // Open in the user's browser immediately (before any await) so popup blockers
+    // allow it. Server-side headed Chrome only works on a local Mac; on Railway
+    // this is how the application tab appears for review/submit.
+    const applyLink = app?.job.applyUrl || app?.job.url || "";
+    if (applyLink && !headless) {
+      window.open(applyLink, "_blank", "noopener,noreferrer");
+    }
+
     if (dirty) await saveDocs();
     setAutofilling(true);
     setShowAutofill(true);

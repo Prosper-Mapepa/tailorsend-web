@@ -30,10 +30,9 @@ export function AutofillHero({
             Auto-fill application
           </h3>
           <p className="mt-1.5 max-w-lg text-sm leading-relaxed text-slate-600">
-            Fills the company apply page with your tailored answers. Locally it
-            opens Chrome so you can review and submit; on the live site it runs
-            headless — use the screenshot and form-answers backup, then submit
-            yourself.
+            Opens the company apply page in a new tab and fills fields on the
+            server. Use that tab to review and submit — plus the form-answers
+            backup below if anything was missed.
           </p>
           {disabled && disabledReason && (
             <p className="mt-2 text-sm font-medium text-amber-700">
