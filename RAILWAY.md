@@ -128,10 +128,6 @@ Use Railway’s **public** or TCP proxy URL only when required; prefer private n
 
 ### Playwright / autofill on Railway
 
-Chromium for autofill is large. Autofill may need a dedicated worker or larger instance with:
+Do **not** install Chromium during the Railway image build — `playwright install --with-deps` downloads ~100MB of apt packages and routinely times out the build.
 
-```bash
-npx playwright install chromium
-```
-
-For v1 production, many teams run autofill from a local/dev agent and keep Railway for web + auth + DB. Tailoring and core APIs work without browser install.
+For v1 production, run autofill from a local/dev agent (or a dedicated worker with browsers preinstalled). Tailoring, billing, and core APIs work without Playwright on Railway.

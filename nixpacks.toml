@@ -12,7 +12,6 @@ cmds = ["npm install --include=dev"]
 cmds = [
   "npx prisma generate",
   "npm run build",
-  "npx playwright install --with-deps chromium || npx playwright install chromium || true",
 ]
 
 [start]
