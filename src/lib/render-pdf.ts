@@ -9,9 +9,9 @@ import {
 import { ensureCoverLetterDate } from "@/lib/cover-letter";
 import {
   PLAYWRIGHT_DISABLED_MESSAGE,
-  launchHeadlessChromium,
   playwrightEnabled,
 } from "@/lib/playwright-env";
+import { launchHeadlessChromium } from "@/lib/chromium-launch";
 import type { Project } from "@/lib/types";
 
 /** Render markdown to a PDF file on disk (for resume upload during autofill). */

@@ -6,7 +6,7 @@ import {
 import { ensureCoverLetterDate } from "@/lib/cover-letter";
 import { requireAuthUser, isAuthUser } from "@/lib/auth";
 import { getProfile, profileResumeContact } from "@/lib/profile";
-import { launchHeadlessChromium } from "@/lib/playwright-env";
+import { launchHeadlessChromium } from "@/lib/chromium-launch";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";

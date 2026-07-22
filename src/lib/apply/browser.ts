@@ -3,10 +3,12 @@ import path from "node:path";
 import { chromium, type Browser, type BrowserContext } from "playwright";
 import {
   PLAYWRIGHT_DISABLED_MESSAGE,
-  launchHeadlessChromium,
   playwrightEnabled,
-  resolveChromiumExecutable,
 } from "@/lib/playwright-env";
+import {
+  launchHeadlessChromium,
+  resolveChromiumExecutable,
+} from "@/lib/chromium-launch";
 
 const STEALTH_ARGS = ["--disable-blink-features=AutomationControlled"];
 
