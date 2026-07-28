@@ -19,6 +19,8 @@ export interface AutofillPanelData {
   passes: number;
   uploadedResume: boolean;
   awaitingHumanSubmit?: boolean;
+  /** Screenshot is from a server fill — user's open tab was not filled. */
+  filledInHeadlessPreview?: boolean;
   error?: string;
   warning?: string;
   botWallDetected?: boolean;
@@ -119,6 +121,7 @@ export function AutofillPanel({
   onContinue,
   onComplete,
   onClose,
+  applyUrl,
   variant = "inline",
 }: {
   data: AutofillPanelData | null;
@@ -126,6 +129,8 @@ export function AutofillPanel({
   onContinue: () => void;
   onComplete?: () => void;
   onClose?: () => void;
+  /** Company apply URL — shown when fill was a headless preview. */
+  applyUrl?: string;
   variant?: "inline" | "card";
 }) {
   if (!data && !loading) return null;
@@ -206,7 +211,37 @@ export function AutofillPanel({
           </div>
         )}
 
-        {isComplete && (
+        {isComplete && data?.awaitingHumanSubmit && (
+          <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+            Review the <strong>Chrome window we opened</strong> (that form is
+            filled — screenshot matches it), then click <strong>Complete</strong>{" "}
+            to update your application status.
+          </p>
+        )}
+
+        {isComplete && data?.filledInHeadlessPreview && (
+          <div className="space-y-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950">
+            <p>
+              Screenshot shows a <strong>preview fill</strong> from our server —
+              not your browser tab. Copy answers from the list below into the
+              company apply page, then click <strong>Complete</strong>.
+            </p>
+            {applyUrl ? (
+              <a
+                href={applyUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex font-medium text-amber-900 underline underline-offset-2"
+              >
+                Open company apply page →
+              </a>
+            ) : null}
+          </div>
+        )}
+
+        {isComplete &&
+          !data?.awaitingHumanSubmit &&
+          !data?.filledInHeadlessPreview && (
           <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
             Review in the browser, then click <strong>Complete</strong> to
             update your application status.
@@ -215,11 +250,13 @@ export function AutofillPanel({
 
         {!isComplete && !inProgress && data && (
           <p className="text-xs text-slate-500">
-            {needsMorePasses
+            {data.filledInHeadlessPreview
+              ? "Preview fill only — copy answers into the company site. Multi-step? Click Continue Autofill after advancing the form."
+              : needsMorePasses
               ? `Multi-step form — advanced through ${data.stepsAdvanced ?? data.passes} step(s). Click Continue Autofill to fill remaining pages.`
               : data.verified
-                ? "Validation passed. Review in the browser before submitting."
-                : "Multi-step form? Click Continue Autofill to run another pass (reopens the apply page on the live site)."}
+                ? "Validation passed. Review the Chrome window before submitting."
+                : "Multi-step form? Click Continue Autofill to run another pass."}
           </p>
         )}
 
@@ -240,7 +277,10 @@ export function AutofillPanel({
               <span className="text-emerald-700">Resume attached</span>
             )}
             {data.awaitingHumanSubmit && (
-              <span>Browser left open for review</span>
+              <span>Chrome left open for review (matches screenshot)</span>
+            )}
+            {data.filledInHeadlessPreview && (
+              <span>Preview fill — copy into company site</span>
             )}
           </div>
         )}

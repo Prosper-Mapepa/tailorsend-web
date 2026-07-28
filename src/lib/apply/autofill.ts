@@ -62,6 +62,11 @@ export interface AutofillResult {
   log: string[];
   platform: string;
   awaitingHumanSubmit: boolean;
+  /**
+   * True when fill ran in a headless/server browser (not the user's tab).
+   * Screenshot shows that session — the user's browser was not filled.
+   */
+  filledInHeadlessPreview?: boolean;
   warning?: string;
   botWallDetected?: boolean;
   error?: string;
@@ -100,18 +105,36 @@ export interface AutofillProfileContext {
   sponsorshipDetails: string;
 }
 
+/** Prefer exact ATS selectors first, then common career-site CTAs (Stripe, etc.). */
 const APPLY_BUTTON_SELECTOR = [
   "#apply_button",
   "a#apply_button",
   "button#apply_button",
   '[data-qa="btn-apply"]',
+  '[data-testid="apply-button"]',
+  'a:has-text("Apply for this role")',
+  'button:has-text("Apply for this role")',
+  'a:has-text("Apply for this job")',
+  'button:has-text("Apply for this job")',
   'a:has-text("Apply on company site")',
   'button:has-text("Apply on company site")',
   'a:has-text("Apply now")',
   'button:has-text("Apply now")',
-  'a:has-text("Apply for this job")',
-  'button:has-text("Apply for this job")',
+  'a:has-text("Apply here")',
+  'button:has-text("Apply here")',
+  'a:has-text("Start application")',
+  'button:has-text("Start application")',
 ].join(", ");
+
+/**
+ * Accessible-name match for Apply CTAs.
+ * Stripe uses “Apply for this role >” — trailing punctuation is allowed.
+ */
+const APPLY_NAME_RE =
+  /apply(\s+for\s+this\s+(role|job|position)|\s+now|\s+here|\s+online)?|start\s+application/i;
+
+const APPLY_CTA_TEXT_RE =
+  /apply\s+for\s+this\s+(role|job|position)|apply\s+now|apply\s+here|start\s+application|^apply$/i;
 
 const MIN_VISIBLE_FORM_FIELDS = 4;
 
@@ -127,6 +150,63 @@ const ADVANCE_BUTTON_SELECTORS = [
   'input[type="submit"][value*="Continue" i]',
   'input[type="submit"][value*="Next" i]',
 ];
+
+/** Company JD pages (e.g. stripe.com/jobs/listing/...) vs real apply forms. */
+function urlLooksLikeJobListing(url: string): boolean {
+  const u = url.toLowerCase();
+  if (
+    /boards\.greenhouse\.io|job-boards\.greenhouse\.io|greenhouse\.io\/embed|jobs\.lever\.co|ashbyhq\.com/i.test(
+      u,
+    )
+  ) {
+    return false;
+  }
+  // stripe.com/.../apply is the apply shell (form lives in an iframe)
+  if (/\/apply(\/|$|\?)/i.test(u)) return false;
+  return (
+    /\/jobs\/listing\//i.test(u) ||
+    /\/careers\/.*\/(job|position|role)/i.test(u) ||
+    /\/job-details\//i.test(u) ||
+    /\/job\/\d+/i.test(u)
+  );
+}
+
+/** Stripe JD → /apply shell URL when we can derive it without clicking. */
+function derivedCareerApplyUrl(url: string): string | null {
+  try {
+    const u = new URL(url);
+    // https://stripe.com/jobs/listing/slug/1234567 → .../apply
+    const m = u.pathname.match(/^(\/jobs\/listing\/[^/]+\/\d+)\/?$/i);
+    if (m) return `${u.origin}${m[1]}/apply`;
+  } catch {
+    /* ignore */
+  }
+  return null;
+}
+
+/**
+ * Stripe (and similar) embed Greenhouse in a cross-origin iframe — Playwright
+ * cannot fill that. Open the iframe src in the top frame instead.
+ */
+async function promoteEmbeddedAtsForm(
+  page: Page,
+  log: string[],
+): Promise<boolean> {
+  const iframe = page
+    .locator(
+      'iframe#grnhse_iframe, iframe[src*="greenhouse.io"], iframe[src*="lever.co"], iframe[src*="ashbyhq.com"]',
+    )
+    .first();
+  if ((await iframe.count().catch(() => 0)) === 0) return false;
+  const src = await iframe.getAttribute("src").catch(() => null);
+  if (!src || src === "about:blank") return false;
+  const next = new URL(src, page.url()).toString();
+  if (next === page.url()) return false;
+  log.push(`Opening embedded ATS form directly → ${next.slice(0, 100)}`);
+  await page.goto(next, { waitUntil: "domcontentloaded", timeout: 45000 });
+  await page.waitForTimeout(1500);
+  return true;
+}
 
 const FIELD_RULES: {
   key: keyof FormAnswers | "firstName" | "lastName" | "zipCode" | "currentCompany";
@@ -938,6 +1018,154 @@ async function pickFormPage(context: BrowserContext): Promise<Page> {
   return best;
 }
 
+async function pageHasVisibleApplyCta(page: Page): Promise<boolean> {
+  const hit = page.getByText(/Apply for this role/i).first();
+  if ((await hit.count().catch(() => 0)) > 0 && (await hit.isVisible().catch(() => false))) {
+    return true;
+  }
+  const any = page.getByText(APPLY_CTA_TEXT_RE).first();
+  return (await any.count().catch(() => 0)) > 0 && (await any.isVisible().catch(() => false));
+}
+
+/**
+ * Skip Apply only for a real ATS form — not a JD with search/newsletter inputs
+ * (Stripe listings were falsely treated as already-on-form).
+ */
+async function alreadyOnApplicationForm(page: Page): Promise<boolean> {
+  if (urlLooksLikeJobListing(page.url()) && (await pageHasVisibleApplyCta(page))) {
+    return false;
+  }
+  const files = await discoverFileInputs(page);
+  if (files.length > 0) return true;
+  const fields = await discoverFields(page);
+  if (fields.length < MIN_VISIBLE_FORM_FIELDS) return false;
+  const resumeLike = fields.some((f) => /resume|cv|cover\s*letter/i.test(f.descriptor));
+  const identityLike =
+    fields.filter((f) =>
+      /first\s*name|last\s*name|e-?mail|phone|linkedin/i.test(f.descriptor),
+    ).length >= 2;
+  return resumeLike || identityLike || fields.length >= 8;
+}
+
+async function dismissBlockingOverlays(page: Page, log: string[]): Promise<void> {
+  const dismissers = [
+    page.getByRole("button", { name: /accept all|accept cookies|agree|got it/i }),
+    page.locator("#onetrust-accept-btn-handler"),
+  ];
+  for (const loc of dismissers) {
+    try {
+      const btn = loc.first();
+      if ((await btn.count()) === 0) continue;
+      if (!(await btn.isVisible().catch(() => false))) continue;
+      await btn.click({ timeout: 1500 });
+      log.push("Dismissed cookie/overlay banner.");
+      await page.waitForTimeout(400);
+      return;
+    } catch {
+      /* try next */
+    }
+  }
+}
+
+async function findApplyButtonCandidates(page: Page) {
+  const seen = new Set<string>();
+  const candidates: ReturnType<Page["locator"]>[] = [];
+
+  const pushUnique = async (loc: ReturnType<Page["locator"]>) => {
+    const n = await loc.count().catch(() => 0);
+    for (let i = 0; i < n; i++) {
+      const el = loc.nth(i);
+      const visible = await el.isVisible().catch(() => false);
+      if (!visible) continue;
+      const key = await el
+        .evaluate((node) => {
+          const e = node as HTMLElement;
+          return `${e.tagName}:${e.id}:${e.getAttribute("href") ?? ""}:${(e.innerText || "").slice(0, 80)}`;
+        })
+        .catch(() => `idx-${i}-${Math.random()}`);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      candidates.push(el);
+    }
+  };
+
+  await pushUnique(page.getByRole("link", { name: /Apply for this role/i }));
+  await pushUnique(page.getByRole("button", { name: /Apply for this role/i }));
+  await pushUnique(page.getByText(/Apply for this role/i));
+  await pushUnique(page.getByRole("link", { name: APPLY_NAME_RE }));
+  await pushUnique(page.getByRole("button", { name: APPLY_NAME_RE }));
+  await pushUnique(page.locator(APPLY_BUTTON_SELECTOR));
+  await pushUnique(
+    page.locator('a, button, [role="button"], [role="link"]').filter({
+      hasText: APPLY_CTA_TEXT_RE,
+    }),
+  );
+
+  return candidates;
+}
+
+async function clickApplyViaDomEvaluate(page: Page): Promise<string | null> {
+  return page.evaluate((patternSource) => {
+    const re = new RegExp(patternSource, "i");
+    const nodes = Array.from(
+      document.querySelectorAll("a, button, [role='button'], [role='link']"),
+    ) as HTMLElement[];
+    const scored = nodes
+      .map((el) => {
+        const text = (el.innerText || el.textContent || "").replace(/\s+/g, " ").trim();
+        return { el, text };
+      })
+      .filter(({ el, text }) => {
+        if (!text || text.length > 80) return false;
+        if (!re.test(text)) return false;
+        const r = el.getBoundingClientRect();
+        return r.width > 0 && r.height > 0;
+      })
+      .sort((a, b) => {
+        const score = (t: string) =>
+          /for this (role|job)/i.test(t) ? 0 : /apply now/i.test(t) ? 1 : 2;
+        return score(a.text) - score(b.text);
+      });
+    const hit = scored[0];
+    if (!hit) return null;
+    hit.el.click();
+    return hit.text.slice(0, 60);
+  }, APPLY_CTA_TEXT_RE.source);
+}
+
+async function waitForFormAfterApply(
+  page: Page,
+  context: BrowserContext,
+  beforeUrl: string,
+  log: string[],
+): Promise<Page> {
+  const deadline = Date.now() + 20000;
+  while (Date.now() < deadline) {
+    for (const p of context.pages()) {
+      if (p.isClosed() || p === page) continue;
+      const files = await discoverFileInputs(p);
+      const fields = await discoverFields(p);
+      if (files.length > 0 || fields.length >= MIN_VISIBLE_FORM_FIELDS) {
+        log.push("Apply opened another tab with a form.");
+        await p.bringToFront().catch(() => {});
+        return p;
+      }
+    }
+    await page.waitForTimeout(500);
+    const url = page.url();
+    if (url !== beforeUrl && !urlLooksLikeJobListing(url)) {
+      await page.waitForLoadState("domcontentloaded", { timeout: 10000 }).catch(() => {});
+      log.push(`Navigated off listing → ${url.slice(0, 80)}`);
+      return page;
+    }
+    if (await alreadyOnApplicationForm(page)) {
+      log.push("Application form visible after Apply.");
+      return page;
+    }
+  }
+  return page;
+}
+
 async function navigateToApplyForm(
   page: Page,
   context: BrowserContext,
@@ -950,39 +1178,170 @@ async function navigateToApplyForm(
     return page;
   }
 
-  const existing = await discoverFields(page);
-  const files = await discoverFileInputs(page);
-  if (existing.length >= MIN_VISIBLE_FORM_FIELDS || files.length > 0) {
-    log.push(`Application form already visible (${existing.length} fields).`);
+  await dismissBlockingOverlays(page, log);
+
+  // Stripe JD → /apply without relying on the purple button click.
+  const derived = derivedCareerApplyUrl(page.url());
+  if (derived) {
+    log.push(`Career listing detected — opening apply shell → ${derived.slice(0, 90)}`);
+    await page.goto(derived, { waitUntil: "domcontentloaded", timeout: 45000 });
+    await page.waitForTimeout(1500);
+  }
+
+  // Form is often inside cross-origin Greenhouse iframe — open that URL.
+  if (await promoteEmbeddedAtsForm(page, log)) {
+    if (applicationId) autofillTabByApplication.set(applicationId, page.url());
     return page;
   }
 
-  const applyButtons = page.locator(APPLY_BUTTON_SELECTOR);
-  const count = await applyButtons.count().catch(() => 0);
-  if (count === 0) return page;
+  if (await alreadyOnApplicationForm(page)) {
+    const fields = await discoverFields(page);
+    log.push(`Application form already visible (${fields.length} fields).`);
+    return page;
+  }
 
-  for (let i = 0; i < count; i++) {
-    const applyButton = applyButtons.nth(i);
-    const visible = await applyButton.isVisible().catch(() => false);
-    if (!visible) continue;
+  // Prefer following Apply href (Stripe career pages).
+  try {
+    const applyLink = page
+      .locator("a")
+      .filter({ hasText: /Apply for this role|Apply for this job|Apply now/i })
+      .first();
+    if (
+      (await applyLink.count()) > 0 &&
+      (await applyLink.isVisible().catch(() => false))
+    ) {
+      const href = await applyLink.getAttribute("href");
+      if (href && href !== "#" && !href.startsWith("javascript:")) {
+        const next = new URL(href, page.url()).toString();
+        if (next !== page.url()) {
+          log.push(`Following Apply href → ${next.slice(0, 90)}`);
+          await page.goto(next, { waitUntil: "domcontentloaded", timeout: 45000 });
+          await page.waitForTimeout(1200);
+          if (await promoteEmbeddedAtsForm(page, log)) {
+            if (applicationId) autofillTabByApplication.set(applicationId, page.url());
+            return page;
+          }
+          if (applicationId) autofillTabByApplication.set(applicationId, page.url());
+          if (
+            (await alreadyOnApplicationForm(page)) ||
+            !urlLooksLikeJobListing(page.url())
+          ) {
+            return page;
+          }
+        }
+      }
+    }
+  } catch {
+    /* fall through to click */
+  }
 
+  const candidates = await findApplyButtonCandidates(page);
+  if (candidates.length === 0) {
+    log.push("No Apply button via locators — trying DOM click fallback.");
+    const beforeUrl = page.url();
+    const label = await clickApplyViaDomEvaluate(page);
+    if (label) {
+      log.push(`DOM Apply click (“${label}”).`);
+      const after = await waitForFormAfterApply(page, context, beforeUrl, log);
+      await promoteEmbeddedAtsForm(after, log);
+      if (applicationId) autofillTabByApplication.set(applicationId, after.url());
+      return after;
+    }
+    log.push("No Apply button found on listing page — filling current page.");
+    return page;
+  }
+
+  log.push(`Found ${candidates.length} Apply candidate(s).`);
+
+  for (const applyButton of candidates) {
+    const label = (await applyButton.innerText().catch(() => "Apply"))
+      .replace(/\s+/g, " ")
+      .trim();
+    const beforeUrl = page.url();
     try {
-      const popupPromise = context.waitForEvent("page", { timeout: 5000 });
-      await applyButton.click({ timeout: 4000 });
+      const href = await applyButton.getAttribute("href").catch(() => null);
+      if (href && href !== "#" && !href.startsWith("javascript:")) {
+        const next = new URL(href, page.url()).toString();
+        if (next !== beforeUrl) {
+          log.push(
+            `Navigating Apply link (“${label.slice(0, 40)}”) → ${next.slice(0, 80)}`,
+          );
+          await page.goto(next, { waitUntil: "domcontentloaded", timeout: 45000 });
+          await page.waitForTimeout(1200);
+          if (await promoteEmbeddedAtsForm(page, log)) {
+            if (applicationId) autofillTabByApplication.set(applicationId, page.url());
+            return page;
+          }
+          if (applicationId) autofillTabByApplication.set(applicationId, page.url());
+          if (
+            (await alreadyOnApplicationForm(page)) ||
+            !urlLooksLikeJobListing(page.url())
+          ) {
+            return page;
+          }
+        }
+      }
+
+      const popupPromise = context.waitForEvent("page", { timeout: 8000 });
+      await applyButton.scrollIntoViewIfNeeded().catch(() => {});
+      await applyButton.click({ timeout: 5000, force: true });
       const popup = await popupPromise.catch(() => null);
       if (popup) {
-        await popup.waitForLoadState("domcontentloaded", { timeout: 15000 }).catch(() => {});
-        log.push("Apply opened a new tab.");
+        await popup
+          .waitForLoadState("domcontentloaded", { timeout: 20000 })
+          .catch(() => {});
+        await popup.waitForTimeout(1200);
+        await promoteEmbeddedAtsForm(popup, log);
+        log.push(`Apply opened a new tab (“${label.slice(0, 40)}”).`);
         if (applicationId) autofillTabByApplication.set(applicationId, popup.url());
         return popup;
       }
-      await page.waitForLoadState("domcontentloaded", { timeout: 10000 }).catch(() => {});
-      await page.waitForTimeout(1500);
-      log.push("Clicked an Apply button.");
-    } catch {
-      /* form may already be visible */
+
+      const after = await waitForFormAfterApply(page, context, beforeUrl, log);
+      await promoteEmbeddedAtsForm(after, log);
+      if (
+        after.url() !== beforeUrl ||
+        (await alreadyOnApplicationForm(after)) ||
+        after !== page
+      ) {
+        log.push(
+          `Clicked Apply (“${label.slice(0, 40)}”) — left listing / form ready.`,
+        );
+        if (applicationId) autofillTabByApplication.set(applicationId, after.url());
+        return after;
+      }
+      log.push(
+        `Clicked Apply (“${label.slice(0, 40)}”) — still on listing, trying next.`,
+      );
+    } catch (err) {
+      log.push(
+        `Apply click failed (“${label.slice(0, 40)}”): ${
+          err instanceof Error ? err.message.slice(0, 80) : "error"
+        }`,
+      );
     }
-    break;
+  }
+
+  const beforeUrl = page.url();
+  const domLabel = await clickApplyViaDomEvaluate(page);
+  if (domLabel) {
+    log.push(`DOM Apply fallback (“${domLabel}”).`);
+    const after = await waitForFormAfterApply(page, context, beforeUrl, log);
+    await promoteEmbeddedAtsForm(after, log);
+    if (applicationId) autofillTabByApplication.set(applicationId, after.url());
+    return after;
+  }
+
+  // Last chance: maybe we're already on /apply with an iframe.
+  if (await promoteEmbeddedAtsForm(page, log)) {
+    if (applicationId) autofillTabByApplication.set(applicationId, page.url());
+    return page;
+  }
+
+  if (urlLooksLikeJobListing(page.url())) {
+    log.push(
+      "Still on job listing after Apply attempts — click Apply manually, then Continue Autofill.",
+    );
   }
 
   const picked = await pickFormPage(context);
@@ -1482,10 +1841,16 @@ async function openApplyTab(
 
   const page = await context.newPage();
   log.push("Opened new tab in auto-fill browser.");
-  await page.goto(applyUrl, {
+  const target = derivedCareerApplyUrl(applyUrl) || applyUrl;
+  if (target !== applyUrl) {
+    log.push(`Using derived apply URL → ${target.slice(0, 90)}`);
+  }
+  await page.goto(target, {
     waitUntil: "domcontentloaded",
     timeout: 45000,
   });
+  await page.waitForTimeout(1000);
+  await promoteEmbeddedAtsForm(page, log);
   autofillTabByApplication.set(applicationId, page.url());
   return page;
 }
@@ -1500,13 +1865,16 @@ async function runAutofillPasses(
 ): Promise<{ page: Page; passes: number; stepsAdvanced: number }> {
   let passes = 0;
   let stepsAdvanced = 0;
-  let active = await navigateToApplyForm(
-    page,
-    context,
-    log,
-    opts.continueSession,
-    opts.applicationId,
-  );
+  // Apply navigation already ran in autofillApplication for new sessions.
+  let active = opts.continueSession
+    ? await navigateToApplyForm(
+        page,
+        context,
+        log,
+        true,
+        opts.applicationId,
+      )
+    : page;
 
   for (let pass = 1; pass <= MAX_PASSES; pass++) {
     passes = pass;
@@ -1605,7 +1973,15 @@ export async function autofillApplication(
       log,
       opts.continueSession,
     );
+    // Click Apply on JD pages (Stripe, etc.) before waiting for form fields.
     if (!opts.continueSession) {
+      page = await navigateToApplyForm(
+        page,
+        session.context,
+        log,
+        false,
+        opts.applicationId,
+      );
       await waitForApplicationForm(page, log);
     } else {
       await page.waitForTimeout(600);
@@ -1709,6 +2085,8 @@ export async function autofillApplication(
 
     if (effectiveHeadless) {
       await browser.close();
+      const previewNote =
+        "Filled in a background browser (see screenshot). Your browser tab was not filled — open the company apply page and copy answers from the list below.";
       return {
         ok,
         filledFields,
@@ -1723,7 +2101,8 @@ export async function autofillApplication(
         log,
         platform,
         awaitingHumanSubmit: false,
-        warning: urlWarning ?? undefined,
+        filledInHeadlessPreview: true,
+        warning: urlWarning ? `${urlWarning} ${previewNote}` : previewNote,
         botWallDetected: botWall,
         validationErrors,
         verified,
@@ -1736,7 +2115,7 @@ export async function autofillApplication(
     }
 
     log.push(
-      "Browser left open. Review every field, then click Submit yourself.",
+      "Browser left open. Review every field in that Chrome window (screenshot matches it), then click Submit yourself.",
     );
 
     return {
@@ -1753,6 +2132,7 @@ export async function autofillApplication(
       log,
       platform,
       awaitingHumanSubmit: true,
+      filledInHeadlessPreview: false,
       warning: urlWarning ?? undefined,
       botWallDetected: botWall,
       validationErrors,

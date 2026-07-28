@@ -470,13 +470,10 @@ export default function ApplicationDetailPage() {
   }, [guideStep, statusHighlight]);
 
   async function autofill(headless: boolean, continueSession = false) {
-    // Open in the user's browser immediately (before any await) so popup blockers
-    // allow it. Server-side headed Chrome only works on a local Mac; on Railway
-    // this is how the application tab appears for review/submit.
-    const applyLink = app?.job.applyUrl || app?.job.url || "";
-    if (applyLink && !headless) {
-      window.open(applyLink, "_blank", "noopener,noreferrer");
-    }
+    // Do not open a blank apply tab up front — that tab stayed empty while
+    // Playwright filled a different browser (screenshot looked filled).
+    // Headed: review the Chrome window we open. Headless: open apply page after
+    // fill so you can copy answers from the panel / screenshot.
 
     if (dirty) await saveDocs();
     setAutofilling(true);
@@ -650,6 +647,7 @@ export default function ApplicationDetailPage() {
                 onContinue={() => autofill(false, true)}
                 onComplete={scrollToStatusUpdate}
                 onClose={() => setShowAutofill(false)}
+                applyUrl={applyUrl}
               />
             )}
 
