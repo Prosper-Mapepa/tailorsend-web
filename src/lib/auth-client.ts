@@ -18,9 +18,19 @@ function authUrl(path: string): string {
   return base ? `${base}${path}` : path;
 }
 
+function readCookieToken(): string | null {
+  if (typeof document === "undefined") return null;
+  const match = document.cookie
+    .split("; ")
+    .find((row) => row.startsWith(`${AUTH_TOKEN_KEY}=`));
+  if (!match) return null;
+  const value = match.slice(AUTH_TOKEN_KEY.length + 1);
+  return value || null;
+}
+
 export function getStoredToken(): string | null {
   if (typeof window === "undefined") return null;
-  return localStorage.getItem(AUTH_TOKEN_KEY);
+  return localStorage.getItem(AUTH_TOKEN_KEY) ?? readCookieToken();
 }
 
 export function setStoredToken(token: string | null): void {

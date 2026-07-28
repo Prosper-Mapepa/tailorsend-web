@@ -8,7 +8,7 @@ import {
   useMemo,
   useState,
 } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import type { AuthUser } from "@/lib/auth-client";
 import {
   fetchMe,
@@ -34,6 +34,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const pathname = usePathname();
 
   const refresh = useCallback(async () => {
     const me = await fetchMe();
@@ -75,6 +76,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     router.push("/");
     router.refresh();
   }, [router]);
+
+  // Valid session on auth pages → home (proxy no longer does this via cookie).
+  useEffect(() => {
+    if (loading || !user) return;
+    if (pathname === "/sign-in" || pathname === "/register") {
+      router.replace("/");
+    }
+  }, [user, loading, pathname, router]);
 
   const value = useMemo(
     () => ({ user, loading, signIn, signUp, signOut, refresh }),

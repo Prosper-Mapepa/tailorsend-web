@@ -59,6 +59,14 @@ const SIZES = {
   lg: "px-5 py-3 text-sm rounded-xl",
 };
 
+type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
+  variant?: Variant;
+  size?: keyof typeof SIZES;
+  loading?: boolean;
+  /** When set, renders a Next.js Link with button styles (avoids nested <a><button>). */
+  href?: string;
+};
+
 export function Button({
   variant = "primary",
   size = "md",
@@ -66,20 +74,28 @@ export function Button({
   loading = false,
   children,
   disabled,
+  href,
   ...props
-}: ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: Variant;
-  size?: keyof typeof SIZES;
-  loading?: boolean;
-}) {
+}: ButtonProps) {
   const spinnerClass =
     variant === "primary" || variant === "danger"
       ? "h-4 w-4 border-white/40 border-t-white"
       : "h-4 w-4 border-emerald-200 border-t-emerald-600";
 
+  const classes = `inline-flex items-center justify-center gap-2 font-medium transition disabled:cursor-not-allowed ${SIZES[size]} ${VARIANTS[variant]} ${className}`;
+
+  if (href) {
+    return (
+      <Link href={href} className={classes} aria-disabled={disabled || loading}>
+        {loading && <Spinner className={spinnerClass} />}
+        {children}
+      </Link>
+    );
+  }
+
   return (
     <button
-      className={`inline-flex items-center justify-center gap-2 font-medium transition disabled:cursor-not-allowed ${SIZES[size]} ${VARIANTS[variant]} ${className}`}
+      className={classes}
       disabled={disabled || loading}
       {...props}
     >

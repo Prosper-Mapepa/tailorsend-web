@@ -10,9 +10,103 @@
   <link rel="stylesheet" href="styles.css" />
   <style>
     /* Page-specific: financial model */
-    .fin-container { max-width: 900px; margin: 0 auto; padding: 3rem 1.5rem 4rem; }
-    .fin-container h2 { margin-top: 4rem; }
-    .fin-sub { color: var(--text-muted); margin: 0.25rem 0 1.5rem; font-size: 0.95rem; max-width: 44rem; }
+    .fin-container {
+      max-width: 52rem;
+      margin: 0 auto;
+      padding: 2.5rem 1.5rem 5rem;
+    }
+    .fin-container > h1 { margin-bottom: 0.35rem; }
+    .fin-container .lead {
+      max-width: 36rem;
+      font-size: 1.05rem;
+      line-height: 1.6;
+      margin-bottom: 1.5rem;
+    }
+    .fin-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin: 0 0 2rem;
+    }
+    .fin-pill {
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 0.35rem 0.85rem;
+    }
+    .fin-toc {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem 1rem;
+      margin: 0 0 2.5rem;
+      padding: 0.85rem 1rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 0.85rem;
+    }
+    .fin-toc span { color: var(--text-muted); margin-right: 0.25rem; }
+    .fin-toc a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .fin-toc a:hover { text-decoration: underline; }
+
+    .fin-section {
+      margin-top: 3.5rem;
+      scroll-margin-top: 5rem;
+    }
+    .fin-section:first-of-type { margin-top: 0; }
+    .fin-section h2 {
+      margin: 0 0 0.35rem;
+      font-size: clamp(1.25rem, 2.5vw, 1.5rem);
+    }
+    .fin-sub {
+      color: var(--text-muted);
+      margin: 0 0 1.25rem;
+      font-size: 0.92rem;
+      max-width: 40rem;
+      line-height: 1.55;
+    }
+
+    .fin-stat-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.75rem;
+      margin: 1.75rem 0 0;
+    }
+    @media (min-width: 640px) {
+      .fin-stat-grid { grid-template-columns: repeat(4, 1fr); }
+    }
+    .fin-stat {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem 1.1rem;
+      text-align: center;
+    }
+    .fin-stat.highlight {
+      border-color: rgba(16, 185, 129, 0.4);
+      background: var(--accent-glow);
+    }
+    .fin-stat .val {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
+    }
+    .fin-stat.highlight .val { color: var(--accent); }
+    .fin-stat .lbl {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin-top: 0.35rem;
+    }
 
     /* Big equation */
     .equation {
@@ -20,12 +114,12 @@
       flex-wrap: wrap;
       align-items: center;
       justify-content: center;
-      gap: 1.25rem 1.75rem;
+      gap: 0.75rem 1.25rem;
       background: var(--bg-card);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 2.25rem 1.5rem;
-      margin: 2rem 0 0.75rem;
+      padding: 2rem 1.25rem;
+      margin: 0;
       text-align: center;
     }
     .equation .term {
@@ -34,7 +128,7 @@
       align-items: center;
     }
     .equation .term .big {
-      font-size: clamp(1.7rem, 4vw, 2.4rem);
+      font-size: clamp(1.35rem, 3.5vw, 1.85rem);
       font-weight: 700;
       line-height: 1.1;
       color: var(--text);
@@ -56,7 +150,7 @@
       padding: 0.75rem 1.4rem;
     }
     .equation .op {
-      font-size: 1.7rem;
+      font-size: 1.35rem;
       font-weight: 600;
       color: var(--text-muted);
     }
@@ -92,10 +186,15 @@
 
     /* Collapsible detail */
     details.fin-details {
-      margin: 1rem 0 2rem;
+      margin: 0.75rem 0 0;
       border: 1px solid var(--border);
       border-radius: var(--radius);
       background: var(--bg-card);
+    }
+    details.fin-details + details.fin-details { margin-top: 0.75rem; }
+    details.fin-details.fin-details--nested {
+      margin: 1rem 1.25rem 1.25rem;
+      background: var(--bg-elevated);
     }
     details.fin-details summary {
       cursor: pointer;
@@ -134,6 +233,58 @@
     .assumption-list li::before { content: "✓"; color: var(--accent); font-weight: 700; }
     .assumption-list strong { color: var(--text); }
 
+    .spend-list { display: none; }
+    .fin-cost-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.6rem;
+      margin-top: 1.25rem;
+    }
+    @media (min-width: 520px) {
+      .fin-cost-grid { grid-template-columns: repeat(4, 1fr); }
+    }
+    .fin-cost-item {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      background: var(--bg-elevated);
+      border-radius: 8px;
+      padding: 0.65rem 0.75rem;
+      text-align: center;
+    }
+    .fin-cost-item strong {
+      display: block;
+      color: var(--text);
+      font-size: 1rem;
+      margin-bottom: 0.15rem;
+    }
+
+    .fin-simple-table td:first-child { font-weight: 500; }
+    .fin-table-target th:nth-child(2),
+    .fin-table-target td:nth-child(2) {
+      background: rgba(16, 185, 129, 0.06);
+    }
+    .fin-table-target th:nth-child(2) {
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .fin-check {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin: 1rem 0 0;
+      line-height: 1.5;
+      font-variant-numeric: tabular-nums;
+    }
+    .fin-check strong { color: var(--accent); }
+
+    .fin-section .chart-row {
+      margin-top: 1.5rem;
+      max-width: 28rem;
+    }
+    .fin-section .chart-row.fin-charts-wide {
+      max-width: none;
+    }
+
     .downloads-strip {
       display: flex;
       flex-wrap: wrap;
@@ -163,351 +314,254 @@
     <p class="eyebrow">Financial model · Michigan SBDC · July 2026</p>
     <h1>Financial Model</h1>
     <p class="lead">
-      Five years, cash only, no debt. One <strong>$25K ask</strong> bridges Year 1 — every year ends cash-positive.
+      Cash-basis plan for SBDC review. One $25,000 award in month 1; no debt; no founder salary in Year 1.
     </p>
-
-    <div class="equation">
-      <span class="term"><span class="big">$1.5K</span><span class="lbl">Y1 revenue</span></span>
-      <span class="op">+</span>
-      <span class="term"><span class="big accent">$25K</span><span class="lbl">one-time ask</span></span>
-      <span class="op">−</span>
-      <span class="term"><span class="big">$13K</span><span class="lbl">Y1 spending</span></span>
-      <span class="op">=</span>
-      <span class="term result"><span class="big accent">$13.5K</span><span class="lbl">cash at end of Y1</span></span>
-    </div>
-    <p class="equation-note">
-      Year 1 spending, all of it: <strong>$4.5K</strong> founder · <strong>$3K</strong> marketing · <strong>$2.4K</strong> hosting · <strong>$3.1K</strong> legal, security &amp; other.
-    </p>
-
-    <h2>How revenue works</h2>
-    <p class="fin-sub">Paying users × ~$10/mo. Pricing is live today at tailorsend.cc with Stripe billing.</p>
-
-    <div class="table-wrap">
-      <table>
-        <tbody>
-          <tr><td>Free</td><td class="num">$0</td><td style="color: var(--text-muted);">the funnel</td></tr>
-          <tr><td>Campus · 8 kits</td><td class="num">$5</td><td style="color: var(--text-muted);">first purchase</td></tr>
-          <tr><td>Student Monthly · 25 kits/mo</td><td class="num">$9.99/mo</td><td style="color: var(--text-muted);">recurring</td></tr>
-          <tr><td>Student Yearly · 25 kits/mo</td><td class="num">$89.99/yr</td><td style="color: var(--text-muted);">best value · cash upfront</td></tr>
-          <tr><td>Sprint · 50 kits</td><td class="num">$29.99</td><td style="color: var(--text-muted);">one-time volume</td></tr>
-        </tbody>
-      </table>
+    <div class="fin-pills">
+      <span class="fin-pill">Live pricing · tailorsend.cc</span>
+      <span class="fin-pill">B2C + campus revenue</span>
+      <span class="fin-pill">Target ends Y1 at $20K cash</span>
     </div>
 
-    <h2>Five years at a glance</h2>
-    <p class="fin-sub">Money in − money out = ending cash. Year 1 includes the $25K ask; nothing else is raised.</p>
+    <nav class="fin-toc" aria-label="On this page">
+      <span>Jump to</span>
+      <a href="#y1-bridge">Year 1 bridge</a>
+      <a href="#three-year">3-year plan</a>
+      <a href="#more-detail">More detail</a>
+    </nav>
 
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th></th>
-            <th class="num">Paying users</th>
-            <th class="num">Money in</th>
-            <th class="num">Money out</th>
-            <th class="num">Ending cash</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>Year 1</td>
-            <td class="num">24</td>
-            <td class="num">$26.5K <span style="color: var(--text-muted); font-size: 0.8rem;">(incl. $25K ask)</span></td>
-            <td class="num">$13.0K</td>
-            <td class="num positive"><strong>$13.5K</strong></td>
-          </tr>
-          <tr>
-            <td>Year 2</td>
-            <td class="num">95</td>
-            <td class="num">$11.0K</td>
-            <td class="num">$8.8K</td>
-            <td class="num positive"><strong>$15.7K</strong></td>
-          </tr>
-          <tr>
-            <td>Year 3</td>
-            <td class="num">280</td>
-            <td class="num">$42.0K</td>
-            <td class="num">$34.4K</td>
-            <td class="num positive"><strong>$23.4K</strong></td>
-          </tr>
-          <tr>
-            <td>Year 4</td>
-            <td class="num">700</td>
-            <td class="num">$120.0K</td>
-            <td class="num">$103.5K</td>
-            <td class="num positive"><strong>$39.9K</strong></td>
-          </tr>
-          <tr>
-            <td>Year 5</td>
-            <td class="num">1,500</td>
-            <td class="num">$280.0K</td>
-            <td class="num">$233.5K</td>
-            <td class="num positive"><strong>$86.4K</strong></td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    <section class="fin-section" id="y1-bridge">
+      <h2>Year 1 at a glance (target)</h2>
+      <p class="fin-sub">How the $25,000 ask and revenue cover costs and leave cash in the bank.</p>
 
-    <div class="takeaway">
-      <span>By Year 5:</span>
-      <span><b>1,500</b> paying users</span>
-      <span class="arrow">→</span>
-      <span><b>$280K</b> revenue</span>
-      <span class="arrow">→</span>
-      <span><b>$86K</b> cash in the bank</span>
-      <span class="arrow">·</span>
-      <span>no capital raised after the $25K</span>
-    </div>
-
-    <div class="chart-row">
-      <div class="chart-box">
-        <h4>Ending cash (Years 1–5)</h4>
-        <canvas class="chart-canvas" id="chart-ending-cash"></canvas>
+      <div class="equation">
+        <span class="term"><span class="big">$0</span><span class="lbl">start</span></span>
+        <span class="op">+</span>
+        <span class="term"><span class="big accent">$25K</span><span class="lbl">ask</span></span>
+        <span class="op">+</span>
+        <span class="term"><span class="big">$16K</span><span class="lbl">revenue</span></span>
+        <span class="op">−</span>
+        <span class="term"><span class="big">$21K</span><span class="lbl">costs</span></span>
+        <span class="op">=</span>
+        <span class="term result"><span class="big accent">$20K</span><span class="lbl">end of Y1</span></span>
       </div>
-      <div class="chart-box">
-        <h4>Revenue (Years 1–5)</h4>
-        <canvas class="chart-canvas" id="chart-revenue"></canvas>
-      </div>
-    </div>
 
-    <details class="fin-details">
-      <summary>Full line-item cash flow (sources &amp; uses, Years 1–5)</summary>
+      <div class="fin-cost-grid" aria-label="Year 1 cost breakdown">
+        <div class="fin-cost-item"><strong>$3,000</strong> marketing</div>
+        <div class="fin-cost-item"><strong>$2,400</strong> hosting</div>
+        <div class="fin-cost-item"><strong>$3,100</strong> legal &amp; security</div>
+        <div class="fin-cost-item"><strong>$12,500</strong> campus GTM</div>
+      </div>
+
+      <div class="fin-stat-grid">
+        <div class="fin-stat"><div class="val">$16K</div><div class="lbl">Y1 revenue</div></div>
+        <div class="fin-stat"><div class="val">50</div><div class="lbl">paying users (Dec)</div></div>
+        <div class="fin-stat"><div class="val">$10K</div><div class="lbl">campus (M9)</div></div>
+        <div class="fin-stat highlight"><div class="val">$20K</div><div class="lbl">ending cash</div></div>
+      </div>
+    </section>
+
+    <section class="fin-section" id="three-year">
+      <h2>Three-year snapshot</h2>
+      <p class="fin-sub">
+        <strong>B2C cash</strong> = paying users × Student Monthly <strong>$9.99/mo</strong> (~<strong>$120/yr</strong>).
+        Example Year 1: <strong>50</strong> users × $120 ≈ <strong>$6,000</strong>.
+        Campus = pilot then annual licenses.
+      </p>
+
       <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th></th>
-            <th class="num">Year 1</th>
-            <th class="num">Year 2</th>
-            <th class="num">Year 3</th>
-            <th class="num">Year 4</th>
-            <th class="num">Year 5</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr class="group-row"><td colspan="6">Cash sources</td></tr>
-          <tr>
-            <td class="indent">Product revenue (subscriptions + packs)</td>
-            <td class="num">$1,546</td>
-            <td class="num">$11,000</td>
-            <td class="num">$42,000</td>
-            <td class="num">$120,000</td>
-            <td class="num">$280,000</td>
-          </tr>
-          <tr>
-            <td class="indent">Ask — grant / award / seed (one-time)</td>
-            <td class="num">$25,000</td>
-            <td class="num">—</td>
-            <td class="num">—</td>
-            <td class="num">—</td>
-            <td class="num">—</td>
-          </tr>
-          <tr>
-            <td class="indent">Loans / other debt</td>
-            <td class="num">—</td>
-            <td class="num">—</td>
-            <td class="num">—</td>
-            <td class="num">—</td>
-            <td class="num">—</td>
-          </tr>
-          <tr class="subtotal-row">
-            <td>Total sources</td>
-            <td class="num">$26,546</td>
-            <td class="num">$11,000</td>
-            <td class="num">$42,000</td>
-            <td class="num">$120,000</td>
-            <td class="num">$280,000</td>
-          </tr>
-
-          <tr class="group-row"><td colspan="6">Cash uses</td></tr>
-          <tr>
-            <td class="indent">Founder salary</td>
-            <td class="num">$4,500</td>
-            <td class="num">$0</td>
-            <td class="num">$9,000</td>
-            <td class="num">$36,000</td>
-            <td class="num">$60,000</td>
-          </tr>
-          <tr>
-            <td class="indent">Additional staff wages</td>
-            <td class="num">—</td>
-            <td class="num">—</td>
-            <td class="num">—</td>
-            <td class="num">—</td>
-            <td class="num">$45,000</td>
-          </tr>
-          <tr>
-            <td class="indent">Platform hosting &amp; maintenance</td>
-            <td class="num">$2,400</td>
-            <td class="num">$3,000</td>
-            <td class="num">$4,800</td>
-            <td class="num">$9,000</td>
-            <td class="num">$14,000</td>
-          </tr>
-          <tr>
-            <td class="indent">AI API / variable COGS</td>
-            <td class="num">$372</td>
-            <td class="num">$2,000</td>
-            <td class="num">$6,500</td>
-            <td class="num">$16,000</td>
-            <td class="num">$30,000</td>
-          </tr>
-          <tr>
-            <td class="indent">Platform hardening &amp; compliance</td>
-            <td class="num">$400</td>
-            <td class="num">$400</td>
-            <td class="num">$1,000</td>
-            <td class="num">$2,500</td>
-            <td class="num">$4,000</td>
-          </tr>
-          <tr>
-            <td class="indent">Legal contracts &amp; SaaS agreements</td>
-            <td class="num">$900</td>
-            <td class="num">$800</td>
-            <td class="num">$1,200</td>
-            <td class="num">$2,500</td>
-            <td class="num">$4,500</td>
-          </tr>
-          <tr>
-            <td class="indent">Campus demo &amp; sales materials</td>
-            <td class="num">$400</td>
-            <td class="num">$500</td>
-            <td class="num">$1,500</td>
-            <td class="num">$4,000</td>
-            <td class="num">$7,000</td>
-          </tr>
-          <tr>
-            <td class="indent">Student ambassador program</td>
-            <td class="num">$400</td>
-            <td class="num">$500</td>
-            <td class="num">$1,800</td>
-            <td class="num">$5,000</td>
-            <td class="num">$9,000</td>
-          </tr>
-          <tr>
-            <td class="indent">Rent</td>
-            <td class="num">—</td>
-            <td class="num">—</td>
-            <td class="num">—</td>
-            <td class="num">—</td>
-            <td class="num">$6,000</td>
-          </tr>
-          <tr>
-            <td class="indent">General &amp; administrative</td>
-            <td class="num">$450</td>
-            <td class="num">$400</td>
-            <td class="num">$1,200</td>
-            <td class="num">$3,000</td>
-            <td class="num">$5,000</td>
-          </tr>
-          <tr>
-            <td class="indent">Marketing</td>
-            <td class="num">$3,000</td>
-            <td class="num">$1,000</td>
-            <td class="num">$4,000</td>
-            <td class="num">$18,000</td>
-            <td class="num">$30,000</td>
-          </tr>
-          <tr>
-            <td class="indent">Estimated income taxes (25%)</td>
-            <td class="num">$0</td>
-            <td class="num">$0</td>
-            <td class="num">$2,550</td>
-            <td class="num">$5,500</td>
-            <td class="num">$15,500</td>
-          </tr>
-          <tr>
-            <td class="indent">Capital expenditures</td>
-            <td class="num">$200</td>
-            <td class="num">$200</td>
-            <td class="num">$800</td>
-            <td class="num">$2,000</td>
-            <td class="num">$3,500</td>
-          </tr>
-          <tr class="subtotal-row">
-            <td>Total uses</td>
-            <td class="num">$13,022</td>
-            <td class="num">$8,800</td>
-            <td class="num">$34,350</td>
-            <td class="num">$103,500</td>
-            <td class="num">$233,500</td>
-          </tr>
-
-          <tr class="group-row"><td colspan="6">Net cash position</td></tr>
-          <tr>
-            <td class="indent">Net cash flow (sources − uses)</td>
-            <td class="num positive">$13,524</td>
-            <td class="num positive">$2,200</td>
-            <td class="num positive">$7,650</td>
-            <td class="num positive">$16,500</td>
-            <td class="num positive">$46,500</td>
-          </tr>
-          <tr>
-            <td class="indent">Starting cash</td>
-            <td class="num">$0</td>
-            <td class="num">$13,524</td>
-            <td class="num">$15,724</td>
-            <td class="num">$23,374</td>
-            <td class="num">$39,874</td>
-          </tr>
-          <tr class="subtotal-row">
-            <td>Ending cash balance</td>
-            <td class="num positive"><strong>$13,524</strong></td>
-            <td class="num positive"><strong>$15,724</strong></td>
-            <td class="num positive"><strong>$23,374</strong></td>
-            <td class="num positive"><strong>$39,874</strong></td>
-            <td class="num positive"><strong>$86,374</strong></td>
-          </tr>
-        </tbody>
-      </table>
+        <table class="fin-simple-table fin-table-target">
+          <thead>
+            <tr>
+              <th></th>
+              <th class="num">Year 1</th>
+              <th class="num">Year 2</th>
+              <th class="num">Year 3</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Paying users (B2C)</td>
+              <td class="num">50</td>
+              <td class="num">150</td>
+              <td class="num">300</td>
+            </tr>
+            <tr>
+              <td>B2C cash <span style="font-weight:400;color:var(--text-muted);font-size:0.85rem;">(users × ~$120/yr)</span></td>
+              <td class="num">50 × $120 = <strong>$6K</strong></td>
+              <td class="num">150 × $120 = <strong>$18K</strong></td>
+              <td class="num">300 × $120 = <strong>$36K</strong></td>
+            </tr>
+            <tr>
+              <td>Campus revenue</td>
+              <td class="num">$10K</td>
+              <td class="num">$40K</td>
+              <td class="num">$55K</td>
+            </tr>
+            <tr class="total-row">
+              <td>Total revenue</td>
+              <td class="num">$16K</td>
+              <td class="num">$58K</td>
+              <td class="num">$91K</td>
+            </tr>
+            <tr>
+              <td>Operating costs</td>
+              <td class="num">$21K</td>
+              <td class="num">$43K</td>
+              <td class="num">$71K</td>
+            </tr>
+            <tr class="total-row">
+              <td>Ending cash</td>
+              <td class="num positive"><strong>$20K</strong></td>
+              <td class="num positive"><strong>$35K</strong></td>
+              <td class="num positive"><strong>$55K</strong></td>
+            </tr>
+          </tbody>
+        </table>
       </div>
-    </details>
 
-    <h2>Year 1, month by month</h2>
-    <p class="fin-sub">From 8 signups in month 1 to 24 paying users and ~$336 MRR by month 12.</p>
-
-    <div class="chart-row">
-      <div class="chart-box">
-        <h4>MRR ramp (M1–M12)</h4>
-        <canvas class="chart-canvas" id="chart-mrr"></canvas>
+      <div class="chart-row fin-section">
+        <div class="chart-box">
+          <h4>Ending cash (Years 1–3)</h4>
+          <canvas class="chart-canvas" id="chart-ending-cash"></canvas>
+        </div>
       </div>
-      <div class="chart-box">
-        <h4>Cash on hand (M1–M12)</h4>
-        <canvas class="chart-canvas" id="chart-cash"></canvas>
-      </div>
-    </div>
 
-    <details class="fin-details">
-      <summary>Monthly table (signups, users, MRR, burn, cash)</summary>
-      <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Month</th>
-            <th class="num">New signups</th>
-            <th class="num">Registered users</th>
-            <th class="num">Paying users</th>
-            <th class="num">MRR</th>
-            <th class="num">Revenue</th>
-            <th class="num">COGS</th>
-            <th class="num">Net burn</th>
-            <th class="num">Cash</th>
-          </tr>
-        </thead>
-        <tbody id="monthly-tbody"></tbody>
-      </table>
-      </div>
-    </details>
+      <p class="takeaway">
+        <span>Year 3</span>
+        <span><b>$91K</b> revenue</span>
+        <span class="arrow">→</span>
+        <span><b>$55K</b> cash</span>
+        <span class="arrow">·</span>
+        <span>no raise after $25K</span>
+      </p>
+    </section>
 
-    <h2>Key assumptions</h2>
-    <ul class="assumption-list">
-      <li><span><strong>Lean team.</strong> Founder salary $4.5K in Y1, $0 in Y2, scaling with revenue. First hire in Year 5.</span></li>
-      <li><span><strong>Low costs.</strong> Pure SaaS — ~$0.18/kit AI cost plus hosting. No inventory.</span></li>
-      <li><span><strong>Live product.</strong> tailorsend.cc is operating today with Stripe billing — this is not a concept.</span></li>
-      <li><span><strong>Upside excluded.</strong> Campus site licenses, employer seats, and enterprise API are not in these numbers.</span></li>
-    </ul>
+    <section class="fin-section" id="more-detail">
+      <h2>More detail</h2>
+      <p class="fin-sub">Expand only what you need for SBDC worksheets or follow-up questions.</p>
 
-    <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 1.5rem;">
+      <details class="fin-details">
+        <summary>Year 1 scenarios (conservative · target · stretch)</summary>
+        <div class="table-wrap">
+          <table class="fin-simple-table fin-table-target">
+            <thead>
+              <tr><th>Year 1</th><th class="num">Conservative</th><th class="num">Target</th><th class="num">Stretch</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Paying users (Dec 31)</td><td class="num">25</td><td class="num"><strong>50</strong></td><td class="num">50</td></tr>
+              <tr><td>B2C cash <span style="font-weight:400;color:var(--text-muted);font-size:0.85rem;">(× ~$120/yr)</span></td><td class="num">25 × $120 = $3,000</td><td class="num"><strong>50 × $120 = $6,000</strong></td><td class="num">50 × $120 = $6,000</td></tr>
+              <tr><td>Campus cash</td><td class="num">$0</td><td class="num"><strong>$10,000</strong></td><td class="num">$15,000</td></tr>
+              <tr class="total-row"><td>Total revenue</td><td class="num">$3,000</td><td class="num"><strong>$16,000</strong></td><td class="num">$21,000</td></tr>
+              <tr><td>Operating costs</td><td class="num">$17,000</td><td class="num"><strong>$21,000</strong></td><td class="num">$23,000</td></tr>
+              <tr class="total-row"><td>Ending cash</td><td class="num">$11,000</td><td class="num positive"><strong>$20,000</strong></td><td class="num">$23,000</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="fin-check" style="padding: 0 1.25rem 1rem;">Target: $0 + $25,000 + $16,000 − $21,000 = <strong>$20,000</strong>.</p>
+      </details>
+
+      <details class="fin-details">
+        <summary>How numbers are calculated</summary>
+        <ul class="assumption-list" style="padding: 0 1.25rem 1rem;">
+          <li><span><strong>B2C subscription:</strong> Student Monthly <strong>$9.99/mo</strong> ≈ <strong>$120/yr</strong> per paying user (Yearly $89.99 is the same order of magnitude; model uses ~$120).</span></li>
+          <li><span><strong>B2C cash (summary):</strong> year-end paying users × ~$120 — Y1 <strong>50 × $120 = $6,000</strong> · Y2 <strong>150 × $120 = $18,000</strong> · Y3 <strong>300 × $120 = $36,000</strong>.</span></li>
+          <li><span><strong>B2C cash (detail):</strong> Month-by-month ramp uses $9.99 MRR plus a few $89.99 yearly prepays; totals still tie to <strong>$6,000</strong> in Y1.</span></li>
+          <li><span>Campus = <strong>$10,000</strong> pilot invoiced in month 9. Years 2–3 = Small <strong>$15K</strong> + Mid <strong>$25K</strong> licenses.</span></li>
+        </ul>
+      </details>
+
+      <details class="fin-details">
+        <summary>Traction ramp (milestones)</summary>
+        <p class="fin-sub" style="padding: 0 1.25rem;">16 registered today · 12 waitlist → 13 paying in month 1 · 50 by month 12.</p>
+        <div class="table-wrap">
+          <table class="fin-simple-table">
+            <thead><tr><th></th><th class="num">M1</th><th class="num">M6</th><th class="num">M9</th><th class="num">M12</th></tr></thead>
+            <tbody>
+              <tr><td>Paying users</td><td class="num">13</td><td class="num">32</td><td class="num">44</td><td class="num">50</td></tr>
+              <tr><td>MRR</td><td class="num">$130</td><td class="num">$320</td><td class="num">$440</td><td class="num">$500</td></tr>
+              <tr><td>B2C cash (cumulative)</td><td class="num">$130</td><td class="num">$2,230</td><td class="num">$3,464</td><td class="num">$6,000</td></tr>
+              <tr><td>Campus cash</td><td class="num">—</td><td class="num">—</td><td class="num">$10,000</td><td class="num">$10,000</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </details>
+
+      <details class="fin-details">
+        <summary>Pricing (live on tailorsend.cc)</summary>
+        <div class="table-wrap">
+          <table>
+            <tbody>
+              <tr><td>Student Monthly · 25 kits/mo</td><td class="num">$9.99/mo</td></tr>
+              <tr><td>Student Yearly</td><td class="num">$89.99/yr</td></tr>
+              <tr><td>Campus site license</td><td class="num">$15K–$40K/yr</td></tr>
+              <tr><td>Y1 pilot (discounted)</td><td class="num">$10,000</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </details>
+
+      <details class="fin-details">
+        <summary>Year 1 month-by-month cash</summary>
+        <p class="fin-sub" style="padding: 0 1.25rem;">Award in M1 · campus in M9 · opex totals <strong>$21,000</strong> · B2C totals <strong>$6,000</strong>.</p>
+        <div class="chart-row fin-charts-wide" style="padding: 0 1rem 1rem;">
+          <div class="chart-box">
+            <h4>MRR</h4>
+            <canvas class="chart-canvas" id="chart-mrr"></canvas>
+          </div>
+          <div class="chart-box">
+            <h4>Cash on hand</h4>
+            <canvas class="chart-canvas" id="chart-cash"></canvas>
+          </div>
+        </div>
+        <details class="fin-details fin-details--nested">
+          <summary>Monthly table + CSV tie-out</summary>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Mo</th>
+                  <th class="num">Paying</th>
+                  <th class="num">B2C</th>
+                  <th class="num">Campus</th>
+                  <th class="num">Opex</th>
+                  <th class="num">Cash</th>
+                </tr>
+              </thead>
+              <tbody id="monthly-tbody"></tbody>
+            </table>
+          </div>
+          <p class="fin-check" style="padding: 0 1.25rem 1rem;" id="monthly-tie-out"></p>
+        </details>
+      </details>
+
+      <details class="fin-details">
+        <summary>Three-year sources &amp; uses</summary>
+        <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th></th>
+              <th class="num">Year 1</th>
+              <th class="num">Year 2</th>
+              <th class="num">Year 3</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="group-row"><td colspan="4">Cash in</td></tr>
+            <tr><td class="indent">B2C</td><td class="num">$6,000</td><td class="num">$18,000</td><td class="num">$36,000</td></tr>
+            <tr><td class="indent">Campus</td><td class="num">$10,000</td><td class="num">$40,000</td><td class="num">$55,000</td></tr>
+            <tr><td class="indent">Grant (Y1 only)</td><td class="num">$25,000</td><td class="num">—</td><td class="num">—</td></tr>
+            <tr class="subtotal-row"><td>Total cash in</td><td class="num">$41,000</td><td class="num">$58,000</td><td class="num">$91,000</td></tr>
+            <tr class="group-row"><td colspan="4">Cash out</td></tr>
+            <tr><td class="indent">Operating costs</td><td class="num">$21,000</td><td class="num">$43,000</td><td class="num">$71,000</td></tr>
+            <tr class="subtotal-row"><td>Ending cash</td><td class="num positive"><strong>$20,000</strong></td><td class="num positive"><strong>$35,000</strong></td><td class="num positive"><strong>$55,000</strong></td></tr>
+          </tbody>
+        </table>
+        </div>
+      </details>
+    </section>
+
+    <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 3rem;">
       Source: TailorSend internal projections · Michigan SBDC · July 2026.
     </p>
 
@@ -520,24 +574,41 @@
   </div>
 
   <script>
-const YEARS = [1, 2, 3, 4, 5];
-const ENDING_CASH = [13524, 15724, 23374, 39874, 86374];
-const REVENUE = [1546, 11000, 42000, 120000, 280000];
+const MONTHLY_PRICE = 9.99;
+const Y1_PAYING = [13, 16, 20, 24, 28, 32, 36, 40, 44, 47, 49, 50];
+const Y1_YEARLY_CASH = [0, 450, 0, 0, 0, 450, 0, 34, 0, 450, 180, 446];
+const Y1_OPEX = [1200, 1500, 1500, 1600, 1700, 1800, 1900, 2000, 2500, 2000, 1800, 1500];
+const CAMPUS_MONTH_INDEX = 8;
+const CAMPUS_CASH = 10000;
+const Y1_ASK = 25000;
 
-const MONTHLY_DATA = [
-  { month: 1, signups: 8, users: 8, paying: 1, mrr: 14, revenue: 14, cogs: 4, burn: -506, cash: 24994 },
-  { month: 2, signups: 12, users: 20, paying: 2, mrr: 28, revenue: 28, cogs: 7, burn: -492, cash: 24502 },
-  { month: 3, signups: 15, users: 35, paying: 3, mrr: 42, revenue: 42, cogs: 10, burn: -493, cash: 24009 },
-  { month: 4, signups: 18, users: 53, paying: 4, mrr: 56, revenue: 56, cogs: 14, burn: -489, cash: 23520 },
-  { month: 5, signups: 20, users: 73, paying: 6, mrr: 84, revenue: 84, cogs: 19, burn: -476, cash: 23044 },
-  { month: 6, signups: 22, users: 95, paying: 8, mrr: 112, revenue: 112, cogs: 26, burn: -513, cash: 22531 },
-  { month: 7, signups: 25, users: 120, paying: 10, mrr: 140, revenue: 140, cogs: 32, burn: -500, cash: 22031 },
-  { month: 8, signups: 28, users: 148, paying: 12, mrr: 168, revenue: 168, cogs: 39, burn: -487, cash: 21544 },
-  { month: 9, signups: 30, users: 178, paying: 14, mrr: 196, revenue: 196, cogs: 45, burn: -2024, cash: 19520 },
-  { month: 10, signups: 35, users: 213, paying: 17, mrr: 238, revenue: 238, cogs: 55, burn: -1997, cash: 17523 },
-  { month: 11, signups: 40, users: 253, paying: 20, mrr: 280, revenue: 280, cogs: 64, burn: -2020, cash: 15503 },
-  { month: 12, signups: 45, users: 298, paying: 24, mrr: 336, revenue: 336, cogs: 77, burn: -1979, cash: 13524 },
-];
+function buildMonthlyData() {
+  let cash = 0;
+  return Y1_PAYING.map((paying, i) => {
+    const mrr = Math.round(paying * MONTHLY_PRICE);
+    const b2c = mrr + Y1_YEARLY_CASH[i];
+    const campus = i === CAMPUS_MONTH_INDEX ? CAMPUS_CASH : 0;
+    const revenue = b2c + campus;
+    const opex = Y1_OPEX[i];
+    const ask = i === 0 ? Y1_ASK : 0;
+    const net = ask + revenue - opex;
+    cash += net;
+    return {
+      month: i + 1,
+      paying,
+      mrr,
+      b2c,
+      campus,
+      opex,
+      net,
+      cash,
+    };
+  });
+}
+
+const MONTHLY_DATA = buildMonthlyData();
+const YEARS = [1, 2, 3];
+const ENDING_CASH = [20000, 35000, 55000];
 
 function fmt(n) {
   if (n < 0) return `-$${Math.abs(n).toLocaleString()}`;
@@ -593,27 +664,36 @@ function renderMonthlyTable() {
   tbody.innerHTML = MONTHLY_DATA.map((r) => `
     <tr>
       <td>M${r.month}</td>
-      <td class="num">${r.signups}</td>
-      <td class="num">${r.users.toLocaleString()}</td>
       <td class="num">${r.paying}</td>
-      <td class="num positive">${fmt(r.mrr)}</td>
-      <td class="num">${fmt(r.revenue)}</td>
-      <td class="num">${fmt(r.cogs)}</td>
-      <td class="num negative">${fmt(r.burn)}</td>
-      <td class="num">${fmt(r.cash)}</td>
+      <td class="num">${fmt(r.b2c)}</td>
+      <td class="num">${r.campus ? fmt(r.campus) : "—"}</td>
+      <td class="num">${fmt(r.opex)}</td>
+      <td class="num"><strong>${fmt(r.cash)}</strong></td>
     </tr>`).join("");
+  const tie = document.getElementById("monthly-tie-out");
+  if (tie) {
+    const b2cSum = MONTHLY_DATA.reduce((s, r) => s + r.b2c, 0);
+    const opexSum = MONTHLY_DATA.reduce((s, r) => s + r.opex, 0);
+    const end = MONTHLY_DATA[11].cash;
+    tie.innerHTML =
+      `B2C <strong>${fmt(b2cSum)}</strong> + campus <strong>${fmt(CAMPUS_CASH)}</strong> = <strong>${fmt(b2cSum + CAMPUS_CASH)}</strong> revenue · ` +
+      `opex <strong>${fmt(opexSum)}</strong> · ending cash <strong>${fmt(end)}</strong>.`;
+  }
 }
 function initCharts() {
   const yLabels = YEARS.map((y) => `Y${y}`);
   drawLineChart("chart-ending-cash", yLabels, [{ data: ENDING_CASH, color: "#10b981" }], { minY: 0 });
-  drawLineChart("chart-revenue", yLabels, [{ data: REVENUE, color: "#60a5fa" }], { minY: 0 });
   const labels = MONTHLY_DATA.map((r) => `M${r.month}`);
   drawLineChart("chart-mrr", labels, [{ data: MONTHLY_DATA.map((r) => r.mrr), color: "#10b981" }]);
   drawLineChart("chart-cash", labels, [{ data: MONTHLY_DATA.map((r) => r.cash), color: "#10b981" }], { minY: 0 });
 }
 document.addEventListener("DOMContentLoaded", () => {
-  renderMonthlyTable(); initCharts();
+  renderMonthlyTable();
+  initCharts();
   window.addEventListener("resize", initCharts);
+  document.querySelectorAll("details.fin-details").forEach((el) => {
+    el.addEventListener("toggle", () => { if (el.open) initCharts(); });
+  });
 });
   </script>
   <script src="download.js"></script>
@@ -625,9 +705,9 @@ document.addEventListener("DOMContentLoaded", () => {
       if (self) self.addEventListener("click", () => dl.download(FILE));
 
       function monthlyCsv() {
-        const head = "Month,New Signups,Registered Users,Paying Users,MRR,Revenue,COGS,Net Burn,Cumulative Cash";
+        const head = "Month,Paying Users,MRR,B2C Cash,Campus Cash,Opex,Net Cash Flow,Cumulative Cash";
         const rows = MONTHLY_DATA.map((r) =>
-          [r.month, r.signups, r.users, r.paying, r.mrr, r.revenue, r.cogs, r.burn, r.cash].join(","),
+          [r.month, r.paying, r.mrr, r.b2c, r.campus, r.opex, r.net, r.cash].join(","),
         );
         return [head, ...rows].join("\n");
       }

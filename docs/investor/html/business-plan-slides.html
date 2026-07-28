@@ -9,672 +9,1637 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
   <style>
-    /* Page-specific: business plan deck */
-    .ps-grid {
+    /* Business plan deck — full-bleed, larger, calmer */
+    body.deck-body .site-header {
+      padding: 0.85rem clamp(1.25rem, 4vw, 2.5rem);
+    }
+    body.deck-body .site-nav a {
+      font-size: 0.9rem;
+    }
+    body.deck-body .download-bar .btn-download {
+      font-size: 0.8rem;
+    }
+
+    .slide {
+      padding: 5.75rem clamp(2rem, 5vw, 4rem) 9rem;
+      justify-content: flex-start;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+    .slide-inner {
+      max-width: min(1280px, 100%) !important;
+      width: 100%;
+      margin: 0 auto;
+    }
+    .slide-num {
+      top: 1.25rem;
+      right: clamp(1.25rem, 4vw, 2.5rem);
+      font-size: 0.9rem;
+    }
+    .slide .corner-logo {
+      display: none;
+    }
+
+    .slide .kicker {
+      margin: 0 0 0.55rem;
+      color: var(--accent);
+      font-size: 0.9rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+    .slide .kicker .k-num { opacity: 0.55; margin-right: 0.65rem; }
+    .slide h2 {
+      margin: 0 0 0.85rem;
+      font-size: clamp(1.85rem, 3.6vw, 2.75rem);
+      letter-spacing: -0.03em;
+      line-height: 1.12;
+    }
+    .slide .subtitle {
+      margin: -0.5rem 0 2rem;
+      font-size: clamp(1.15rem, 2vw, 1.4rem);
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+    .slide .footnote {
+      margin-top: 2.25rem;
+      padding: 1rem 1.25rem;
+      font-size: 1.2rem;
+      font-weight: 500;
+      line-height: 1.45;
+      color: #e8edf4;
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 0.75rem;
+    }
+    .slide table { font-size: 1.1rem; }
+    .slide th, .slide td { padding: 0.95rem 1.25rem; }
+
+    .slide-title {
+      text-align: left;
+      padding-left: clamp(2.5rem, 6vw, 5rem) !important;
+      padding-right: clamp(2.5rem, 6vw, 5rem) !important;
+    }
+    .slide-title .slide-inner {
+      max-width: min(1280px, 100%) !important;
+      width: 100%;
+      margin: auto;
+    }
+    .title-cover {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: clamp(2.5rem, 6vw, 5rem);
+      align-items: center;
+      width: 100%;
+    }
+    .title-cover .title-copy {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .slide-title .eyebrow {
+      margin: 0 0 1.75rem;
+      font-size: 0.875rem;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+    /* Same brand row pattern as docs home */
+    .title-cover .brand-row {
+      display: flex;
+      align-items: center;
+      gap: 1.35rem;
+      margin: 0;
+    }
+    .title-cover .brand-row img {
+      width: clamp(4.5rem, 9vw, 5.75rem);
+      height: clamp(4.5rem, 9vw, 5.75rem);
+      object-fit: cover;
+      border-radius: 16px;
+      flex-shrink: 0;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.06);
+    }
+    /* Match hub-hero h1 gradient wordmark */
+    .slide-title .plan-name {
+      margin: 0;
+      font-size: clamp(3.25rem, 7.5vw, 5.25rem);
+      font-weight: 700;
+      letter-spacing: -0.04em;
+      line-height: 1.05;
+      background: linear-gradient(135deg, #fff 20%, #6ee7b7 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .slide-title .plan-tagline {
+      margin: 1.85rem 0 0;
+      max-width: 34rem;
+      color: var(--text);
+      font-size: clamp(1.35rem, 2.5vw, 1.7rem);
+      line-height: 1.35;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+    .slide-title .plan-support {
+      margin: 0.9rem 0 0;
+      max-width: 34rem;
+      color: #c5d0de;
+      font-size: clamp(1.05rem, 1.9vw, 1.2rem);
+      line-height: 1.5;
+      font-weight: 400;
+    }
+    .slide-title .meta {
+      margin: 2.75rem 0 0;
+      padding-top: 1.35rem;
+      border-top: 1px solid rgba(148, 163, 184, 0.12);
+      color: var(--text-muted);
+      font-size: 1.05rem;
+      line-height: 1.5;
+    }
+    .slide-title .meta a {
+      color: var(--accent);
+      text-decoration: underline;
+      text-underline-offset: 0.18em;
+    }
+    .title-cover .title-qr {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      padding: 1.75rem 1.5rem 1.5rem;
+      background: rgba(26, 35, 50, 0.55);
+      border: 1px solid rgba(148, 163, 184, 0.12);
+      border-radius: 20px;
+      text-decoration: none;
+      color: inherit;
+    }
+    .title-cover .title-qr img {
+      width: min(16rem, 34vw);
+      height: auto;
+      border-radius: 0.75rem;
+      background: #fff;
+      padding: 0.7rem;
+    }
+    .title-cover .title-qr .qr-label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #e8edf4;
+    }
+    .title-cover .title-qr .qr-url {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: -0.01em;
+    }
+    @media (max-width: 820px) {
+      .title-cover {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+      }
+      .title-cover .title-qr {
+        justify-self: start;
+        flex-direction: row;
+        align-items: center;
+        gap: 1.15rem;
+        text-align: left;
+        width: 100%;
+        max-width: 28rem;
+        padding: 1.15rem;
+      }
+      .title-cover .title-qr img {
+        width: 7rem;
+      }
+    }
+
+    /* Problem list */
+    .check-list { list-style: none; padding: 0; margin: 1.5rem 0 0; text-align: left; }
+    .check-list li {
+      display: flex;
+      gap: 1rem;
+      padding: 1.15rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: clamp(1.2rem, 2.2vw, 1.45rem);
+      line-height: 1.55;
+    }
+    .check-list li:last-child { border-bottom: none; }
+    .check-list li::before { content: "✓"; color: var(--accent); font-weight: 700; flex-shrink: 0; }
+    .slide blockquote {
+      margin: 2rem 0 0;
+      padding: 0;
+      border: none;
+      font-size: clamp(1.15rem, 2vw, 1.35rem);
+      color: var(--text-muted);
+      font-style: italic;
+    }
+
+    /* Reality / why / solution — larger, calmer layouts */
+    .slide-reality .reality-stats,
+    .slide-impact .impact-grid,
+    .slide-solution .feature-grid {
+      margin-top: 1.35rem;
+    }
+
+    .slide-solution .feature-grid .feature {
+      min-height: 8.5rem;
+    }
+
+    .reality-stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 1.5rem;
-      margin: 2rem 0;
       text-align: left;
     }
-    .ps-grid article {
-      padding: 2rem 2.25rem;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
+    .reality-stats .stat {
+      padding: 2rem 1.75rem;
+      background: rgba(26, 35, 50, 0.55);
+      border: 1px solid rgba(148, 163, 184, 0.12);
+      border-radius: 16px;
+      min-height: 11rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
     }
-    .ps-grid .label {
-      display: block;
-      margin-bottom: 0.75rem;
-      color: var(--accent);
-      font-size: 0.85rem;
+    .reality-stats .stat .label {
+      font-size: 0.95rem;
       font-weight: 700;
       letter-spacing: 0.1em;
       text-transform: uppercase;
+      color: #e8edf4;
+      margin-bottom: 0.85rem;
     }
-    .ps-grid h3 { margin: 0 0 0.6rem; color: var(--text); font-size: clamp(1.2rem, 2.2vw, 1.5rem); line-height: 1.3; }
-    .ps-grid p { margin: 0; color: var(--text-muted); font-size: clamp(1rem, 1.8vw, 1.15rem); line-height: 1.65; }
-    @media (max-width: 700px) { .ps-grid { grid-template-columns: 1fr; } }
+    .reality-stats .stat .value {
+      font-size: clamp(2.4rem, 4.5vw, 3.25rem);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      color: var(--accent);
+      line-height: 1.05;
+    }
+    .reality-stats .stat .sub {
+      margin-top: 0.85rem;
+      font-size: 1.15rem;
+      line-height: 1.45;
+      color: #c5d0de;
+    }
+    .slide-reality .footnote {
+      margin-top: 2.5rem;
+      font-size: 1.35rem;
+    }
+    @media (max-width: 800px) {
+      .reality-stats { grid-template-columns: 1fr; }
+      .reality-stats .stat { min-height: 0; }
+    }
 
+    .impact-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1.5rem;
+      text-align: left;
+    }
+    .impact-grid .impact {
+      padding: 2.25rem 2rem;
+      background: rgba(26, 35, 50, 0.55);
+      border: 1px solid rgba(148, 163, 184, 0.12);
+      border-radius: 16px;
+      min-height: 12rem;
+    }
+    .impact-grid .impact h3 {
+      margin: 0 0 1rem;
+      font-size: clamp(1.5rem, 2.5vw, 1.85rem);
+      color: var(--accent);
+      letter-spacing: -0.02em;
+    }
+    .impact-grid .impact p {
+      margin: 0;
+      font-size: clamp(1.15rem, 2vw, 1.35rem);
+      line-height: 1.6;
+      color: #c5d0de;
+    }
+    .slide-impact .footnote {
+      margin-top: 2.5rem;
+      font-size: 1.25rem;
+    }
+    @media (max-width: 800px) {
+      .impact-grid { grid-template-columns: 1fr; }
+      .impact-grid .impact { min-height: 0; }
+    }
+
+    .slide-solution .subtitle {
+      margin: -0.15rem 0 0;
+      max-width: 42rem;
+    }
+    .solution-bottom {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 1rem 1.35rem;
+      align-items: stretch;
+      margin-top: 1.15rem;
+      margin-bottom: 0.5rem;
+      position: relative;
+      z-index: 1;
+    }
+    .slide-solution .footnote {
+      margin-top: 0;
+      text-align: left;
+      font-size: 1.05rem;
+      display: flex;
+      align-items: center;
+    }
+    .solution-qr {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.75rem 1rem;
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 0.75rem;
+      text-decoration: none;
+      color: inherit;
+    }
+    .solution-qr img {
+      width: 4.75rem;
+      height: 4.75rem;
+      border-radius: 0.45rem;
+      background: #fff;
+      padding: 0.3rem;
+      flex-shrink: 0;
+    }
+    .solution-qr .qr-copy {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+      min-width: 7rem;
+    }
+    .solution-qr .qr-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #e8edf4;
+    }
+    .solution-qr .qr-url {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: -0.01em;
+    }
+    .solution-qr .qr-hint {
+      font-size: 0.8rem;
+      color: #c5d0de;
+    }
+    @media (max-width: 900px) {
+      .solution-bottom { grid-template-columns: 1fr; }
+    }
+
+    /* Solution flow */
     .flow-line {
       display: flex;
       flex-wrap: wrap;
       align-items: center;
       justify-content: space-between;
-      gap: 0.75rem 1rem;
+      gap: 0.85rem 1.1rem;
       background: var(--bg-card);
       border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 1.9rem 2.5rem;
-      margin: 2rem 0 0;
+      border-radius: 16px;
+      padding: 2rem clamp(1.5rem, 3vw, 2.75rem);
+      margin: 1.5rem 0 0;
     }
-    .flow-line .step { font-weight: 700; font-size: clamp(1.2rem, 2.4vw, 1.7rem); letter-spacing: -0.01em; color: var(--text); white-space: nowrap; }
-    .flow-line .arrow { color: var(--accent); font-size: clamp(1.1rem, 2vw, 1.5rem); font-weight: 600; }
-    .flow-caption { text-align: center; color: var(--text-muted); font-size: 1rem; margin: 1rem 0 0; }
-
-    .edge-grid {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 1.25rem;
-      margin: 1.75rem 0;
-      text-align: left;
-    }
-    .edge-grid .edge {
-      position: relative;
-      padding: 1.75rem 1.6rem;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      overflow: hidden;
-    }
-    .edge-grid .edge::before {
-      content: "";
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 3px;
-      background: var(--accent);
-      opacity: 0.7;
-    }
-    .edge-grid .edge .ico {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 2.7rem; height: 2.7rem;
-      font-size: 1.35rem;
-      background: var(--accent-glow);
-      border-radius: 12px;
-    }
-    .edge-grid .edge b { display: block; margin-top: 0.85rem; color: var(--text); font-size: 1.15rem; }
-    .edge-grid .edge p { margin: 0.45rem 0 0; color: var(--text-muted); font-size: 1rem; line-height: 1.6; }
-    @media (max-width: 700px) { .edge-grid { grid-template-columns: 1fr; } }
-
-    .ask-banner {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 1.25rem 2.25rem;
-      background: var(--accent-glow);
-      border: 1px solid rgba(16, 185, 129, 0.35);
-      border-radius: var(--radius);
-      padding: 1.75rem 2rem;
-      margin: 1.75rem 0 0;
-      text-align: left;
-    }
-    .ask-banner .amount { flex-shrink: 0; text-align: center; }
-    .ask-banner .amount .big { display: block; font-size: 2.4rem; font-weight: 700; color: var(--accent); line-height: 1.1; }
-    .ask-banner .amount .lbl { display: block; margin-top: 0.25rem; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-muted); }
-    .ask-banner .detail { flex: 1; min-width: 240px; }
-    .ask-banner .detail p { margin: 0; color: var(--text); font-size: 1.05rem; line-height: 1.6; }
-    .ask-banner .detail p + p { margin-top: 0.45rem; color: var(--text-muted); font-size: 0.95rem; }
-
-    .slide table { font-size: 1.02rem; }
-    .slide th, .slide td { padding: 0.8rem 1.15rem; }
-
-    /* Title slide — two-column cover */
-    .slide-title .slide-inner { max-width: 1150px; }
-    .title-cover {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 3rem;
-      text-align: left;
-    }
-    .title-cover .copy { flex: 1; min-width: 0; }
-    .slide-title .eyebrow { font-size: 0.9rem; letter-spacing: 0.1em; }
-    .slide-title .plan-name {
-      margin: 0.5rem 0 1rem;
-      font-size: clamp(2.8rem, 6vw, 4.5rem);
+    .flow-line .step {
       font-weight: 700;
-      letter-spacing: -0.03em;
+      font-size: clamp(1.35rem, 2.6vw, 1.9rem);
+      letter-spacing: -0.02em;
       color: var(--text);
-      line-height: 1.05;
+      white-space: nowrap;
     }
-    .slide-title .plan-tagline {
-      margin: 0 0 2rem;
-      max-width: 36rem;
-      color: var(--text-muted);
-      font-size: clamp(1.15rem, 2.2vw, 1.4rem);
-      line-height: 1.5;
-    }
-    .slide-title .ask-line {
-      display: inline-block;
-      margin: 0 0 2.25rem;
-      padding-bottom: 0.2rem;
-      border-bottom: 3px solid var(--accent);
+    .flow-line .arrow {
       color: var(--accent);
-      font-size: clamp(1.25rem, 2.2vw, 1.5rem);
-      font-weight: 700;
-      letter-spacing: -0.01em;
-    }
-    .slide-title .meta {
-      color: var(--text-muted);
-      font-size: 1.02rem;
-      line-height: 1.8;
-    }
-    .slide-title .meta a { color: var(--accent); }
-    .title-cover .brand-mark {
-      flex-shrink: 0;
-      line-height: 0;
-    }
-    .title-cover .brand-mark img {
-      display: block;
-      width: clamp(240px, 28vw, 340px);
-      height: auto;
-      border-radius: 26px;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
-    }
-    @media (max-width: 820px) {
-      .title-cover { flex-direction: column-reverse; align-items: flex-start; gap: 1.75rem; }
-      .title-cover .brand-mark img { width: 160px; }
-    }
-    .slide .two-col {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 1.25rem;
-      text-align: left;
-    }
-    .slide .two-col > div {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 1.75rem 1.9rem;
-    }
-    .slide .two-col h3 { margin-top: 0; }
-    .slide .two-col ul { font-size: 1.05rem; line-height: 1.7; }
-    .slide .two-col p { font-size: 1.05rem; }
-    @media (max-width: 700px) { .slide .two-col { grid-template-columns: 1fr; } }
-
-    /* Consistent slide system */
-    .slide-inner { max-width: 1120px; }
-    .slide .kicker {
-      margin: 0 0 0.75rem;
-      color: var(--accent);
-      font-size: 0.95rem;
-      font-weight: 700;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-    }
-    .slide .kicker .k-num { opacity: 0.6; margin-right: 0.6rem; }
-    .slide h2 { margin-top: 0; font-size: clamp(2rem, 4.5vw, 3rem); }
-    .slide h3 { font-size: 1.3rem; }
-    .slide .footnote {
-      margin-top: 1.75rem;
-      color: var(--text-muted);
-      font-size: 1.05rem;
-    }
-
-    /* Logo on every slide */
-    .slide .corner-logo {
-      position: absolute;
-      top: 1.4rem;
-      left: 2rem;
-      width: 52px;
-      height: auto;
-      border-radius: 12px;
-    }
-    .slide-title .corner-logo { display: none; }
-
-    /* Company facts */
-    .fact-grid {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 1.25rem;
-      margin: 1.75rem 0 0;
-      text-align: left;
-    }
-    .fact-grid .fact {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 1.5rem 1.6rem;
-    }
-    .fact-grid .fact .label {
-      display: block;
-      margin-bottom: 0.45rem;
-      color: var(--text-muted);
-      font-size: 0.8rem;
+      font-size: clamp(1.2rem, 2vw, 1.6rem);
       font-weight: 600;
-      letter-spacing: 0.07em;
-      text-transform: uppercase;
     }
-    .fact-grid .fact .value { color: var(--text); font-size: 1.15rem; font-weight: 600; line-height: 1.45; }
-    .fact-grid .fact.span-3 { grid-column: 1 / -1; }
-    @media (max-width: 700px) { .fact-grid { grid-template-columns: 1fr; } }
-
-    /* Feature grid */
-    .feature-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 1.1rem;
-      margin: 1.75rem 0 0;
-      text-align: left;
-    }
-    .feature-grid .feature {
-      display: flex;
-      align-items: baseline;
-      gap: 0.9rem;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 1.25rem 1.5rem;
-    }
-    .feature-grid .feature b { color: var(--text); font-size: 1.1rem; white-space: nowrap; }
-    .feature-grid .feature span { color: var(--text-muted); font-size: 1rem; line-height: 1.55; }
-    @media (max-width: 700px) { .feature-grid { grid-template-columns: 1fr; } }
-
-    /* Checklist */
-    .check-list { list-style: none; padding: 0; margin: 1.75rem 0 0; text-align: left; }
-    .check-list li {
-      display: flex;
-      gap: 0.9rem;
-      padding: 0.95rem 0;
-      border-bottom: 1px solid var(--border);
-      font-size: 1.15rem;
-      line-height: 1.6;
-    }
-    .check-list li:last-child { border-bottom: none; }
-    .check-list li::before { content: "✓"; color: var(--accent); font-weight: 700; }
-
-    /* Stat cards sizing */
-    .slide .stat-card { padding: 1.6rem 1.75rem; }
-    .slide .stat-card .label { font-size: 0.85rem; }
-    .slide .stat-card .value { font-size: 2.1rem; }
-    .slide .stat-card .sub { font-size: 0.95rem; }
-    .slide .principle { font-size: 1.05rem; }
-    .slide .subtitle { font-size: 1.2rem; }
-
-    /* Pill row (solution) */
     .pill-row {
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
       gap: 0.75rem;
-      margin: 2rem 0 0;
+      margin: 1.75rem 0 0;
     }
     .pill-row .pill {
-      padding: 0.6rem 1.4rem;
+      padding: 0.65rem 1.5rem;
       background: var(--accent-glow);
       border: 1px solid rgba(16, 185, 129, 0.4);
       border-radius: 999px;
       color: var(--accent);
-      font-size: 1rem;
+      font-size: 1.05rem;
       font-weight: 700;
       letter-spacing: 0.08em;
       text-transform: uppercase;
     }
 
-    /* Statement slides (vision / thank you / demo) */
-    .statement-slide .slide-inner { text-align: center; }
-    .statement {
-      margin: 0 auto;
-      max-width: 54rem;
-      font-size: clamp(1.5rem, 3.2vw, 2.3rem);
+    /* Product features — 2×3 */
+    .slide-product .subtitle {
+      margin: -0.35rem 0 0;
+      max-width: 40rem;
+    }
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1.15rem;
+      margin: 1.75rem 0 0;
+      text-align: left;
+    }
+    .feature-grid .feature {
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+      background: rgba(26, 35, 50, 0.55);
+      border: 1px solid rgba(148, 163, 184, 0.12);
+      border-radius: 16px;
+      padding: 1.55rem 1.5rem 1.65rem;
+      min-height: 10.5rem;
+    }
+    .feature-grid .feature .n {
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: var(--accent);
+    }
+    .feature-grid .feature b {
+      color: var(--text);
+      font-size: clamp(1.25rem, 2vw, 1.45rem);
       font-weight: 700;
       letter-spacing: -0.02em;
+    }
+    .feature-grid .feature span {
+      color: #c5d0de;
+      font-size: 1.05rem;
+      line-height: 1.45;
+      margin-top: 0.15rem;
+    }
+    .slide-product .footnote {
+      margin-top: 2rem;
+    }
+    @media (max-width: 900px) { .feature-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 600px) {
+      .feature-grid { grid-template-columns: 1fr; }
+      .feature-grid .feature { min-height: 0; }
+    }
+
+    /* Two-col cards */
+    .slide .two-col {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1.5rem;
+      text-align: left;
+      margin-top: 2rem;
+    }
+    .slide .two-col > div {
+      background: rgba(26, 35, 50, 0.55);
+      border: 1px solid rgba(148, 163, 184, 0.12);
+      border-radius: 16px;
+      padding: 2rem 1.85rem;
+      min-height: 14rem;
+    }
+    .slide .two-col h3 {
+      margin: 0 0 1.15rem;
+      font-size: clamp(1.35rem, 2.2vw, 1.6rem);
+      color: var(--accent);
+      letter-spacing: -0.02em;
+    }
+    .slide .two-col ul {
+      margin: 0;
+      padding-left: 1.2rem;
+      font-size: clamp(1.1rem, 1.8vw, 1.25rem);
+      line-height: 1.7;
+      color: #c5d0de;
+    }
+    .slide .two-col li + li { margin-top: 0.65rem; }
+    .slide .two-col p {
+      font-size: clamp(1.1rem, 1.8vw, 1.25rem);
+      margin: 0 0 0.85rem;
+      color: #c5d0de;
+      line-height: 1.55;
+    }
+    .slide .two-col strong { color: var(--text); }
+    @media (max-width: 700px) { .slide .two-col { grid-template-columns: 1fr; } }
+
+    /* Customer & pricing */
+    .slide-customer .subtitle {
+      margin: -0.15rem 0 0;
+      max-width: 42rem;
+      font-size: clamp(1.05rem, 1.7vw, 1.2rem);
+    }
+    .slide-customer .two-col {
+      margin-top: 1.15rem;
+      gap: 1rem;
+    }
+    .slide-customer .two-col > div {
+      min-height: 0;
+      padding: 1.25rem 1.35rem;
+    }
+    .slide-customer .two-col h3 {
+      margin: 0 0 0.65rem;
+      font-size: clamp(1.15rem, 1.9vw, 1.35rem);
+    }
+    .slide-customer .who-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .slide-customer .who-list li {
+      display: grid;
+      gap: 0.1rem;
+      padding: 0.55rem 0;
+      border-top: 1px solid rgba(148, 163, 184, 0.12);
+      margin: 0;
+    }
+    .slide-customer .who-list li:first-child { border-top: 0; padding-top: 0; }
+    .slide-customer .who-list li:last-child { padding-bottom: 0; }
+    .slide-customer .who-list strong {
+      font-size: clamp(1rem, 1.6vw, 1.1rem);
+      color: var(--text);
+      font-weight: 700;
+    }
+    .slide-customer .who-list span {
+      font-size: 0.92rem;
       line-height: 1.35;
+      color: #c5d0de;
+    }
+    .price-tiers {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+    .price-tiers .tier {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 0.1rem 0.85rem;
+      align-items: baseline;
+      padding: 0.5rem 0;
+      border-top: 1px solid rgba(148, 163, 184, 0.12);
+    }
+    .price-tiers .tier:first-child { border-top: 0; padding-top: 0; }
+    .price-tiers .tier:last-child { padding-bottom: 0; }
+    .price-tiers .name {
+      font-size: clamp(1rem, 1.6vw, 1.1rem);
+      font-weight: 700;
+      color: var(--text);
+    }
+    .price-tiers .amount {
+      font-size: clamp(1rem, 1.6vw, 1.15rem);
+      font-weight: 700;
+      color: var(--accent);
+      white-space: nowrap;
+    }
+    .price-tiers .detail {
+      grid-column: 1 / -1;
+      font-size: 0.9rem;
+      line-height: 1.35;
+      color: #c5d0de;
+    }
+    .slide-customer .footnote {
+      margin-top: 1.1rem;
+      font-size: 1.05rem;
+      padding: 0.8rem 1.1rem;
+    }
+
+    /* Campus B2B licenses */
+    .slide-b2b .subtitle {
+      margin: -0.15rem 0 0;
+      max-width: 44rem;
+      font-size: clamp(1.05rem, 1.7vw, 1.2rem);
+    }
+    .slide-b2b .b2b-buyer {
+      display: flex;
+      align-items: stretch;
+      gap: 1.15rem;
+      margin-top: 1.15rem;
+      padding: 1.15rem 1.35rem;
+      background: rgba(26, 35, 50, 0.55);
+      border: 1px solid rgba(148, 163, 184, 0.12);
+      border-radius: 14px;
+      text-align: left;
+    }
+    .slide-b2b .b2b-buyer .bar {
+      width: 4px;
+      border-radius: 999px;
+      background: var(--accent);
+      flex-shrink: 0;
+    }
+    .slide-b2b .b2b-buyer .buyer-label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 0.35rem;
+    }
+    .slide-b2b .b2b-buyer .buyer-name {
+      display: block;
+      font-size: clamp(1.35rem, 2.4vw, 1.7rem);
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+    }
+    .slide-b2b .b2b-buyer .buyer-range {
+      display: block;
+      margin-top: 0.25rem;
+      font-size: 1.05rem;
+      color: #c5d0de;
+    }
+    .slide-b2b .b2b-license-label {
+      margin: 1.35rem 0 0.75rem;
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #e8edf4;
+      text-align: left;
+    }
+    .slide-b2b .b2b-license-label .hl {
+      color: var(--accent);
+    }
+    .slide-b2b .b2b-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1rem;
+      text-align: left;
+    }
+    .slide-b2b .b2b-tier {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      padding: 1.25rem 1.2rem 1.35rem;
+      background: rgba(26, 35, 50, 0.55);
+      border: 1px solid rgba(148, 163, 184, 0.12);
+      border-radius: 16px;
+      border-top: 3px solid var(--accent);
+      min-height: 9.5rem;
+    }
+    .slide-b2b .b2b-tier .tier-name {
+      font-size: clamp(1.1rem, 1.8vw, 1.25rem);
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.02em;
+    }
+    .slide-b2b .b2b-tier .tier-price {
+      font-size: clamp(1.35rem, 2.4vw, 1.65rem);
+      font-weight: 700;
+      color: var(--accent);
+      line-height: 1.2;
+    }
+    .slide-b2b .b2b-tier .tier-detail {
+      font-size: 0.95rem;
+      line-height: 1.4;
+      color: #c5d0de;
+      margin-top: 0.35rem;
+    }
+    .slide-b2b .footnote {
+      margin-top: 1.1rem;
+      font-size: 1.05rem;
+    }
+    @media (max-width: 900px) {
+      .slide-b2b .b2b-grid { grid-template-columns: 1fr; }
+      .slide-b2b .b2b-tier { min-height: 0; }
+    }
+
+    .slide-traction .subtitle {
+      margin: -0.15rem 0 0;
+      max-width: 40rem;
+    }
+    .slide-traction .card-grid {
+      margin-top: 1.35rem;
+    }
+    .slide-traction .footnote {
+      margin-top: 1.25rem;
+    }
+
+    /* Stat cards (why now / traction / market) — match reality */
+    .slide .card-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1.5rem;
+      margin: 2rem 0 0;
+    }
+    .slide .stat-card {
+      padding: 2rem 1.75rem;
+      background: rgba(26, 35, 50, 0.55);
+      border: 1px solid rgba(148, 163, 184, 0.12);
+      border-radius: 16px;
+      min-height: 11rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+    }
+    .slide .stat-card .label {
+      font-size: 0.95rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #e8edf4;
+      margin-bottom: 0.85rem;
+    }
+    .slide .stat-card .value {
+      font-size: clamp(2.2rem, 4vw, 3rem);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      color: var(--accent);
+      line-height: 1.05;
+    }
+    .slide .stat-card .sub {
+      margin-top: 0.85rem;
+      font-size: 1.15rem;
+      line-height: 1.45;
+      color: #c5d0de;
+    }
+    @media (max-width: 800px) {
+      .slide .card-grid { grid-template-columns: 1fr; }
+      .slide .stat-card { min-height: 0; }
+    }
+
+    /* Competition rows */
+    .comp-list {
+      list-style: none;
+      margin: 1.25rem 0 0;
+      padding: 0;
+      display: grid;
+      gap: 0.55rem;
+    }
+    .comp-list li {
+      display: grid;
+      grid-template-columns: 11rem 1fr 1.4fr;
+      gap: 1rem;
+      align-items: start;
+      padding: 0.95rem 1.25rem;
+      background: rgba(26, 35, 50, 0.55);
+      border: 1px solid rgba(148, 163, 184, 0.12);
+      border-radius: 12px;
+      font-size: clamp(0.98rem, 1.5vw, 1.1rem);
+      line-height: 1.4;
+    }
+    .comp-list .who {
+      font-weight: 700;
+      color: var(--text);
+    }
+    .comp-list .does { color: var(--text-muted); }
+    .comp-list .diff { color: #c5d0de; }
+    .comp-list .diff strong { color: var(--accent); font-weight: 600; }
+    @media (max-width: 800px) {
+      .comp-list li { grid-template-columns: 1fr; gap: 0.25rem; }
+    }
+
+    /* GTM steps */
+    .edge-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1.5rem;
+      margin: 2rem 0 0;
+      text-align: left;
+    }
+    .edge-grid .edge {
+      padding: 2rem 1.75rem;
+      background: rgba(26, 35, 50, 0.55);
+      border: 1px solid rgba(148, 163, 184, 0.12);
+      border-radius: 16px;
+      border-top: 3px solid var(--accent);
+      min-height: 11rem;
+    }
+    .edge-grid .edge b {
+      display: block;
+      color: var(--text);
+      font-size: clamp(1.25rem, 2vw, 1.45rem);
+      margin-bottom: 0.75rem;
+      letter-spacing: -0.02em;
+    }
+    .edge-grid .edge p {
+      margin: 0;
+      color: #c5d0de;
+      font-size: 1.15rem;
+      line-height: 1.55;
+    }
+    @media (max-width: 700px) { .edge-grid { grid-template-columns: 1fr; } }
+
+    /* Tables */
+    .slide .table-wrap {
+      margin-top: 2rem;
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid rgba(148, 163, 184, 0.12);
+    }
+    .slide table { font-size: clamp(1.1rem, 1.8vw, 1.25rem); }
+    .slide th, .slide td { padding: 1.1rem 1.35rem; }
+    .slide th {
+      font-size: 0.85rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      background: rgba(26, 35, 50, 0.8);
+    }
+
+    /* Use of funds */
+    .slide .use-of-funds {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 1.35rem;
+      margin-top: 2.25rem;
+    }
+    .slide .fund-bar {
+      text-align: center;
+      font-size: 1.1rem;
+      color: #c5d0de;
+      padding: 1.5rem 1rem;
+      background: rgba(26, 35, 50, 0.55);
+      border: 1px solid rgba(148, 163, 184, 0.12);
+      border-radius: 16px;
+    }
+    .slide .fund-bar .pct {
+      font-size: clamp(1.85rem, 3.2vw, 2.4rem);
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: -0.02em;
+    }
+    .slide .fund-bar .bar {
+      height: 100px;
+      background: rgba(15, 20, 25, 0.6);
+      border-radius: 10px 10px 0 0;
+      margin: 1rem 0 0.85rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .slide .fund-bar .bar-fill {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(180deg, var(--accent) 0%, var(--accent-dim) 100%);
+      border-radius: 10px 10px 0 0;
+    }
+    @media (max-width: 700px) {
+      .slide .use-of-funds { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    .slide-vision .subtitle {
+      margin: -0.15rem 0 0;
+      max-width: 44rem;
+    }
+    .slide-vision .feature-grid {
+      margin-top: 1.35rem;
+    }
+    .slide-vision .feature {
+      min-height: 8.5rem;
+    }
+    .slide-vision .footnote {
+      margin-top: 1.25rem;
+    }
+
+    .slide-revenue .subtitle {
+      margin: -0.15rem 0 0.85rem;
+      max-width: 48rem;
+    }
+    .slide-revenue .table-wrap {
+      margin-top: 0.85rem;
+    }
+    .slide-revenue table {
+      font-size: clamp(0.9rem, 1.45vw, 1.05rem);
+    }
+    .slide-revenue th,
+    .slide-revenue td {
+      padding: 0.6rem 1rem;
+    }
+    .slide-revenue .footnote {
+      margin-top: 0.95rem;
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+
+    .slide-thanks .subtitle {
+      margin: -0.15rem 0 0;
+      max-width: 40rem;
+    }
+    .thanks-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.9fr);
+      gap: 1.25rem;
+      margin-top: 1.5rem;
+      text-align: left;
+    }
+    .thanks-grid > div {
+      background: rgba(26, 35, 50, 0.55);
+      border: 1px solid rgba(148, 163, 184, 0.12);
+      border-radius: 16px;
+      padding: 1.75rem 1.65rem;
+    }
+    .thanks-grid h3 {
+      margin: 0 0 1rem;
+      font-size: clamp(1.2rem, 2vw, 1.4rem);
+      color: var(--accent);
+      letter-spacing: -0.02em;
+    }
+    .thanks-contact {
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+    }
+    .thanks-contact .name {
+      font-size: clamp(1.35rem, 2.2vw, 1.6rem);
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.02em;
+    }
+    .thanks-contact a {
+      color: var(--accent);
+      font-size: 1.1rem;
+      font-weight: 600;
+      text-decoration: none;
+    }
+    .thanks-contact a:hover { text-decoration: underline; }
+    .thanks-contact .meta {
+      font-size: 1.05rem;
+      color: #c5d0de;
+      line-height: 1.45;
+    }
+    .thanks-qr {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      gap: 1rem;
+      text-decoration: none;
+      color: inherit;
+    }
+    .thanks-qr img {
+      width: min(11rem, 42vw);
+      height: auto;
+      border-radius: 0.65rem;
+      background: #fff;
+      padding: 0.55rem;
+    }
+    .thanks-qr .qr-label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #e8edf4;
+    }
+    .thanks-qr .qr-url {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: -0.01em;
+    }
+    .thanks-qr .qr-hint {
+      font-size: 0.95rem;
+      color: #c5d0de;
+    }
+    .slide-thanks .footnote {
+      margin-top: 1.25rem;
+    }
+    @media (max-width: 800px) {
+      .thanks-grid { grid-template-columns: 1fr; }
+    }
+
+    /* Statement / demo / thank you */
+    .statement-slide .slide-inner { text-align: center; max-width: min(1000px, 100%) !important; }
+    .statement {
+      margin: 0 auto;
+      max-width: 44rem;
+      font-size: clamp(2rem, 4vw, 2.85rem);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.25;
       color: var(--text);
     }
     .statement .hl { color: var(--accent); }
-    .statement-list { list-style: none; padding: 0; margin: 2.25rem auto 0; max-width: 44rem; text-align: left; }
+    .statement-list {
+      list-style: none;
+      padding: 0;
+      margin: 2.75rem auto 0;
+      max-width: 44rem;
+      text-align: left;
+    }
     .statement-list li {
       display: flex;
-      gap: 1rem;
-      padding: 1rem 0;
-      border-bottom: 1px solid var(--border);
-      font-size: clamp(1.1rem, 2vw, 1.35rem);
+      gap: 1.1rem;
+      padding: 1.35rem 0;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+      font-size: clamp(1.2rem, 2.2vw, 1.45rem);
       line-height: 1.55;
-      color: var(--text-muted);
+      color: #c5d0de;
     }
     .statement-list li:last-child { border-bottom: none; }
-    .statement-list li::before { content: "→"; color: var(--accent); font-weight: 700; }
+    .statement-list li::before { content: "→"; color: var(--accent); font-weight: 700; flex-shrink: 0; }
     .statement-list strong { color: var(--text); }
     .big-link {
       display: inline-block;
-      margin-top: 2.25rem;
-      padding-bottom: 0.25rem;
+      margin-top: 2.75rem;
+      padding-bottom: 0.35rem;
       border-bottom: 3px solid var(--accent);
       color: var(--accent);
-      font-size: clamp(1.5rem, 3vw, 2.2rem);
+      font-size: clamp(2rem, 3.5vw, 2.75rem);
       font-weight: 700;
+      text-decoration: none;
     }
-    .big-link:hover { text-decoration: none; }
+    .big-link:hover { text-decoration: none; color: #6ee7b7; }
+
+    .slide .principle {
+      margin-top: 1.15rem;
+      margin-bottom: 0;
+      padding: 0.95rem 1.25rem;
+      background: rgba(16, 185, 129, 0.08);
+      border: 1px solid rgba(16, 185, 129, 0.22);
+      border-radius: 12px;
+      font-size: clamp(1.05rem, 1.7vw, 1.15rem);
+      font-weight: 600;
+      color: var(--accent);
+      line-height: 1.4;
+    }
+    .slide .footnote {
+      margin-top: 1.15rem;
+      margin-bottom: 0;
+      padding: 0.85rem 1.15rem;
+      font-size: 1.05rem;
+      font-weight: 500;
+      line-height: 1.4;
+      color: #e8edf4;
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 0.75rem;
+    }
+    .slide .subtitle {
+      margin: -0.15rem 0 0;
+      font-size: clamp(1.05rem, 1.8vw, 1.25rem);
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .deck-controls {
+      bottom: 1.25rem;
+      padding: 0.6rem 1.15rem;
+      font-size: 0.95rem;
+      z-index: 300;
+      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+    }
+    .deck-controls button {
+      width: 42px;
+      height: 42px;
+      font-size: 1.15rem;
+    }
+    .slide-solution {
+      padding-bottom: 10rem;
+    }
+    @media (max-width: 700px) {
+      .slide {
+        padding-bottom: 9rem;
+      }
+      .slide-solution {
+        padding-bottom: 10.5rem;
+      }
+    }
   </style>
 </head>
 <body class="deck-body">
   <header class="site-header no-print">
-    <a class="site-logo" href="index.html"><span>🚀</span> TailorSend</a>
+    <a class="site-logo" href="index.html"><img src="/logo.JPG" alt="" width="28" height="28" style="border-radius:8px;object-fit:cover;margin-right:0.45rem;vertical-align:middle;" /> TailorSend</a>
     <nav class="site-nav">
       <a href="index.html">Home</a>
-      <a href="pitch-deck.html">Overview</a>
-      <a href="business-plan.html">Business Plan</a>
-      <a href="business-plan-slides.html" class="active">Plan Slides</a>
+      <a href="business-plan.html">Plan</a>
+      <a href="business-plan-slides.html" class="active">Slides</a>
       <a href="financial-model.html">Financials</a>
     </nav>
     <div class="download-bar no-print">
-      <a class="btn-download" href="business-plan.html">📄 Document view</a>
-      <button type="button" class="btn-download" id="dl-self">↓ Download HTML</button>
+      <a class="btn-download" href="business-plan.html">Document</a>
     </div>
   </header>
 
   <div class="slides" id="slides">
     <!-- Slide 1 · Title -->
     <section class="slide slide-title active" data-slide="1">
-      <img class="corner-logo" src="/logo.JPG" alt="TailorSend" /><span class="slide-num">1 / 16</span>
+      <span class="slide-num">1 / 18</span>
       <div class="slide-inner">
         <div class="title-cover">
-          <div class="copy">
-            <p class="eyebrow">Business plan · Michigan SBDC · July 2026</p>
-            <h1 class="plan-name">TailorSend</h1>
+          <div class="title-copy">
+            <p class="eyebrow">Michigan SBDC · July 2026</p>
+            <div class="brand-row">
+              <img src="/logo.JPG" alt="" width="72" height="72" />
+              <h1 class="plan-name">TailorSend</h1>
+            </div>
             <p class="plan-tagline">
-              The full-loop job application platform for students — search, tailor, apply, and follow up in one place.
+              Fast-track quality applications—without the burnout.
             </p>
-            <div class="ask-line">Ask $25,000 · Live at <a href="https://tailorsend.cc" target="_blank" rel="noopener" style="color: inherit;">tailorsend.cc</a></div>
+            <p class="plan-support">
+              Search, tailor, autofill, outreach, and track in one loop. Honest AI drafts; you review and submit every application.
+            </p>
             <p class="meta">
-              Prosper Mapepa, Founder · <a href="https://mapepallc.netlify.app/">Mapepa Innovation LLC</a> · Michigan<br />
-              mapepapro@gmail.com · (989) 332-8050<br />
-              <span style="font-size: 0.85rem;">© 2026 Mapepa Innovation LLC</span>
+              Prosper Mapepa · <a href="https://mapepallc.netlify.app/">Mapepa Innovation LLC</a>
             </p>
           </div>
-          <div class="brand-mark"><img src="/logo.JPG" alt="TailorSend" /></div>
+          <a class="title-qr" href="https://tailorsend.cc" target="_blank" rel="noopener">
+            <img src="qr-tailorsend.png" width="512" height="512" alt="QR code for https://tailorsend.cc" />
+            <span class="qr-label">Scan to open</span>
+            <span class="qr-url">tailorsend.cc</span>
+          </a>
         </div>
       </div>
     </section>
 
-    <!-- Slide 2 · Problem -->
-    <section class="slide" data-slide="2">
-      <img class="corner-logo" src="/logo.JPG" alt="TailorSend" /><span class="slide-num">2 / 16</span>
+    <!-- Slide 2 · Job search reality -->
+    <section class="slide slide-reality" data-slide="2">
+      <img class="corner-logo" src="/logo.JPG" alt="TailorSend" /><span class="slide-num">2 / 18</span>
       <div class="slide-inner">
         <p class="kicker"><span class="k-num">01</span>Problem</p>
-        <h2>The application gap</h2>
-        <ul class="check-list">
-          <li><span><strong>Students apply to 50–200+ roles</strong> per search cycle — each quality application takes 30–60 minutes</span></li>
-          <li><span><strong>98% of Fortune 500 companies use ATS</strong> — generic resumes get filtered before a human sees them</span></li>
-          <li><span><strong>The tools are fragmented</strong> — job boards, ChatGPT, resume builders, trackers — and auto-apply bots submit without review</span></li>
-        </ul>
-        <blockquote style="margin-top: 2rem; font-size: 1.1rem;">"I spent more time customizing applications than interviewing."</blockquote>
+        <h2>Job Search Reality</h2>
+        <div class="reality-stats">
+          <div class="stat">
+            <span class="label">High volume</span>
+            <span class="value">50 – 200+</span>
+            <span class="sub">applications to land one offer</span>
+          </div>
+          <div class="stat">
+            <span class="label">Time cost</span>
+            <span class="value">30 – 60 min</span>
+            <span class="sub">per careful application</span>
+          </div>
+          <div class="stat">
+            <span class="label">Total hours</span>
+            <span class="value">25 – 200+</span>
+            <span class="sub">hours per search cycle</span>
+          </div>
+        </div>
+        <p class="footnote">Quality applications are a full-time job on top of school.</p>
       </div>
     </section>
 
-    <!-- Slide 3 · Solution -->
-    <section class="slide" data-slide="3">
-      <img class="corner-logo" src="/logo.JPG" alt="TailorSend" /><span class="slide-num">3 / 16</span>
+    <!-- Slide 3 · Why it matters -->
+    <section class="slide slide-impact" data-slide="3">
+      <img class="corner-logo" src="/logo.JPG" alt="TailorSend" /><span class="slide-num">3 / 18</span>
       <div class="slide-inner">
-        <p class="kicker"><span class="k-num">02</span>Solution</p>
-        <h2>One guided workflow, start to hired</h2>
-        <div class="flow-line">
-          <span class="step">Search</span><span class="arrow">→</span>
-          <span class="step">Tailor</span><span class="arrow">→</span>
-          <span class="step">Edge</span><span class="arrow">→</span>
-          <span class="step">Autofill</span><span class="arrow">→</span>
-          <span class="step">Outreach</span><span class="arrow">→</span>
-          <span class="step">Track</span>
+        <p class="kicker"><span class="k-num">02</span>Problem</p>
+        <h2>Why It Matters</h2>
+        <div class="impact-grid">
+          <div class="impact">
+            <h3>Burnout risk</h3>
+            <!-- <p>Job seekers juggling school, work, or life burn out under a serious search—then quit early or stop applying with care.</p> -->
+            <p>Students & Job-Seekers get tired and stressed balancing school/work/life commitments and job hunting - then quit early or apply with less care.</p>
+          </div>
+          <div class="impact">
+            <h3>Quality drop</h3>
+            <p>Rushing means weaker resumes, weaker answers, and fewer callbacks - even for strong candidates.</p>
+          </div>
         </div>
-        <div class="pill-row">
-          <span class="pill">Guided</span>
-          <span class="pill">User-controlled</span>
-          <span class="pill">Measurable</span>
-        </div>
-        <p class="footnote" style="text-align: center;">One "application kit" = one job, start to finish. The user reviews and submits everything.</p>
+        <p class="footnote">Tailored applications win. Doing them by hand costs too much time.</p>
       </div>
     </section>
 
-    <!-- Slide 4 · Product -->
-    <section class="slide" data-slide="4">
-      <img class="corner-logo" src="/logo.JPG" alt="TailorSend" /><span class="slide-num">4 / 16</span>
+    <!-- Slide 4 · Solution -->
+    <section class="slide slide-solution" data-slide="4">
+      <img class="corner-logo" src="/logo.JPG" alt="TailorSend" /><span class="slide-num">4 / 18</span>
       <div class="slide-inner">
-        <p class="kicker"><span class="k-num">03</span>Product</p>
-        <h2>Everything shipped, everything live</h2>
+        <p class="kicker"><span class="k-num">03</span>Solution</p>
+        <h2>One Guided Workflow</h2>
+        <p class="subtitle">AI does the heavy lifting. You stay in control - review and submit every application.</p>
         <div class="feature-grid">
-          <div class="feature"><b>Job search</b><span>Roles from Greenhouse, Lever, remote boards, job APIs</span></div>
-          <div class="feature"><b>AI tailoring</b><span>Resume + cover letter with before/after ATS scores</span></div>
-          <div class="feature"><b>Company edge</b><span>Research, fit gaps &amp; talking points folded into docs</span></div>
-          <div class="feature"><b>Autofill</b><span>Fills forms on Greenhouse, Lever, Ashby — user submits</span></div>
-          <div class="feature"><b>Outreach</b><span>Recruiter LinkedIn note + follow-up email drafts</span></div>
-          <div class="feature"><b>Tracker</b><span>Pipeline: tailored → submitted → interview → offer</span></div>
-          <div class="feature"><b>Resume import</b><span>PDF/DOCX upload with AI field extraction</span></div>
-          <div class="feature"><b>Billing</b><span>Stripe subscriptions and one-time credit packs</span></div>
+          <div class="feature">
+            <span class="n">01</span>
+            <b>Search</b>
+            <span>Find roles across boards &amp; ATS</span>
+          </div>
+          <div class="feature">
+            <span class="n">02</span>
+            <b>Tailor</b>
+            <span>Resume + cover letter for the job</span>
+          </div>
+          <div class="feature">
+            <span class="n">03</span>
+            <b>Edge</b>
+            <span>Company research &amp; talking points</span>
+          </div>
+          <div class="feature">
+            <span class="n">04</span>
+            <b>Autofill</b>
+            <span>Fill forms—you review &amp; submit</span>
+          </div>
+          <div class="feature">
+            <span class="n">05</span>
+            <b>Outreach</b>
+            <span>Recruiter note + follow-up email</span>
+          </div>
+          <div class="feature">
+            <span class="n">06</span>
+            <b>Track</b>
+            <span>Pipeline from tailored to offer</span>
+          </div>
+        </div>
+        <div class="solution-bottom">
+          <p class="footnote">1 kit = 1 job application, start to finish.</p>
+          <a class="solution-qr" href="https://tailorsend.cc" target="_blank" rel="noopener">
+            <img src="qr-tailorsend.png" width="512" height="512" alt="QR code for https://tailorsend.cc" />
+            <span class="qr-copy">
+              <span class="qr-label">Scan to open</span>
+              <span class="qr-url">tailorsend.cc</span>
+              <span class="qr-hint">Live product</span>
+            </span>
+          </a>
         </div>
       </div>
     </section>
 
-    <!-- Slide 5 · Demo -->
-    <section class="slide statement-slide" data-slide="5">
-      <img class="corner-logo" src="/logo.JPG" alt="TailorSend" /><span class="slide-num">5 / 16</span>
+    <!-- Slide 5 · Product -->
+    <!-- <section class="slide slide-product" data-slide="5">
+      <img class="corner-logo" src="/logo.JPG" alt="TailorSend" /><span class="slide-num">5 / 18</span>
       <div class="slide-inner">
-        <p class="kicker" style="text-align: center;"><span class="k-num">04</span>Live demo</p>
-        <p class="statement">This is not a prototype.<br />Try the <span class="hl">live product</span> right now.</p>
+        <p class="kicker"><span class="k-num">04</span>Product</p>
+        <h2>Shipped and live today</h2>
+        <p class="subtitle">The full search → apply → track loop in one product.</p>
+        <div class="feature-grid">
+          <div class="feature">
+            <span class="n">01</span>
+            <b>Job search</b>
+            <span>Find roles across Greenhouse, Lever, remote boards, and job APIs.</span>
+          </div>
+          <div class="feature">
+            <span class="n">02</span>
+            <b>AI tailoring</b>
+            <span>Resume + cover letter tuned to the posting, with ATS scores.</span>
+          </div>
+          <div class="feature">
+            <span class="n">03</span>
+            <b>Company edge</b>
+            <span>Research, gaps, and talking points written into your docs.</span>
+          </div>
+          <div class="feature">
+            <span class="n">04</span>
+            <b>Autofill</b>
+            <span>Completes ATS forms—you review everything, then submit.</span>
+          </div>
+          <div class="feature">
+            <span class="n">05</span>
+            <b>Outreach</b>
+            <span>Recruiter LinkedIn note + follow-up email, ready to send.</span>
+          </div>
+          <div class="feature">
+            <span class="n">06</span>
+            <b>Tracker</b>
+            <span>One pipeline from tailored kit all the way to offer.</span>
+          </div>
+        </div>
+        <!-- <p class="footnote">Accounts · Stripe billing · human-in-the-loop on every application.</p> -->
+      </div>
+    </section> -->
+
+    <!-- Slide 6 · Demo -->
+    <section class="slide statement-slide" data-slide="6">
+      <img class="corner-logo" src="/logo.JPG" alt="TailorSend" /><span class="slide-num">6 / 18</span>
+      <div class="slide-inner">
+        <p class="kicker" style="text-align: center;"><span class="k-num">05</span>Live demo</p>
+        <p class="statement">Not a prototype.<br />Try the <span class="hl">live product</span>.</p>
         <a class="big-link" href="https://tailorsend.cc" target="_blank" rel="noopener">tailorsend.cc</a>
-        <p class="footnote" style="text-align: center;">User accounts · Stripe billing · full search → tailor → apply → outreach → track loop</p>
+        <p class="footnote" style="text-align: center;">Accounts · Stripe · full search → apply → track loop</p>
       </div>
     </section>
 
-    <!-- Slide 6 · Customer & pricing -->
-    <section class="slide" data-slide="6">
-      <img class="corner-logo" src="/logo.JPG" alt="TailorSend" /><span class="slide-num">6 / 16</span>
+    <!-- Slide 7 · Customer & pricing -->
+    <section class="slide slide-customer" data-slide="7">
+      <img class="corner-logo" src="/logo.JPG" alt="TailorSend" /><span class="slide-num">7 / 18</span>
       <div class="slide-inner">
-        <p class="kicker"><span class="k-num">05</span>Customer</p>
+        <p class="kicker"><span class="k-num">06</span>Customer</p>
         <h2>Who pays, and what they pay</h2>
+        <p class="subtitle">B2C student plans today · B2B campus licenses for career centers (next slide).</p>
         <div class="two-col">
           <div>
-            <h3>Primary customer</h3>
-            <ul>
-              <li><strong>Michigan college students</strong> — seniors &amp; grad students at CMU, U-M, MSU, Wayne State</li>
-              <li><strong>Recent graduates</strong> — 20–80 applications in the first 6 months</li>
-              <li><strong>Career changers</strong> — retooling for tech, PM, engineering</li>
+            <h3>Who we serve</h3>
+            <ul class="who-list">
+              <li>
+                <strong>College students</strong>
+                <span>Michigan first — CMU, U-M, MSU, Wayne State</span>
+              </li>
+              <li>
+                <strong>Career centers</strong>
+                <span>Annual campus license · seats + kit pool for students</span>
+              </li>
+              <li>
+                <strong>Recent graduates</strong>
+                <span>Often 20–80 applications in the first 6 months</span>
+              </li>
+              <li>
+                <strong>Career changers</strong>
+                <span>Pivoting into tech, PM, engineering, and adjacent roles</span>
+              </li>
+              <li>
+                <strong>Working job seekers</strong>
+                <span>Searching while employed or between roles</span>
+              </li>
             </ul>
           </div>
           <div>
-            <h3>Usage-based pricing</h3>
-            <ul>
-              <li><strong>Free</strong> — 2 tailor + 1 autofill/mo (funnel)</li>
-              <li><strong>Campus $5</strong> — 8 kits, first purchase</li>
-              <li><strong>Monthly $9.99 / Yearly $89.99</strong> — 25 kits/mo</li>
-              <li><strong>Sprint $29.99</strong> — 50 kits, one-time</li>
-            </ul>
+            <h3>Student pricing (B2C)</h3>
+            <div class="price-tiers">
+              <div class="tier">
+                <span class="name">Free</span>
+                <span class="amount">$0</span>
+                <span class="detail">2 tailor + 1 autofill per month</span>
+              </div>
+              <div class="tier">
+                <span class="name">Campus</span>
+                <span class="amount">$5</span>
+                <span class="detail">8 kits · low-friction first purchase</span>
+              </div>
+              <div class="tier">
+                <span class="name">Monthly · Yearly</span>
+                <span class="amount">$9.99 · $89.99</span>
+                <span class="detail">25 kits/mo · yearly is best value</span>
+              </div>
+              <div class="tier">
+                <span class="name">Sprint</span>
+                <span class="amount">$29.99</span>
+                <span class="detail">50 kits · one-time hunt push</span>
+              </div>
+            </div>
           </div>
         </div>
-        <p class="footnote"><strong style="color: var(--text);">Kit</strong> = tailor, autofill, or incorporate · COGS ~$0.18/kit · gross margin ~78%</p>
       </div>
     </section>
 
-    <!-- Slide 7 · Competitive positioning -->
-    <section class="slide" data-slide="7">
-      <img class="corner-logo" src="/logo.JPG" alt="TailorSend" /><span class="slide-num">7 / 16</span>
+    <!-- Slide 8 · Campus B2B licenses -->
+    <section class="slide slide-b2b" data-slide="8">
+      <img class="corner-logo" src="/logo.JPG" alt="TailorSend" /><span class="slide-num">8 / 18</span>
       <div class="slide-inner">
-        <p class="kicker"><span class="k-num">06</span>Competitive positioning</p>
-        <h2>We own the full loop — with trust</h2>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Competitor</th><th>What they do</th><th>TailorSend difference</th></tr></thead>
-            <tbody>
-              <tr><td>Jobscan, Teal</td><td>Resume optimization / tracking</td><td>We add job search + autofill + full workflow</td></tr>
-              <tr><td>ChatGPT</td><td>Generic AI writing</td><td>Purpose-built workflow, ATS scoring, no hallucinated experience</td></tr>
-              <tr><td>Simplify, LazyApply</td><td>Mass auto-apply</td><td>We never auto-submit; user reviews every application</td></tr>
-              <tr><td>Career centers</td><td>Free advising</td><td>Complements — faster execution between sessions</td></tr>
-            </tbody>
-          </table>
+        <p class="kicker"><span class="k-num">07</span>Campus B2B</p>
+        <h2>Institutional SaaS licenses</h2>
+        <p class="subtitle">Price by university enrollment. Career centers buy the license; students get access.</p>
+        <div class="b2b-buyer">
+          <span class="bar" aria-hidden="true"></span>
+          <div>
+            <span class="buyer-label">Primary buyer</span>
+            <span class="buyer-name">Mid-to-large university</span>
+            <span class="buyer-range">8,000 – 40,000 students</span>
+          </div>
         </div>
-        <p class="principle">We are not a resume checker or an auto-apply bot. We are the full, user-controlled application workflow.</p>
+        <p class="b2b-license-label">Annual <span class="hl">SaaS</span> license</p>
+        <div class="b2b-grid">
+          <div class="b2b-tier">
+            <span class="tier-name">Small campus</span>
+            <span class="tier-price">$15K / yr</span>
+            <span class="tier-detail">~8,000 – 15,000 students · career-center seats + kit pool</span>
+          </div>
+          <div class="b2b-tier">
+            <span class="tier-name">Mid-sized</span>
+            <span class="tier-price">$25K / yr</span>
+            <span class="tier-detail">~15,000 – 25,000 students · admin dashboard · workshops</span>
+          </div>
+          <div class="b2b-tier">
+            <span class="tier-name">Large</span>
+            <span class="tier-price">$40K / yr</span>
+            <span class="tier-detail">~25,000 – 40,000 students · higher kit pool · priority support</span>
+          </div>
+        </div>
+        <p class="footnote">Student <strong>Campus $5</strong> packs stay retail overflow. Year 1 goal: 1 MI campus pilot ($10K) + ~50 paying on Monthly/Yearly.</p>
       </div>
     </section>
 
-    <!-- Slide 8 · Why now -->
-    <section class="slide" data-slide="8">
-      <img class="corner-logo" src="/logo.JPG" alt="TailorSend" /><span class="slide-num">8 / 16</span>
+    <!-- Slide 9 · Competitive positioning -->
+    <section class="slide" data-slide="9">
+      <img class="corner-logo" src="/logo.JPG" alt="TailorSend" /><span class="slide-num">9 / 18</span>
       <div class="slide-inner">
-        <p class="kicker"><span class="k-num">07</span>Why now</p>
+        <p class="kicker"><span class="k-num">08</span>Competition</p>
+        <h2>Full loop — with trust</h2>
+        <ul class="comp-list">
+          <li>
+            <span class="who">Jobscan, Teal</span>
+            <span class="does">Resume tools / tracking</span>
+            <span class="diff"><strong>We add</strong> search + autofill + workflow</span>
+          </li>
+          <li>
+            <span class="who">ChatGPT</span>
+            <span class="does">Generic AI writing</span>
+            <span class="diff"><strong>Purpose-built</strong> · ATS scores · no fake experience</span>
+          </li>
+          <li>
+            <span class="who">Simplify, LazyApply</span>
+            <span class="does">Mass auto-apply</span>
+            <span class="diff"><strong>Never auto-submit</strong> — you review every app</span>
+          </li>
+          <li>
+            <span class="who">Career centers</span>
+            <span class="does">Free advising</span>
+            <span class="diff"><strong>Complements</strong> — faster work between sessions</span>
+          </li>
+        </ul>
+        <p class="principle">Not a resume checker or auto-apply bot — the full, user-controlled workflow.</p>
+      </div>
+    </section>
+
+    <!-- Slide 9 · Why now -->
+    <section class="slide" data-slide="10">
+      <img class="corner-logo" src="/logo.JPG" alt="TailorSend" /><span class="slide-num">10 / 18</span>
+      <div class="slide-inner">
+        <p class="kicker"><span class="k-num">09</span>Why now</p>
         <h2>Three forces converging</h2>
         <div class="card-grid">
           <div class="stat-card">
             <div class="label">ATS everywhere</div>
             <div class="value">98%</div>
-            <div class="sub">of Fortune 500 filter with ATS — tailoring is now mandatory</div>
+            <div class="sub">of Fortune 500 filter with ATS</div>
           </div>
           <div class="stat-card">
             <div class="label">Application volume</div>
             <div class="value">50–200+</div>
-            <div class="sub">applications per student search cycle and rising</div>
+            <div class="sub">apps per student search cycle</div>
           </div>
           <div class="stat-card">
             <div class="label">AI expectations</div>
             <div class="value">Mainstream</div>
-            <div class="sub">students already use AI — but generic tools break trust</div>
+            <div class="sub">generic AI tools break trust</div>
           </div>
         </div>
-        <p class="footnote">The window: students need honest, purpose-built AI before auto-apply spam poisons the market.</p>
+        <p class="footnote">Students need honest, purpose-built AI before auto-apply spam poisons the market.</p>
       </div>
     </section>
 
-    <!-- Slide 9 · Traction -->
-    <section class="slide" data-slide="9">
-      <img class="corner-logo" src="/logo.JPG" alt="TailorSend" /><span class="slide-num">9 / 16</span>
+    <!-- Slide 10 · Traction -->
+    <section class="slide slide-traction" data-slide="11">
+      <img class="corner-logo" src="/logo.JPG" alt="TailorSend" /><span class="slide-num">11 / 18</span>
       <div class="slide-inner">
-        <p class="kicker"><span class="k-num">08</span>Traction &amp; momentum</p>
+        <p class="kicker"><span class="k-num">10</span>Traction</p>
         <h2>Built. Live. Validating.</h2>
+        <p class="subtitle">Live product plus confirmed demand from people ready to pay.</p>
         <div class="card-grid">
           <div class="stat-card">
-            <div class="label">Product</div>
-            <div class="value">Live MVP</div>
-            <div class="sub">tailorsend.cc on Railway</div>
+            <div class="label">Registered users</div>
+            <div class="value">16</div>
+            <div class="sub">accounts on tailorsend.cc</div>
           </div>
           <div class="stat-card">
-            <div class="label">Revenue engine</div>
-            <div class="value">Stripe live</div>
-            <div class="sub">Campus · Monthly · Yearly · Sprint</div>
+            <div class="label">Applications</div>
+            <div class="value">35</div>
+            <div class="sub">kits created end-to-end</div>
           </div>
           <div class="stat-card">
-            <div class="label">Workflow</div>
-            <div class="value">Full loop</div>
-            <div class="sub">search → tailor → apply → outreach → track</div>
+            <div class="label">Confirmed</div>
+            <div class="value">12</div>
+            <div class="sub">waiting · willing to pay list</div>
           </div>
         </div>
-        <ul class="check-list">
-          <li><span>Multi-source search with match scores and visa filters</span></li>
-          <li><span>AI tailor with before/after ATS scoring and PDF export</span></li>
-          <li><span>Autofill, recruiter outreach, and application tracker shipped</span></li>
-        </ul>
+        <p class="footnote">Full search → tailor → apply → track loop is live. Early stage—validating demand.</p>
       </div>
     </section>
 
-    <!-- Slide 10 · Market opportunity -->
-    <section class="slide" data-slide="10">
-      <img class="corner-logo" src="/logo.JPG" alt="TailorSend" /><span class="slide-num">10 / 16</span>
+    <!-- Slide 11 · Market opportunity -->
+    <section class="slide" data-slide="12">
+      <img class="corner-logo" src="/logo.JPG" alt="TailorSend" /><span class="slide-num">12 / 18</span>
       <div class="slide-inner">
-        <p class="kicker"><span class="k-num">09</span>Market opportunity</p>
+        <p class="kicker"><span class="k-num">11</span>Market</p>
         <h2>Michigan first, national online</h2>
         <div class="card-grid">
           <div class="stat-card">
-            <div class="label">TAM · US college students</div>
+            <div class="label">TAM · US students</div>
             <div class="value">19M+</div>
-            <div class="sub">plus recent grads &amp; career changers</div>
+            <div class="sub">plus grads &amp; career changers</div>
           </div>
           <div class="stat-card">
-            <div class="label">SAM · Michigan students</div>
+            <div class="label">SAM · Michigan</div>
             <div class="value">300K+</div>
-            <div class="sub">~50K+ job-seeking annually</div>
+            <div class="sub">~50K+ job-seeking yearly</div>
           </div>
           <div class="stat-card">
-            <div class="label">SOM · 5-year target</div>
+            <div class="label">SOM · 5-year</div>
             <div class="value">1,500</div>
-            <div class="sub">paying users · 20 campus communities</div>
+            <div class="sub">paying users · 20 campuses</div>
           </div>
         </div>
-        <p class="footnote">
-          <strong style="color: var(--text);">The math:</strong> 1,500 paying users × ~$11/mo blended ARPU ≈
-          <strong style="color: var(--accent);">$280K revenue in Year 5</strong> — B2B campus licenses and employer seats are excluded upside.
-        </p>
+        <p class="footnote">1,500 × ~$11 ARPU ≈ <strong style="color: var(--accent);">$280K Year 5 B2C ceiling</strong> — near-term path is slower B2C + $15K–$40K campus licenses.</p>
       </div>
     </section>
 
-    <!-- Slide 11 · Land & expand -->
-    <section class="slide" data-slide="11">
-      <img class="corner-logo" src="/logo.JPG" alt="TailorSend" /><span class="slide-num">11 / 16</span>
+    <!-- Slide 12 · Land & expand -->
+    <section class="slide" data-slide="13">
+      <img class="corner-logo" src="/logo.JPG" alt="TailorSend" /><span class="slide-num">13 / 18</span>
       <div class="slide-inner">
-        <p class="kicker"><span class="k-num">10</span>Go-to-market</p>
-        <h2>Land and expand — campus by campus</h2>
+        <p class="kicker"><span class="k-num">12</span>Go-to-market</p>
+        <h2>Land and expand</h2>
         <div class="edge-grid">
-          <div class="edge"><span class="ico">🏫</span><b>1 · Pilot (now)</b><p>CMU + 1–2 Michigan campuses. Ambassadors, career center workshops, .edu pricing.</p></div>
-          <div class="edge"><span class="ico">🗺️</span><b>2 · Regional (Y2–Y3)</b><p>4+ Michigan universities → Midwest. Referral program: give kits, get kits.</p></div>
-          <div class="edge"><span class="ico">🌎</span><b>3 · National (Y4–Y5)</b><p>Online growth beyond campuses. Paid marketing only after unit economics are proven.</p></div>
+          <div class="edge"><b>1 · Pilot</b><p>CMU + 1 MI campus license. Workshops, ambassadors, convert pilot → paid.</p></div>
+          <div class="edge"><b>2 · Regional</b><p>Michigan → Midwest. Referral: give kits, get kits.</p></div>
+          <div class="edge"><b>3 · National</b><p>Online growth. Paid ads only after unit economics work.</p></div>
         </div>
-        <p class="footnote"><strong style="color: var(--text);">Year 1 budget:</strong> ~$250–400/month, organic only — SEO content, student communities, word-of-mouth.</p>
+        <p class="footnote">Year 1: ~$250–400/mo organic only.</p>
       </div>
     </section>
 
-    <!-- Slide 12 · Revenue trajectory -->
-    <section class="slide" data-slide="12">
-      <img class="corner-logo" src="/logo.JPG" alt="TailorSend" /><span class="slide-num">12 / 16</span>
+    <!-- Slide 13 · Revenue trajectory -->
+    <section class="slide slide-revenue" data-slide="14">
+      <img class="corner-logo" src="/logo.JPG" alt="TailorSend" /><span class="slide-num">14 / 18</span>
       <div class="slide-inner">
-        <p class="kicker"><span class="k-num">11</span>Revenue trajectory</p>
-        <h2>Cash-positive every year with the $25K bridge</h2>
+        <p class="kicker"><span class="k-num">13</span>Revenue</p>
+        <h2>Feasible path — B2C + campuses</h2>
+        <p class="subtitle">B2C = users × $9.99/mo (~$120/yr) &nbsp;·&nbsp; Campus = Small $15K · Mid $25K · Large $40K &nbsp;·&nbsp; Cash = start + ask + revenue − costs</p>
         <div class="table-wrap">
           <table>
             <thead><tr><th></th><th class="num">Year 1</th><th class="num">Year 2</th><th class="num">Year 3</th></tr></thead>
             <tbody>
-              <tr><td>Paying users (end of year)</td><td class="num">24</td><td class="num">95</td><td class="num">280</td></tr>
-              <tr><td>Revenue</td><td class="num">$1,546</td><td class="num">$11,000</td><td class="num">$42,000</td></tr>
-              <tr><td>Ask (grant / award / seed)</td><td class="num">$25,000</td><td class="num">—</td><td class="num">—</td></tr>
-              <tr><td>Total spending</td><td class="num">$13,022</td><td class="num">$8,800</td><td class="num">$34,350</td></tr>
-              <tr><td><strong>Ending cash</strong></td><td class="num positive"><strong>$13.5K</strong></td><td class="num positive"><strong>$15.7K</strong></td><td class="num positive"><strong>$23.4K</strong></td></tr>
+              <tr><td>Paying users</td><td class="num">50</td><td class="num">150</td><td class="num">300</td></tr>
+              <tr><td>B2C (users × ~$120/yr)</td><td class="num">50 × $120 = <strong>$6K</strong></td><td class="num">150 × $120 = <strong>$18K</strong></td><td class="num">300 × $120 = <strong>$36K</strong></td></tr>
+              <tr><td>Campus</td><td class="num">$10K</td><td class="num">$15K+$25K=$40K</td><td class="num">$15K+$15K+$25K=$55K</td></tr>
+              <tr><td><strong>Revenue</strong></td><td class="num"><strong>$16K</strong></td><td class="num"><strong>$58K</strong></td><td class="num"><strong>$91K</strong></td></tr>
+              <tr><td>Starting cash</td><td class="num">$0</td><td class="num">$20K</td><td class="num">$35K</td></tr>
+              <tr><td>Ask</td><td class="num">+$25K</td><td class="num">—</td><td class="num">—</td></tr>
+              <tr><td>Costs</td><td class="num">−$21K</td><td class="num">−$43K</td><td class="num">−$71K</td></tr>
+              <tr><td><strong>Ending cash</strong></td><td class="num positive"><strong>$20K</strong></td><td class="num positive"><strong>$35K</strong></td><td class="num positive"><strong>$55K</strong></td></tr>
             </tbody>
           </table>
         </div>
-        <p class="footnote">Reaching <strong style="color: var(--accent);">~$86K cash by Year 5</strong> with no additional capital. <a href="financial-model.html">Full projections →</a></p>
+        <p class="footnote">
+          Cash-basis Year 1 ties month-by-month to <strong>$20,000</strong> ending cash ($25,000 ask + $16,000 revenue − $21,000 costs).
+          Y2 $20,000 + $58,000 − $43,000 = <strong>$35,000</strong>.
+          Y3 $35,000 + $91,000 − $71,000 = <strong>$55,000</strong>.
+          B2C = Student Monthly $9.99; pilot = discounted Small tier.
+          <a href="financial-model.html">Scenarios + monthly detail →</a>
+        </p>
       </div>
     </section>
 
-    <!-- Slide 13 · Team -->
-    <section class="slide" data-slide="13">
-      <img class="corner-logo" src="/logo.JPG" alt="TailorSend" /><span class="slide-num">13 / 16</span>
+    <!-- Slide 14 · Team -->
+    <section class="slide" data-slide="15">
+      <img class="corner-logo" src="/logo.JPG" alt="TailorSend" /><span class="slide-num">15 / 18</span>
       <div class="slide-inner">
-        <p class="kicker"><span class="k-num">12</span>Team &amp; support</p>
+        <p class="kicker"><span class="k-num">14</span>Team</p>
         <h2>Founder-built, SBDC-backed</h2>
         <div class="two-col">
           <div>
             <h3>Founder</h3>
             <p><strong>Prosper Mapepa</strong> — <a href="https://mapepallc.netlify.app/">Mapepa Innovation LLC</a></p>
             <ul>
-              <li>MBA candidate in Cybersecurity, Central Michigan University</li>
-              <li>7+ years software engineering, full-stack/mobile, app security</li>
-              <li>Shipped multiple production apps (iOS/Android)</li>
+              <li>MBA candidate, Cybersecurity · CMU</li>
+              <li>7+ years software &amp; app security</li>
               <li>Built TailorSend end-to-end</li>
             </ul>
           </div>
           <div>
-            <h3>Michigan SBDC support</h3>
+            <h3>Michigan SBDC</h3>
             <ul>
-              <li><strong>Market research</strong> — pricing &amp; MI student market</li>
-              <li><strong>Tech commercialization</strong> — SaaS metrics, scaling, IP</li>
-              <li><strong>Growth consulting</strong> — campus partnership playbook</li>
-              <li><strong>Financial review</strong> — plan, projections, LLC/tax structure</li>
+              <li><strong>Market research</strong> — pricing &amp; MI demand</li>
+              <li><strong>Tech commercialization</strong> — SaaS metrics</li>
+              <li><strong>Growth</strong> — campus partnership playbook</li>
+              <li><strong>Financial review</strong> — plan &amp; LLC structure</li>
             </ul>
           </div>
         </div>
-        <p class="footnote">No employees in Year 1; possible part-time marketing help in Year 2 if revenue supports it.</p>
+        <p class="footnote">No employees in Year 1.</p>
       </div>
     </section>
 
-    <!-- Slide 14 · Vision -->
-    <section class="slide statement-slide" data-slide="14">
-      <img class="corner-logo" src="/logo.JPG" alt="TailorSend" /><span class="slide-num">14 / 16</span>
+    <!-- Slide 15 · Vision -->
+    <section class="slide slide-vision" data-slide="16">
+      <img class="corner-logo" src="/logo.JPG" alt="TailorSend" /><span class="slide-num">16 / 18</span>
       <div class="slide-inner">
-        <p class="kicker" style="text-align: center;"><span class="k-num">13</span>Vision</p>
-        <p class="statement">If every student applies with <span class="hl">TailorSend</span>:</p>
-        <ul class="statement-list">
-          <li><span><strong>Students</strong> graduate with interviews — not just a stack of unanswered applications</span></li>
-          <li><span><strong>Employers</strong> receive honest, tailored applications instead of AI spam</span></li>
-          <li><span><strong>Career centers</strong> get faster execution and measurable outcomes between advising sessions</span></li>
-        </ul>
+        <p class="kicker"><span class="k-num">15</span>Vision</p>
+        <h2>Quality applications at scale</h2>
+        <p class="subtitle">If every student and job seeker applies with TailorSend, the market gets better for everyone.</p>
+        <div class="feature-grid">
+          <div class="feature">
+            <span class="n">01</span>
+            <b>Fast-track applications</b>
+            <span>Serious searches move in days—not months of burnout and half-finished apps.</span>
+          </div>
+          <div class="feature">
+            <span class="n">02</span>
+            <b>More interviews</b>
+            <span>Students and seekers land callbacks from tailored kits—not unanswered mass applies.</span>
+          </div>
+          <div class="feature">
+            <span class="n">03</span>
+            <b>Honest for employers</b>
+            <span>Job-specific, truthful applications—not generic AI spam flooding ATS inboxes.</span>
+          </div>
+          <div class="feature">
+            <span class="n">04</span>
+            <b>Career centers</b>
+            <span>Faster outcomes between advising sessions—coaches focus on strategy, not formatting.</span>
+          </div>
+          <div class="feature">
+            <span class="n">05</span>
+            <b>Human in control</b>
+            <span>You review and submit every application. AI drafts; people decide.</span>
+          </div>
+          <div class="feature">
+            <span class="n">06</span>
+            <b>One full loop</b>
+            <span>Search → tailor → autofill → outreach → track—without juggling five tools.</span>
+          </div>
+        </div>
+        <p class="footnote">Same trust standard: no fake experience · never auto-submit.</p>
       </div>
     </section>
 
-    <!-- Slide 15 · The ask -->
-    <section class="slide" data-slide="15">
-      <img class="corner-logo" src="/logo.JPG" alt="TailorSend" /><span class="slide-num">15 / 16</span>
+    <!-- Slide 16 · The ask -->
+    <section class="slide" data-slide="17">
+      <img class="corner-logo" src="/logo.JPG" alt="TailorSend" /><span class="slide-num">17 / 18</span>
       <div class="slide-inner">
-        <p class="kicker"><span class="k-num">14</span>Funding</p>
-        <h2>We are asking for $25,000</h2>
-        <p class="subtitle">To prove Michigan demand and reach sustainable unit economics · not a venture round</p>
+        <p class="kicker"><span class="k-num">16</span>Funding</p>
+        <h2>Ask: $25,000</h2>
+        <p class="subtitle">Prove Michigan demand · reach unit economics · not a VC round</p>
         <div class="use-of-funds">
           <div class="fund-bar">
             <div class="pct">$6K</div>
@@ -697,30 +1662,43 @@
             <div>GTM &amp; buffer</div>
           </div>
         </div>
-        <p class="footnote">
-          <strong style="color: var(--text);">12-month milestones:</strong> 25+ paying customers · 1–2 Michigan campus pilots · business banking under the LLC · LTV &gt; CAC on organic channels
-        </p>
+        <p class="footnote">12 months: ~50 paying · 1 campus pilot · LTV &gt; CAC</p>
       </div>
     </section>
 
-    <!-- Slide 16 · Thank you -->
-    <section class="slide statement-slide" data-slide="16">
-      <img class="corner-logo" src="/logo.JPG" alt="TailorSend" /><span class="slide-num">16 / 16</span>
+    <!-- Slide 17 · Thank you -->
+    <section class="slide slide-thanks" data-slide="18">
+      <img class="corner-logo" src="/logo.JPG" alt="TailorSend" /><span class="slide-num">18 / 18</span>
       <div class="slide-inner">
-        <p class="statement">Thank <span class="hl">you</span>.</p>
-        <a class="big-link" href="https://tailorsend.cc" target="_blank" rel="noopener">tailorsend.cc</a>
-        <p class="footnote" style="text-align: center; margin-top: 2.5rem;">
-          Prosper Mapepa · <a href="mailto:mapepapro@gmail.com">mapepapro@gmail.com</a> · (989) 332-8050<br />
-          <a href="https://mapepallc.netlify.app/">mapepallc.netlify.app</a> · <a href="https://michigansbdc.org/">michigansbdc.org</a><br />
-          <span style="font-size: 0.85rem;">© 2026 Mapepa Innovation LLC. All rights reserved.</span>
-        </p>
+        <p class="kicker"><span class="k-num">17</span>Next step</p>
+        <h2>Thank you</h2>
+        <p class="subtitle">Try the live product, then let’s talk about the $25K ask.</p>
+        <div class="thanks-grid">
+          <div>
+            <h3>Contact</h3>
+            <div class="thanks-contact">
+              <span class="name">Prosper Mapepa</span>
+              <span class="meta">Founder · Mapepa Innovation LLC</span>
+              <a href="mailto:mapepapro@gmail.com">mapepapro@gmail.com</a>
+              <a href="https://mapepallc.netlify.app/" target="_blank" rel="noopener">mapepallc.netlify.app</a>
+              <span class="meta">Michigan · seeking $25,000 to prove demand</span>
+            </div>
+          </div>
+          <a class="thanks-qr" href="https://tailorsend.cc" target="_blank" rel="noopener">
+            <img src="qr-tailorsend.png" width="512" height="512" alt="QR code for https://tailorsend.cc" />
+            <span class="qr-label">Scan to open</span>
+            <span class="qr-url">tailorsend.cc</span>
+            <span class="qr-hint">Live product · Stripe billing</span>
+          </a>
+        </div>
+        <p class="footnote">Questions welcome — happy to walk through the model or a live demo.</p>
       </div>
     </section>
   </div>
 
   <div class="deck-controls no-print">
     <button type="button" id="prev" aria-label="Previous slide">←</button>
-    <span id="counter">1 / 16</span>
+    <span id="counter">1 / 18</span>
     <button type="button" id="next" aria-label="Next slide">→</button>
   </div>
 
@@ -743,15 +1721,5 @@
     });
   </script>
   <script src="download.js"></script>
-  <script>
-    (function () {
-      const FILE = "TailorSend-Business-Plan-Slides.html";
-      const self = document.getElementById("dl-self");
-      if (self) self.addEventListener("click", () => window.TailorSendDownload.download(FILE));
-      if (new URLSearchParams(location.search).get("download") === "1") {
-        window.addEventListener("load", () => setTimeout(() => window.TailorSendDownload.download(FILE), 400));
-      }
-    })();
-  </script>
 </body>
 </html>

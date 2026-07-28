@@ -40,11 +40,9 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (token && (pathname === "/sign-in" || pathname === "/register")) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/";
-    return NextResponse.redirect(url);
-  }
+  // Do not redirect away from /sign-in or /register based on cookie presence —
+  // the cookie may be stale while the session is already gone. Auth pages
+  // redirect valid sessions client-side after /api/auth/me succeeds.
 
   return NextResponse.next();
 }

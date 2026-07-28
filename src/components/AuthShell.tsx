@@ -25,16 +25,16 @@ function AuthCTACard({ className = "" }: { className?: string }) {
       </p>
 
       <div className="mt-6 space-y-3">
-        <Link href="/register" className="block">
-          <Button size="lg" className="w-full shadow-lg shadow-emerald-600/20">
-            Create free account
-          </Button>
-        </Link>
-        <Link href="/sign-in" className="block">
-          <Button size="lg" variant="secondary" className="w-full">
-            Sign in
-          </Button>
-        </Link>
+        <Button
+          href="/register"
+          size="lg"
+          className="w-full shadow-lg shadow-emerald-600/20"
+        >
+          Create free account
+        </Button>
+        <Button href="/sign-in" size="lg" variant="secondary" className="w-full">
+          Sign in
+        </Button>
       </div>
 
       <div className="mt-6 rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-4">
@@ -52,20 +52,21 @@ function AuthCTACard({ className = "" }: { className?: string }) {
 function HeroCTAs() {
   return (
     <div className="flex flex-wrap justify-center gap-3 lg:justify-start">
-      <Link href="/register">
-        <Button size="lg" className="shadow-lg shadow-emerald-600/25 text-xl">
-          Create free account
-        </Button>
-      </Link>
-      <Link href="/sign-in">
-        <Button
-          size="lg"
-          variant="secondary"
-          className="border-white/25 bg-white/10 text-white hover:bg-white/20 text-xl"
-        >
-          Sign in
-        </Button>
-      </Link>
+      <Button
+        href="/register"
+        size="lg"
+        className="shadow-lg shadow-emerald-600/25 text-xl"
+      >
+        Create free account
+      </Button>
+      <Button
+        href="/sign-in"
+        size="lg"
+        variant="secondary"
+        className="border-white/25 bg-white/10 text-white hover:bg-white/20 text-xl"
+      >
+        Sign in
+      </Button>
     </div>
   );
 }
@@ -76,20 +77,17 @@ export function AuthMarketingShell() {
       <header className="flex shrink-0 items-center justify-between gap-4 border-b border-white/10 px-5 py-5 sm:px-8 lg:px-12">
         <AuthLogo />
         <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-          <Link href="/sign-in" className="hidden sm:block">
-            <Button
-              size="md"
-              variant="secondary"
-              className="border-white/20 bg-white/10 text-base text-white hover:bg-white/20"
-            >
-              Sign in
-            </Button>
-          </Link>
-          <Link href="/register">
-            <Button size="md" className="text-base">
-              Get started
-            </Button>
-          </Link>
+          <Button
+            href="/sign-in"
+            size="md"
+            variant="secondary"
+            className="hidden border-white/20 bg-white/10 text-base text-white hover:bg-white/20 sm:inline-flex"
+          >
+            Sign in
+          </Button>
+          <Button href="/register" size="md" className="text-base">
+            Get started
+          </Button>
         </div>
       </header>
 

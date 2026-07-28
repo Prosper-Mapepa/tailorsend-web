@@ -3,133 +3,97 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>TailorSend — Michigan SBDC Application</title>
+  <title>TailorSend — Investor materials</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
 </head>
-<body>
-  <header class="site-header">
-    <a class="site-logo" href="index.html"><span>🚀</span> TailorSend</a>
-    <nav class="site-nav">
+<body class="hub-page">
+  <div class="hub-glow" aria-hidden="true"></div>
+  <header class="site-header hub-header">
+    <a class="site-logo" href="index.html"><img class="hub-logo-img" src="/logo.JPG" alt="" width="36" height="36" /> TailorSend</a>
+    <nav class="site-nav" aria-label="Documents">
       <a href="index.html" class="active">Home</a>
-      <a href="pitch-deck.html">Overview</a>
-      <a href="business-plan.html">Business Plan</a>
+      <a href="business-plan.html">Business plan</a>
       <a href="financial-model.html">Financials</a>
-      <a href="one-pager.html">Summary</a>
+      <a href="pitch-deck.html" class="nav-muted">Deck</a>
+      <a href="one-pager.html" class="nav-muted">Summary</a>
     </nav>
-    <div class="download-bar no-print">
-      <button type="button" class="btn-download" id="dl-self">↓ Download</button>
-    </div>
+    <div class="download-bar no-print"></div>
   </header>
 
-  <section class="hero">
-    <p class="eyebrow">Michigan SBDC application · July 2026</p>
-    <h1>TailorSend</h1>
-    <p class="lead" style="margin: 0 auto;">
-      AI-assisted job application platform for students and job seekers.<br />
-      <strong style="color: var(--accent);">Live product</strong> at <a href="https://tailorsend.cc">tailorsend.cc</a> · Michigan-based · <strong style="color: var(--accent);">Ask $25K</strong>
-    </p>
-    <div class="hero-actions">
-      <a class="btn btn-primary" href="business-plan.html">Read business plan →</a>
-      <a class="btn btn-secondary" href="financial-model.html">Financial projections</a>
-      <a class="btn btn-secondary" href="https://tailorsend.cc" target="_blank" rel="noopener">Live product</a>
-    </div>
-    <p style="margin-top: 1.5rem; font-size: 0.9rem; color: var(--text-muted);">
-      <strong>Download:</strong>
-      <a class="btn-download" href="business-plan.html?download=1">Business plan</a>
-      <a class="btn-download" href="financial-model.html?download=1">Financials</a>
-      <a class="btn-download" href="one-pager.html?download=1">Summary</a>
-      <a class="btn-download" href="pitch-deck.html?download=1">Overview deck</a>
-    </p>
-  </section>
-
-  <div class="container-wide">
-    <div class="card" style="max-width: 960px; margin: 0 auto 2rem; border-color: rgba(16,185,129,0.3);">
-      <h3 style="margin-top: 0;">Ask: $25,000 + Michigan SBDC support</h3>
-      <ul style="margin-bottom: 0; color: var(--text-muted);">
-        <li><strong>$25K capital</strong> — hosting/AI, campus demos &amp; ambassadors, hardening/legal, GTM + buffer</li>
-        <li><strong>Market research</strong> — validate demand among Michigan college students and career changers</li>
-        <li><strong>Tech services</strong> — guidance on scaling a SaaS product and go-to-market</li>
-        <li><strong>Growth consulting</strong> — campus partnership strategy (CMU, U-M, MSU, Wayne State)</li>
-        <li><strong>Business planning review</strong> — financial projections and pricing model feedback</li>
-      </ul>
-      <p style="margin: 1rem 0 0; font-size: 0.85rem;">
-        <a href="https://michigansbdc.org/" target="_blank" rel="noopener">Michigan SBDC</a> · No-cost confidential consulting · Not seeking VC
+  <div class="hub-shell">
+    <header class="hub-hero">
+      <p class="eyebrow">Michigan SBDC application · July 2026</p>
+      <div class="hub-title-row">
+        <img class="hub-hero-logo" src="/logo.JPG" alt="" width="72" height="72" />
+        <h1>TailorSend</h1>
+      </div>
+      <p class="hub-tagline">
+        AI-assisted job applications for students and career changers—research, tailoring, and ATS autofill in one workflow.
       </p>
-    </div>
 
-    <div class="card-grid" style="max-width: 960px; margin: 0 auto 3rem;">
-      <a class="doc-card" href="business-plan.html">
-        <span class="badge">Primary</span>
-        <h3>Business Plan</h3>
-        <p>Company description, market, competition, operations, management, and SBDC support needs.</p>
-        <div class="doc-card-actions">
-          <span class="tag">Read plan →</span>
-          <a class="btn-download" href="business-plan-slides.html" onclick="event.stopPropagation()">▶ Slides</a>
-          <a class="btn-download" href="business-plan.html?download=1" onclick="event.stopPropagation()">↓ Download</a>
+      <div class="hub-highlights" role="list">
+        <div class="hub-highlight hub-highlight-company" role="listitem">
+          <span class="hub-highlight-label">Company</span>
+          <a class="hub-highlight-value hub-highlight-live-link" href="https://mapepallc.netlify.app/" target="_blank" rel="noopener">Mapepa Innovation LLC</a>
         </div>
-      </a>
-      <a class="doc-card" href="financial-model.html">
-        <span class="badge">12 months</span>
-        <h3>Financial Projections</h3>
-        <p>NVC-style 5-year cash flow with a <strong>$25K ask</strong> as the Y1 capital bridge. Y1 product revenue ~$1.5K.</p>
-        <div class="doc-card-actions">
-          <span class="tag">View →</span>
-          <a class="btn-download" href="financial-model.html?download=1" onclick="event.stopPropagation()">↓ Download</a>
+        <div class="hub-highlight hub-highlight-live" role="listitem">
+          <span class="hub-highlight-label">Live product</span>
+          <a class="hub-highlight-value hub-highlight-live-link" href="https://tailorsend.cc" target="_blank" rel="noopener">tailorsend.cc</a>
         </div>
-      </a>
-      <a class="doc-card" href="one-pager.html">
-        <span class="badge">1 page</span>
-        <h3>Executive Summary</h3>
-        <p>Quick overview for SBDC intake or consultant prep.</p>
-        <div class="doc-card-actions">
-          <span class="tag">Open →</span>
-          <a class="btn-download" href="one-pager.html?download=1" onclick="event.stopPropagation()">↓ Download</a>
+        <div class="hub-highlight hub-highlight-ask" role="listitem">
+          <span class="hub-highlight-label">Funding ask</span>
+          <span class="hub-highlight-value hub-highlight-ask-value"><strong>$25K</strong> grant / seed</span>
         </div>
-      </a>
-      <a class="doc-card" href="pitch-deck.html">
-        <span class="badge">12 slides</span>
-        <h3>Business Overview</h3>
-        <p>Winner pitch: full product loop, feature deep-dives, market, pricing, competition, SBDC ask.</p>
-        <div class="doc-card-actions">
-          <span class="tag">Open →</span>
-          <a class="btn-download" href="pitch-deck.html?download=1" onclick="event.stopPropagation()">↓ Download</a>
-        </div>
-      </a>
-    </div>
+      </div>
+    </header>
 
-    <div class="card-grid" style="max-width: 960px; margin: 0 auto;">
-      <div class="stat-card">
-        <div class="label">Stage</div>
-        <div class="value" style="font-size: 1.1rem;">Early / MVP</div>
-        <div class="sub">Live product, pre-scale revenue</div>
+    <section class="hub-materials" aria-labelledby="materials-heading">
+      <div class="hub-materials-head">
+        <h2 id="materials-heading">Materials</h2>
+        <p>Read the business plan first, then the financial model.</p>
       </div>
-      <div class="stat-card">
-        <div class="label">Year 1 revenue (proj.)</div>
-        <div class="value">~$1.5K</div>
-        <div class="sub">Conservative bootstrap</div>
+      <div class="hub-mat-grid">
+        <article class="hub-mat-card">
+          <a class="hub-mat-hit" href="business-plan.html">
+            <span class="hub-mat-step">1</span>
+            <h3>Business plan</h3>
+            <p>Company, market, competition, operations, management, and SBDC support.</p>
+            <span class="hub-mat-open">Open document →</span>
+          </a>
+          <div class="hub-mat-alt">
+            <a class="hub-mat-slides" href="business-plan-slides.html">View as slides →</a>
+          </div>
+        </article>
+        <article class="hub-mat-card">
+          <a class="hub-mat-hit" href="financial-model.html">
+            <span class="hub-mat-step">2</span>
+            <h3>Financials</h3>
+            <p>Five-year cash flow, $25K use of funds, and conservative revenue assumptions.</p>
+            <span class="hub-mat-open">Open document →</span>
+          </a>
+          <div class="hub-mat-alt">
+            <a href="financial-model.html?download=1">PDF</a>
+          </div>
+        </article>
       </div>
-      <div class="stat-card">
-        <div class="label">Ask</div>
-        <div class="value">$25K</div>
-        <div class="sub">Grant / award / seed</div>
-      </div>
-      <div class="stat-card">
-        <div class="label">Location</div>
-        <div class="value" style="font-size: 1.1rem;">Michigan</div>
-        <div class="sub">Online SaaS · MI customers first</div>
-      </div>
-    </div>
-    <p style="margin: 2.5rem auto 0; font-size: 0.8rem; color: var(--text-muted); text-align: center;">
-      A product of <a href="https://mapepallc.netlify.app/">Mapepa Innovation LLC</a> · © 2026 Mapepa Innovation LLC. All rights reserved.
+    </section>
+
+    <footer class="hub-ask">
+      <div class="hub-ask-amount">$25,000</div>
+      <p class="hub-ask-copy">
+        One-time support to validate Michigan campus demand and reach sustainable unit economics—not a venture round.
+      </p>
+    </footer>
+
+    <p class="hub-footer">
+      <!-- <a href="https://michigansbdc.org/" target="_blank" rel="noopener">Michigan SBDC</a> -->
+      <a class="hub-footer-company" href="https://mapepallc.netlify.app/">Mapepa Innovation LLC</a> · © 2026
     </p>
   </div>
+
   <script src="download.js"></script>
-  <script>
-    document.getElementById("dl-self")?.addEventListener("click", () =>
-      window.TailorSendDownload.download("TailorSend-SBDC-Application.html"));
-  </script>
 </body>
 </html>
