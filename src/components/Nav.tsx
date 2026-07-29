@@ -27,6 +27,7 @@ const AUTH_PATHS = [
   "/register",
   "/forgot-password",
   "/reset-password",
+  "/auth/callback",
 ];
 
 function isActive(pathname: string, href: string) {

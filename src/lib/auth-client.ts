@@ -37,10 +37,18 @@ export function setStoredToken(token: string | null): void {
   if (typeof window === "undefined") return;
   if (token) {
     localStorage.setItem(AUTH_TOKEN_KEY, token);
-    document.cookie = `${AUTH_TOKEN_KEY}=${token}; path=/; max-age=${60 * 60 * 24 * 30}; SameSite=Lax`;
+    const secure =
+      typeof window !== "undefined" && window.location.protocol === "https:"
+        ? "; Secure"
+        : "";
+    document.cookie = `${AUTH_TOKEN_KEY}=${token}; path=/; max-age=${60 * 60 * 24 * 30}; SameSite=Lax${secure}`;
   } else {
     localStorage.removeItem(AUTH_TOKEN_KEY);
-    document.cookie = `${AUTH_TOKEN_KEY}=; path=/; max-age=0; SameSite=Lax`;
+    const secure =
+      typeof window !== "undefined" && window.location.protocol === "https:"
+        ? "; Secure"
+        : "";
+    document.cookie = `${AUTH_TOKEN_KEY}=; path=/; max-age=0; SameSite=Lax${secure}`;
   }
 }
 

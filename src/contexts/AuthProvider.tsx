@@ -12,6 +12,7 @@ import { usePathname, useRouter } from "next/navigation";
 import type { AuthUser } from "@/lib/auth-client";
 import {
   fetchMe,
+  getStoredToken,
   loginUser,
   logoutUser,
   registerUser,
@@ -24,6 +25,11 @@ interface AuthContextValue {
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, name?: string) => Promise<void>;
+  /** Persist OAuth/session token and load the user into client auth state. */
+  completeSession: (
+    token: string,
+    opts?: { newUser?: boolean },
+  ) => Promise<void>;
   signOut: () => Promise<void>;
   refresh: () => Promise<void>;
 }
@@ -46,6 +52,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .then(setUser)
       .finally(() => setLoading(false));
   }, []);
+
+  // Recover when a token exists (e.g. set on /auth/callback) but client user
+  // was never loaded — otherwise dashboard SSR can be logged-in while Nav shows Sign in.
+  useEffect(() => {
+    if (loading || user) return;
+    if (!getStoredToken()) return;
+    let cancelled = false;
+    fetchMe().then((me) => {
+      if (!cancelled) setUser(me);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [loading, user, pathname]);
 
   const signIn = useCallback(
     async (email: string, password: string) => {
@@ -70,6 +90,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [router],
   );
 
+  const completeSession = useCallback(
+    async (token: string, opts?: { newUser?: boolean }) => {
+      setStoredToken(token);
+      const me = await fetchMe();
+      if (!me) {
+        setStoredToken(null);
+        throw new Error(
+          "Could not load your account after sign-in. Please try again.",
+        );
+      }
+      setUser(me);
+      setLoading(false);
+      if (opts?.newUser) markOnboardingPending();
+      router.replace(opts?.newUser ? "/profile" : "/");
+      router.refresh();
+    },
+    [router],
+  );
+
   const signOut = useCallback(async () => {
     await logoutUser();
     setUser(null);
@@ -86,8 +125,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [user, loading, pathname, router]);
 
   const value = useMemo(
-    () => ({ user, loading, signIn, signUp, signOut, refresh }),
-    [user, loading, signIn, signUp, signOut, refresh],
+    () => ({
+      user,
+      loading,
+      signIn,
+      signUp,
+      completeSession,
+      signOut,
+      refresh,
+    }),
+    [user, loading, signIn, signUp, completeSession, signOut, refresh],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -200,3 +200,28 @@ export function describeBoardKind(input: string): string {
   if (c.kind === "lever") return `Lever · ${c.value}`;
   return `Company search · ${c.value}`;
 }
+
+/**
+ * Split a pasted list (newlines, commas, or semicolons) into board entries.
+ * Dedupes against existing sites by normalized input (case-insensitive).
+ */
+export function parseBulkBoardInputs(
+  raw: string,
+  existing: JobBoardSite[] = [],
+): JobBoardSite[] {
+  const seen = new Set(
+    existing
+      .map((s) => normalizeBoardInput(s.input).toLowerCase())
+      .filter(Boolean),
+  );
+  const out: JobBoardSite[] = [];
+  for (const part of raw.split(/[\n,;]+/)) {
+    const input = normalizeBoardInput(part);
+    if (!input) continue;
+    const key = input.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push({ input, label: defaultLabelForInput(input) });
+  }
+  return out;
+}

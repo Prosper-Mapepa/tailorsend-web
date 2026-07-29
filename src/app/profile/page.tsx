@@ -46,6 +46,7 @@ import type {
 import {
   defaultLabelForInput,
   describeBoardKind,
+  parseBulkBoardInputs,
 } from "@/lib/job-boards";
 
 interface ProfileForm {
@@ -203,6 +204,8 @@ export default function ProfilePage() {
   const [extractedChars, setExtractedChars] = useState<number | null>(null);
   const [outlining, setOutlining] = useState(false);
   const [uploadExpanded, setUploadExpanded] = useState(false);
+  const [boardBulkPaste, setBoardBulkPaste] = useState("");
+  const [boardBulkMessage, setBoardBulkMessage] = useState<string | null>(null);
 
   function hydrate(data: Partial<ProfileForm>) {
     setForm({ ...EMPTY, ...data });
@@ -257,6 +260,18 @@ export default function ProfilePage() {
 
   function addJobBoard() {
     set("jobBoards", [...form.jobBoards, { input: "", label: "" }]);
+  }
+
+  function addJobBoardsFromPaste() {
+    const added = parseBulkBoardInputs(boardBulkPaste, form.jobBoards);
+    if (added.length === 0) {
+      setBoardBulkMessage("No new sites found — check the paste or duplicates.");
+      return;
+    }
+    const keep = form.jobBoards.filter((b) => b.input.trim());
+    set("jobBoards", [...keep, ...added]);
+    setBoardBulkPaste("");
+    setBoardBulkMessage(`Added ${added.length} site${added.length === 1 ? "" : "s"}.`);
   }
 
   function updateJobBoard(i: number, patch: Partial<JobBoardSite>) {
@@ -1345,9 +1360,41 @@ export default function ProfilePage() {
               <code className="text-xs">Kaiser Permanente</code>. Nurses,
               teachers, and engineers can each save different targets.
             </p>
+
+            <div className="mb-4 rounded-xl border border-slate-200/80 bg-slate-50/60 p-3 sm:p-4">
+              <Label>Paste multiple sites</Label>
+              <p className="mb-2 text-xs text-slate-500">
+                One per line (or commas). Greenhouse/Lever URLs, careers pages,
+                or company names.
+              </p>
+              <textarea
+                className={`${inputClass} min-h-[7.5rem] font-mono text-xs leading-relaxed`}
+                placeholder={`https://boards.greenhouse.io/stripe\nhttps://jobs.lever.co/netflix\nMicrosoft\njobs.constellationenergy.com`}
+                value={boardBulkPaste}
+                onChange={(e) => {
+                  setBoardBulkPaste(e.target.value);
+                  setBoardBulkMessage(null);
+                }}
+              />
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={addJobBoardsFromPaste}
+                  disabled={!boardBulkPaste.trim()}
+                >
+                  Add all from paste
+                </Button>
+                {boardBulkMessage ? (
+                  <span className="text-xs text-emerald-700">{boardBulkMessage}</span>
+                ) : null}
+              </div>
+            </div>
+
             {form.jobBoards.length === 0 ? (
               <p className="text-sm text-slate-400">
-                No sites yet — add boards for companies you want scanned.
+                No sites yet — paste a list above or add boards one by one.
               </p>
             ) : (
               <div className="space-y-3">

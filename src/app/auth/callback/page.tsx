@@ -1,11 +1,10 @@
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Alert } from "@/components/ui";
-import { setStoredToken } from "@/lib/auth-client";
-import { markOnboardingPending } from "@/lib/onboarding";
+import { useAuth } from "@/contexts/AuthProvider";
 
 const ERROR_MESSAGES: Record<string, string> = {
   cancelled: "Google sign-in was cancelled.",
@@ -16,7 +15,7 @@ const ERROR_MESSAGES: Record<string, string> = {
 };
 
 function OAuthCallbackInner() {
-  const router = useRouter();
+  const { completeSession } = useAuth();
   const searchParams = useSearchParams();
   const [error, setError] = useState<string | null>(null);
 
@@ -34,11 +33,16 @@ function OAuthCallbackInner() {
     }
 
     const isNew = searchParams.get("new") === "1";
-    setStoredToken(token);
-    if (isNew) markOnboardingPending();
-    router.replace(isNew ? "/profile" : "/");
-    router.refresh();
-  }, [router, searchParams]);
+    let cancelled = false;
+    completeSession(token, { newUser: isNew }).catch((err) => {
+      if (!cancelled) {
+        setError((err as Error).message || "Sign-in failed. Please try again.");
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [completeSession, searchParams]);
 
   if (error) {
     return (
