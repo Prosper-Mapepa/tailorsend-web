@@ -113,14 +113,14 @@ function UserMenu({
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
         aria-haspopup="menu"
-        className="flex items-center gap-2 rounded-xl border border-transparent py-1 pl-1 pr-2 transition outline-none hover:border-slate-200 hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-emerald-500/40"
+        className="flex items-center gap-1.5 rounded-xl border border-transparent py-1 pl-1 pr-1.5 transition outline-none hover:border-slate-200 hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-emerald-500/40 2xl:pr-2"
       >
         <UserAvatar name={name} email={email} />
-        <span className="hidden max-w-[7rem] truncate text-sm text-slate-700 lg:inline xl:max-w-[9rem]">
+        <span className="hidden max-w-[8rem] truncate text-sm text-slate-700 2xl:inline">
           {name || email.split("@")[0]}
         </span>
         <svg
-          className={`hidden h-4 w-4 text-slate-400 transition lg:block ${open ? "rotate-180" : ""}`}
+          className={`hidden h-4 w-4 text-slate-400 transition 2xl:block ${open ? "rotate-180" : ""}`}
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -191,16 +191,16 @@ export function Nav() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/95 backdrop-blur-md">
-      <div className="mx-auto grid h-14 w-full max-w-6xl grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-stretch gap-2 px-4 sm:gap-3 sm:px-6">
-        <div className="flex min-w-0 items-center justify-self-start">
-          <SiteLogo size="sm" variant="light" hideNameBelow="md" />
+      <div className="mx-auto flex h-14 w-full max-w-6xl items-stretch gap-3 px-4 sm:px-6">
+        <div className="flex shrink-0 items-center">
+          <SiteLogo size="sm" variant="light" hideNameBelow="lg" />
         </div>
 
         <nav
-          className="hidden items-stretch justify-self-center md:flex"
+          className="hidden min-w-0 flex-1 items-stretch justify-center md:flex"
           aria-label="Main"
         >
-          <div className="flex items-stretch">
+          <div className="flex max-w-full items-stretch">
             {MAIN_LINKS.map((l) => (
               <NavLink
                 key={l.href}
@@ -212,7 +212,7 @@ export function Nav() {
           </div>
         </nav>
 
-        <div className="flex min-w-0 items-center justify-end justify-self-end gap-1 sm:gap-2">
+        <div className="ml-auto flex shrink-0 items-center gap-1.5 pl-2 sm:gap-2 sm:pl-3 md:ml-0">
           {!loading && user && (
             <>
               <UsageNavMenu />
@@ -220,7 +220,7 @@ export function Nav() {
                 className="hidden h-5 w-px shrink-0 bg-slate-200 md:block"
                 aria-hidden
               />
-              <div className="hidden min-w-0 md:block">
+              <div className="hidden md:block">
                 <UserMenu
                   name={user.name}
                   email={user.email}

@@ -98,15 +98,9 @@ export function UsageNavMenu() {
         aria-expanded={open}
         aria-haspopup="dialog"
         title={`${plan} · ${hint}`}
-        className="flex max-w-[9.5rem] items-center gap-1 rounded-xl border border-transparent py-1 pl-2 pr-1.5 text-left transition outline-none hover:border-slate-200 hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-emerald-500/40 xl:max-w-[14rem]"
+        className="flex max-w-[8.5rem] items-center gap-1 rounded-xl border border-transparent py-1 pl-2 pr-1.5 text-left transition outline-none hover:border-slate-200 hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-emerald-500/40"
       >
         <span className="truncate text-sm font-medium text-slate-800">{plan}</span>
-        <span className="hidden text-slate-300 xl:inline" aria-hidden>
-          ·
-        </span>
-        <span className="hidden truncate text-sm text-slate-500 xl:inline">
-          {hint}
-        </span>
         <svg
           className={`h-4 w-4 shrink-0 text-slate-400 transition ${open ? "rotate-180" : ""}`}
           fill="none"

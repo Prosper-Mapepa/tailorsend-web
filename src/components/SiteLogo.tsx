@@ -2,14 +2,22 @@ import Image from "next/image";
 import Link from "next/link";
 import { SITE_LOGO_PATH, SITE_NAME } from "@/lib/brand";
 
+export type SiteLogoHideNameBelow = "sm" | "md" | "lg";
+
 type SiteLogoProps = {
   href?: string;
   showName?: boolean;
   /** Hide wordmark below this breakpoint (logo icon still shown). */
-  hideNameBelow?: "sm" | "md";
+  hideNameBelow?: SiteLogoHideNameBelow;
   size?: "xs" | "sm" | "md" | "lg";
   variant?: "light" | "dark" | "brand";
   className?: string;
+};
+
+const HIDE_NAME_CLASS: Record<SiteLogoHideNameBelow, string> = {
+  sm: "hidden sm:inline",
+  md: "hidden md:inline",
+  lg: "hidden lg:inline",
 };
 
 const SIZES = {
@@ -44,12 +52,7 @@ export function SiteLogo({
 }: SiteLogoProps) {
   const s = SIZES[size];
   const v = VARIANTS[variant];
-  const nameHidden =
-    hideNameBelow === "sm"
-      ? "hidden sm:inline"
-      : hideNameBelow === "md"
-        ? "hidden md:inline"
-        : undefined;
+  const nameHidden = hideNameBelow ? HIDE_NAME_CLASS[hideNameBelow] : undefined;
 
   const content = (
     <>
