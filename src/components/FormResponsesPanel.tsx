@@ -3,9 +3,14 @@
 import { useEffect, useRef, useState } from "react";
 import { Button, Card } from "@/components/ui";
 import {
+  buildExtensionPdfAttachments,
   downloadPdfFromMarkdown,
   resumeSlug,
 } from "@/lib/download";
+import {
+  pingTailorSendExtension,
+  requestExtensionFill,
+} from "@/lib/extension-bridge";
 import {
   fieldTypeLabel,
   fileFieldKind,
@@ -18,6 +23,7 @@ import type { FormFieldResponse } from "@/lib/types";
 export function FormResponsesPanel({
   screenshotUrl,
   applyPageUrl,
+  applicationId,
   pageCaptureLoading = false,
   onGenerate,
   initialFields = [],
@@ -32,6 +38,7 @@ export function FormResponsesPanel({
 }: {
   screenshotUrl?: string | null;
   applyPageUrl?: string | null;
+  applicationId?: string | null;
   pageCaptureLoading?: boolean;
   onGenerate: (file?: File) => Promise<FormFieldResponse[]>;
   initialFields?: FormFieldResponse[];
@@ -51,6 +58,9 @@ export function FormResponsesPanel({
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
   const [downloadingIdx, setDownloadingIdx] = useState<number | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
+  const [extensionReady, setExtensionReady] = useState(false);
+  const [extensionBusy, setExtensionBusy] = useState(false);
+  const [extensionNote, setExtensionNote] = useState<string | null>(null);
   const displaySrc = preview ?? screenshotUrl ?? null;
   const busy = loading || externalLoading;
 
@@ -59,10 +69,88 @@ export function FormResponsesPanel({
   }, [initialFields]);
 
   useEffect(() => {
+    let cancelled = false;
+    pingTailorSendExtension().then((ok) => {
+      if (!cancelled) setExtensionReady(ok);
+    });
+    const onReady = (event: MessageEvent) => {
+      if (event.source !== window) return;
+      if (event.data?.source === "tailorsend-extension" && event.data?.type === "READY") {
+        setExtensionReady(true);
+      }
+    };
+    window.addEventListener("message", onReady);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("message", onReady);
+    };
+  }, []);
+
+  useEffect(() => {
     return () => {
       if (preview) URL.revokeObjectURL(preview);
     };
   }, [preview]);
+
+  async function fillWithExtension() {
+    if (!applyPageUrl?.trim()) {
+      setError("No apply page URL for this job.");
+      return;
+    }
+    const copyable = fields.filter(isCopyableField);
+    if (copyable.length === 0) {
+      setError("Generate answers first, then fill with the extension.");
+      return;
+    }
+    setExtensionBusy(true);
+    setExtensionNote(null);
+    setError(null);
+    try {
+      let pdfs: Awaited<ReturnType<typeof buildExtensionPdfAttachments>> = {};
+      try {
+        pdfs = await buildExtensionPdfAttachments({
+          resumeMarkdown,
+          coverMarkdown,
+          companyName,
+          downloadSlug,
+        });
+      } catch (e) {
+        setExtensionNote(
+          `Could not build PDFs (${(e as Error).message}). Filling text fields only.`,
+        );
+      }
+      const res = await requestExtensionFill({
+        applicationId: applicationId ?? undefined,
+        applyUrl: applyPageUrl,
+        fields: copyable.map((f) => ({
+          label: f.label,
+          fieldType: f.fieldType,
+          answer: f.answer,
+        })),
+        ...pdfs,
+      });
+      if (!res.ok) {
+        setError(
+          res.error ||
+            "Could not reach the TailorSend Fill extension. Install it from /extension (Load unpacked).",
+        );
+        return;
+      }
+      const extras = [
+        res.uploadedResume ? "resume" : null,
+        res.uploadedCover ? "cover letter" : null,
+      ].filter(Boolean);
+      setExtensionNote(
+        res.filled
+          ? `Opened apply page and filled ${res.filledCount ?? 0} field(s)${
+              extras.length ? ` · attached ${extras.join(" & ")}` : ""
+            }. Review, then submit on the company site.`
+          : "Opened the apply page. If fields are empty, click Apply on that site, then use Re-fill in the extension popup.",
+      );
+    } finally {
+      setExtensionBusy(false);
+    }
+  }
 
   async function run(file?: File) {
     setLoading(true);
@@ -160,6 +248,23 @@ export function FormResponsesPanel({
           </div>
         )}
         <div className={`flex flex-wrap gap-2 ${embedded ? "ml-auto" : ""}`}>
+          {applyPageUrl && fields.some(isCopyableField) && (
+            <Button
+              disabled={busy || extensionBusy}
+              onClick={() => void fillWithExtension()}
+              title={
+                extensionReady
+                  ? "Open the company form and fill matching fields"
+                  : "Install the TailorSend Fill Chrome extension first"
+              }
+            >
+              {extensionBusy
+                ? "Preparing PDFs…"
+                : extensionReady
+                  ? "Fill with extension"
+                  : "Fill with extension (install)"}
+            </Button>
+          )}
           {(screenshotUrl || allowGenerateWithoutScreenshot) && (
             <Button variant="secondary" disabled={busy} onClick={() => run()}>
               {busy
@@ -204,6 +309,20 @@ export function FormResponsesPanel({
       {error && (
         <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
           {error}
+        </p>
+      )}
+      {extensionNote && !error && (
+        <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
+          {extensionNote}
+        </p>
+      )}
+      {!extensionReady && applyPageUrl && fields.some(isCopyableField) && (
+        <p className="text-xs text-slate-500">
+          Install the <strong>TailorSend Fill</strong> Chrome extension: open{" "}
+          <code className="text-[11px]">chrome://extensions</code>, enable
+          Developer mode, <strong>Load unpacked</strong>, select the repo’s{" "}
+          <code className="text-[11px]">extension/</code> folder, then refresh
+          this page.
         </p>
       )}
 

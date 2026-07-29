@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>TailorSend Fill</title>
+    <style>
+      body {
+        margin: 0;
+        width: 300px;
+        font: 13px/1.45 system-ui, -apple-system, sans-serif;
+        color: #0f172a;
+        background: #fff;
+      }
+      header {
+        padding: 14px 14px 10px;
+        border-bottom: 1px solid #e2e8f0;
+      }
+      h1 {
+        margin: 0;
+        font-size: 14px;
+        font-weight: 700;
+      }
+      p {
+        margin: 6px 0 0;
+        color: #64748b;
+        font-size: 12px;
+      }
+      main {
+        padding: 12px 14px 14px;
+      }
+      .ok {
+        color: #047857;
+        font-weight: 600;
+      }
+      .bad {
+        color: #b91c1c;
+        font-weight: 600;
+      }
+      button {
+        width: 100%;
+        margin-top: 10px;
+        border: 0;
+        border-radius: 8px;
+        background: #059669;
+        color: #fff;
+        font: 600 13px system-ui;
+        padding: 10px 12px;
+        cursor: pointer;
+      }
+      button.secondary {
+        background: #f1f5f9;
+        color: #0f172a;
+      }
+      button:disabled {
+        opacity: 0.55;
+        cursor: default;
+      }
+      ol {
+        margin: 8px 0 0;
+        padding-left: 18px;
+        color: #475569;
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>TailorSend Fill</h1>
+      <p id="status">Checking extension…</p>
+    </header>
+    <main>
+      <ol>
+        <li>Open an application in TailorSend</li>
+        <li>Click <strong>Fill with extension</strong></li>
+        <li>Review the company form and submit</li>
+      </ol>
+      <button id="refill" class="secondary" disabled>
+        Re-fill active tab
+      </button>
+      <button id="clear" class="secondary" disabled>Clear pending</button>
+    </main>
+    <script src="popup.js"></script>
+  </body>
+</html>

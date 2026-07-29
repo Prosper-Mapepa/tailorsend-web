@@ -10,6 +10,7 @@ import { jobLinkAutofillNotice } from "@/lib/apply/detect";
 import { apiFetch } from "@/lib/auth-client";
 import { parseUsageError } from "@/lib/billing/format";
 import { mdToHtml, prepareResumeMarkdown, type ResumeContact } from "@/lib/markdown";
+import { useTailorProgress } from "@/lib/tailor-progress";
 import type { Project } from "@/lib/types";
 
 type InputMode = "url" | "screenshots" | "text" | "format";
@@ -279,6 +280,7 @@ export default function TailorPage() {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<TailorWorkflowResult | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const tailorProgress = useTailorProgress(loading);
 
   function addFiles(list: FileList | null) {
     if (!list) return;
@@ -437,7 +439,7 @@ export default function TailorPage() {
                         size="lg"
                         className="h-11 shrink-0 sm:min-w-[7.25rem]"
                       >
-                        {loading ? "Working…" : "Tailor"}
+                        {loading ? tailorProgress?.label ?? "Working…" : "Tailor"}
                       </Button>
                     </div>
                   ) : mode === "text" ? (
@@ -451,7 +453,7 @@ export default function TailorPage() {
                       />
                       <div className="flex justify-end px-1 pb-1">
                         <Button onClick={run} disabled={!canSubmit} size="lg">
-                          {loading ? "Working…" : "Tailor"}
+                          {loading ? tailorProgress?.label ?? "Working…" : "Tailor"}
                         </Button>
                       </div>
                     </div>
@@ -499,7 +501,7 @@ export default function TailorPage() {
                       )}
                       <div className="flex justify-end">
                         <Button onClick={run} disabled={!canSubmit} size="lg">
-                          {loading ? "Working…" : "Tailor"}
+                          {loading ? tailorProgress?.label ?? "Working…" : "Tailor"}
                         </Button>
                       </div>
                     </div>
@@ -572,7 +574,8 @@ export default function TailorPage() {
 
                   {loading && (
                     <p className="text-sm font-medium text-emerald-700">
-                      Reading the role and writing your documents…
+                      {tailorProgress?.label ??
+                        "Reading the role and writing your documents…"}
                     </p>
                   )}
                   {error && <p className="text-sm text-red-700">{error}</p>}

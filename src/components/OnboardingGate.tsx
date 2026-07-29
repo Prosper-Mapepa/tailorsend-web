@@ -15,6 +15,7 @@ const HIDDEN_PATHS = [
   "/forgot-password",
   "/reset-password",
   "/auth/callback",
+  "/extension",
   "/terms",
   "/privacy",
   "/welcome",

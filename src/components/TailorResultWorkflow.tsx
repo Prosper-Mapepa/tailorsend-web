@@ -540,6 +540,12 @@ export function TailorResultWorkflow({
                 onAutofill={() => autofill(false)}
                 onPreview={() => autofill(true)}
                 applyUrl={applyUrl || null}
+                applicationId={id}
+                fields={formFields}
+                resumeMarkdown={resume}
+                coverMarkdown={cover}
+                downloadSlug={slug}
+                companyName={initial.job.company}
               />
 
               {(showAutofill || autofilling || autofillResult) &&
@@ -557,11 +563,11 @@ export function TailorResultWorkflow({
               <div>
                 <div className="mb-3">
                   <h3 className="text-sm font-semibold text-slate-900">
-                    Form answers backup
+                    Form answers
                   </h3>
                   <p className="mt-0.5 text-sm text-slate-500">
-                    Copy-paste helpers if auto-fill can&apos;t reach every
-                    field.
+                    Edit answers, then use <strong>Fill with extension</strong>{" "}
+                    — or copy-paste as a backup.
                   </p>
                 </div>
                 <FormResponsesPanel
@@ -572,6 +578,7 @@ export function TailorResultWorkflow({
                       : null
                   }
                   applyPageUrl={applyUrl || null}
+                  applicationId={id}
                   pageCaptureLoading={pageCapturing}
                   initialFields={formFields}
                   allowUpload

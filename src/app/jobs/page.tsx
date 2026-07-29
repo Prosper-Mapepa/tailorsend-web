@@ -17,6 +17,7 @@ import { supportsAutofill } from "@/lib/apply/detect";
 import type { DatePosted, VisaRisk } from "@/lib/types";
 import { visaRiskLabel } from "@/lib/visa";
 import { CompanyLogo } from "@/components/CompanyLogo";
+import { useTailorProgress, TAILOR_PROGRESS_STEPS } from "@/lib/tailor-progress";
 
 interface JobRow {
   id: string;
@@ -100,6 +101,8 @@ function JobCard({
   const app = job.applications[0];
   const posted = job.postedAt ? timeAgo(job.postedAt) : null;
   const canAutofill = supportsAutofill(job.applyUrl || job.url, job.atsPlatform);
+  const isTailoring = tailoringId === job.id;
+  const tailorProgress = useTailorProgress(isTailoring);
 
   return (
     <article className="flex h-full flex-col rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm transition hover:border-emerald-200 hover:shadow-md sm:p-5">
@@ -168,14 +171,40 @@ function JobCard({
             </Button>
           </Link>
         ) : (
-          <Button
-            size="md"
-            className="w-full"
-            loading={tailoringId === job.id}
-            onClick={() => onTailor(job.id)}
-          >
-            {tailoringId === job.id ? "Tailoring…" : "Tailor & prep"}
-          </Button>
+          <div className="space-y-2">
+            <Button
+              size="md"
+              className="w-full min-h-[2.75rem] whitespace-normal text-left leading-snug"
+              loading={isTailoring}
+              disabled={isTailoring}
+              onClick={() => onTailor(job.id)}
+            >
+              {isTailoring ? tailorProgress?.label ?? "Tailoring…" : "Tailor & prep"}
+            </Button>
+            {isTailoring && tailorProgress ? (
+              <div
+                className="flex items-center justify-center gap-1"
+                aria-hidden
+              >
+                {TAILOR_PROGRESS_STEPS.map((step, i) => {
+                  const done = i < tailorProgress.index;
+                  const active = i === tailorProgress.index;
+                  return (
+                    <span
+                      key={step}
+                      className={`h-1.5 w-1.5 rounded-full transition ${
+                        active
+                          ? "bg-emerald-600"
+                          : done
+                            ? "bg-emerald-300"
+                            : "bg-slate-200"
+                      }`}
+                    />
+                  );
+                })}
+              </div>
+            ) : null}
+          </div>
         )}
       </div>
     </article>

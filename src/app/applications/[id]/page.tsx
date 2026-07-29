@@ -636,6 +636,12 @@ export default function ApplicationDetailPage() {
               onAutofill={() => autofill(false)}
               onPreview={() => autofill(true)}
               applyUrl={applyUrl}
+              applicationId={id}
+              fields={formFields}
+              resumeMarkdown={resume}
+              coverMarkdown={cover}
+              downloadSlug={slug}
+              companyName={app.job.company}
             />
 
             {(showAutofill || autofilling || result) && !manualApply && (
@@ -652,10 +658,11 @@ export default function ApplicationDetailPage() {
             <div>
               <div className="mb-3">
                 <h3 className="text-sm font-semibold text-slate-900">
-                  Form answers backup
+                  Form answers
                 </h3>
                 <p className="mt-0.5 text-sm text-slate-500">
-                  Copy-paste helpers if auto-fill can&apos;t reach every field.
+                  Edit answers, then use <strong>Fill with extension</strong>{" "}
+                  above — or copy-paste as a backup.
                 </p>
               </div>
               <FormResponsesPanel
@@ -666,6 +673,7 @@ export default function ApplicationDetailPage() {
                     : null
                 }
                 applyPageUrl={applyUrl}
+                applicationId={id}
                 pageCaptureLoading={pageCapturing}
                 initialFields={formFields}
                 allowUpload
