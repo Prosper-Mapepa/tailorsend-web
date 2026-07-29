@@ -39,6 +39,16 @@ SMTP_PASS=
 SMTP_FROM=TailorSend <noreply@yourdomain.com>
 ```
 
+Google sign-in (API service — redirect URI must match Google Console):
+
+```
+GOOGLE_CLIENT_ID=<same as Web NEXT_PUBLIC_GOOGLE_CLIENT_ID>
+GOOGLE_CLIENT_SECRET=<from Google Cloud>
+GOOGLE_REDIRECT_URI=https://<your-api-service>.up.railway.app/api/auth/google/callback
+```
+
+When using custom domain `tailorsend.cc`, set `FRONTEND_URL` and `APP_URL` to `https://tailorsend.cc` (not the redirect URI; callback stays on the API host).
+
 Generate a public domain: **Settings → Networking → Generate Domain**.
 
 ### Web service
@@ -64,6 +74,12 @@ Optional:
 RAPIDAPI_KEY=
 GREENHOUSE_BOARDS=
 LEVER_BOARDS=
+```
+
+Google sign-in (Web service):
+
+```
+NEXT_PUBLIC_GOOGLE_CLIENT_ID=<from Google Cloud OAuth client>
 ```
 
 Generate a public domain for the Web service. Then update API `FRONTEND_URL` / `APP_URL` to that Web URL if you created API first.

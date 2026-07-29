@@ -9,9 +9,12 @@ import type { UsageSummary } from "@/lib/billing/usage-core";
 export function UsageWidget({
   compact = false,
   slim = false,
+  tone = "default",
 }: {
   compact?: boolean;
   slim?: boolean;
+  /** Muted styling for top nav (does not look like a primary nav item). */
+  tone?: "default" | "muted";
 }) {
   const [usage, setUsage] = useState<UsageSummary | null>(null);
 
@@ -28,13 +31,30 @@ export function UsageWidget({
   const plan = formatPlanLabel(usage.plan);
 
   if (compact) {
+    const muted = tone === "muted";
     return (
       <Link
         href="/billing"
-        className="inline-flex rounded-lg border border-emerald-200/80 bg-emerald-50/60 px-2.5 py-1 text-xs font-medium text-emerald-800 transition hover:bg-emerald-50 sm:px-3 sm:py-1.5"
-        title={`${plan} plan`}
+        className={
+          muted
+            ? "max-w-[min(100%,14rem)] truncate rounded-md px-2 py-1.5 text-xs text-slate-500 transition hover:bg-slate-100 hover:text-slate-800 sm:max-w-none"
+            : "inline-flex rounded-lg border border-emerald-200/80 bg-emerald-50/60 px-2.5 py-1 text-xs font-medium text-emerald-800 transition hover:bg-emerald-50 sm:px-3 sm:py-1.5"
+        }
+        title={`${plan} plan · ${label}`}
       >
-        {label}
+        {muted ? (
+          <>
+            <span className="font-medium text-slate-700">{plan}</span>
+            <span className="hidden text-slate-400 sm:inline"> · </span>
+            <span className="hidden sm:inline">{label}</span>
+            <span className="sm:hidden">
+              {" "}
+              · {usage.creditBalance > 0 ? `${usage.creditBalance} cr` : "Billing"}
+            </span>
+          </>
+        ) : (
+          label
+        )}
       </Link>
     );
   }

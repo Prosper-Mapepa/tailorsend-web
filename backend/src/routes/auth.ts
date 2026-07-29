@@ -4,13 +4,14 @@ import { config, isDev } from "../config.js";
 import { prisma } from "../db.js";
 import { sendPasswordResetEmail } from "../lib/email.js";
 import { hashPassword, validatePassword, verifyPassword } from "../lib/password.js";
-import { isAdminUser } from "../lib/admin-access.js";
 import {
   createSession,
   deleteSession,
   requireAuth,
 } from "../middleware/auth.js";
 import { generateToken, hashToken, resetExpiry } from "../lib/tokens.js";
+import { userPayload } from "./auth-shared.js";
+import googleAuthRoutes from "./google-auth.js";
 
 const router = Router();
 
@@ -33,16 +34,6 @@ const resetSchema = z.object({
   token: z.string().min(1),
   password: z.string().min(8),
 });
-
-function userPayload(user: { id: string; email: string; name: string; role: string }) {
-  return {
-    id: user.id,
-    email: user.email,
-    name: user.name,
-    role: user.role,
-    isAdmin: isAdminUser(user),
-  };
-}
 
 router.post("/register", async (req, res) => {
   const parsed = registerSchema.safeParse(req.body);
@@ -96,7 +87,10 @@ router.post("/login", async (req, res) => {
     where: { email: email.toLowerCase().trim() },
   });
 
-  if (!user || !(await verifyPassword(password, user.passwordHash))) {
+  if (
+    !user?.passwordHash ||
+    !(await verifyPassword(password, user.passwordHash))
+  ) {
     res.status(401).json({ error: "Invalid email or password." });
     return;
   }
@@ -200,5 +194,7 @@ router.post("/reset-password", async (req, res) => {
     user: userPayload(reset.user),
   });
 });
+
+router.use(googleAuthRoutes);
 
 export default router;

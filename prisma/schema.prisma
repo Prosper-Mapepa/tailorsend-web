@@ -14,7 +14,8 @@ model User {
   id           String   @id @default(cuid())
   email        String   @unique
   name         String   @default("")
-  passwordHash String
+  passwordHash String?
+  googleId     String?  @unique
   role         String   @default("user")
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt

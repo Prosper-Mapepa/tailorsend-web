@@ -5,6 +5,11 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Alert, Button, Input, Label } from "@/components/ui";
 import {
+  AuthDivider,
+  GoogleAuthButton,
+  isGoogleAuthEnabled,
+} from "@/components/GoogleAuthButton";
+import {
   requestPasswordReset,
   resetPassword,
   setStoredToken,
@@ -38,6 +43,8 @@ export function SignInForm() {
 
   return (
     <form onSubmit={onSubmit} className="space-y-5">
+      <GoogleAuthButton label="Continue with Google" />
+      {isGoogleAuthEnabled() && <AuthDivider />}
       <AuthError message={error} />
       <div>
         <Label htmlFor="email">Email</Label>
@@ -111,6 +118,8 @@ export function RegisterForm() {
 
   return (
     <form onSubmit={onSubmit} className="space-y-5">
+      <GoogleAuthButton label="Sign up with Google" />
+      {isGoogleAuthEnabled() && <AuthDivider />}
       <AuthError message={error} />
       <div>
         <Label htmlFor="name">Full name</Label>
@@ -136,9 +145,9 @@ export function RegisterForm() {
           onChange={(e) => setEmail(e.target.value)}
           className="mt-0"
         />
-        <p className="mt-2 text-xs text-emerald-600 font-semibold">
+        {/* <p className="mt-2 text-xs text-emerald-600 font-semibold">
           .edu emails unlock student pricing & extra free kits.
-        </p>
+        </p> */}
       </div>
       <div>
         <Label htmlFor="reg-password">Password</Label>

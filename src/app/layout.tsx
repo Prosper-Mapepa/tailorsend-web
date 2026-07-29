@@ -4,6 +4,7 @@ import "./globals.css";
 import { Nav } from "@/components/Nav";
 import { OnboardingGate } from "@/components/OnboardingGate";
 import { AuthProvider } from "@/contexts/AuthProvider";
+import { SITE_LOGO_PATH } from "@/lib/brand";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -27,6 +28,10 @@ export const metadata: Metadata = {
   title: "TailorSend — tailor resumes & send applications",
   description:
     "Find target roles, tailor your resume & cover letter with AI, and auto-fill applications for human review.",
+  icons: {
+    icon: SITE_LOGO_PATH,
+    apple: SITE_LOGO_PATH,
+  },
 };
 
 export default function RootLayout({

@@ -30,6 +30,13 @@ export const config = {
     pass: process.env.SMTP_PASS ?? "",
     from: process.env.SMTP_FROM ?? "TailorSend <noreply@localhost>",
   },
+  google: {
+    clientId: process.env.GOOGLE_CLIENT_ID ?? "",
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
+    redirectUri:
+      process.env.GOOGLE_REDIRECT_URI ??
+      `${normalizeOrigin(process.env.APP_URL ?? process.env.FRONTEND_URL, "http://localhost:3000")}/api/auth/google/callback`,
+  },
 };
 
 export function isDev(): boolean {
