@@ -1,6 +1,10 @@
 "use client";
 
 import { Button } from "@/components/ui";
+import {
+  openCompanyApplyTab,
+  shouldOpenApplyTabForUser,
+} from "@/lib/apply/open-apply-tab";
 
 /** Hero CTA for the Apply step — primary autofill + secondary helpers. */
 export function AutofillHero({
@@ -18,6 +22,19 @@ export function AutofillHero({
   onPreview: () => void;
   applyUrl?: string | null;
 }) {
+  const openUserTab = shouldOpenApplyTabForUser();
+
+  function startAutofill() {
+    // Must run before any await so the popup is not blocked.
+    if (openUserTab && applyUrl) openCompanyApplyTab(applyUrl);
+    onAutofill();
+  }
+
+  function startPreview() {
+    if (openUserTab && applyUrl) openCompanyApplyTab(applyUrl);
+    onPreview();
+  }
+
   return (
     <div className="overflow-hidden rounded-2xl border border-emerald-200/80 bg-gradient-to-br from-emerald-50 via-white to-green-50/80 shadow-sm">
       <div className="flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:justify-between sm:gap-8 sm:p-6">
@@ -30,9 +47,20 @@ export function AutofillHero({
             Auto-fill application
           </h3>
           <p className="mt-1.5 max-w-lg text-sm leading-relaxed text-slate-600">
-            Opens the company apply page in a new tab and fills fields on the
-            server. Use that tab to review and submit — plus the form-answers
-            backup below if anything was missed.
+            {openUserTab ? (
+              <>
+                Opens the company apply page in a <strong>new tab</strong>, then
+                prepares answers on our servers. Use that tab to paste from the
+                answers list and submit — we cannot control your browser from the
+                cloud.
+              </>
+            ) : (
+              <>
+                Opens Google Chrome on this Mac and fills the form for you to
+                review and submit. Use Preview only for a screenshot without a
+                visible window.
+              </>
+            )}
           </p>
           {disabled && disabledReason && (
             <p className="mt-2 text-sm font-medium text-amber-700">
@@ -44,7 +72,7 @@ export function AutofillHero({
         <div className="flex w-full shrink-0 flex-col gap-2.5 sm:w-auto sm:min-w-[15rem]">
           <Button
             size="lg"
-            onClick={onAutofill}
+            onClick={startAutofill}
             disabled={disabled || busy}
             className="w-full bg-emerald-600 px-6 text-base shadow-lg shadow-emerald-600/30 hover:bg-emerald-500"
           >
@@ -65,7 +93,7 @@ export function AutofillHero({
               variant="secondary"
               size="sm"
               className="flex-1"
-              onClick={onPreview}
+              onClick={startPreview}
               disabled={disabled || busy}
             >
               Preview only

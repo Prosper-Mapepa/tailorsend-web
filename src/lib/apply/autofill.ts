@@ -2086,7 +2086,7 @@ export async function autofillApplication(
     if (effectiveHeadless) {
       await browser.close();
       const previewNote =
-        "Filled in a background browser (see screenshot). Your browser tab was not filled — open the company apply page and copy answers from the list below.";
+        "Answers were prepared on our server (see screenshot). Use the apply tab we opened — paste from Form answers below, then submit.";
       return {
         ok,
         filledFields,

@@ -211,7 +211,7 @@ export function AutofillPanel({
           </div>
         )}
 
-        {isComplete && data?.awaitingHumanSubmit && (
+        {isComplete && data?.awaitingHumanSubmit && !data?.filledInHeadlessPreview && (
           <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
             Review the <strong>Chrome window we opened</strong> (that form is
             filled — screenshot matches it), then click <strong>Complete</strong>{" "}
@@ -222,18 +222,18 @@ export function AutofillPanel({
         {isComplete && data?.filledInHeadlessPreview && (
           <div className="space-y-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950">
             <p>
-              Screenshot shows a <strong>preview fill</strong> from our server —
-              not your browser tab. Copy answers from the list below into the
-              company apply page, then click <strong>Complete</strong>.
+              <strong>Your apply tab is open</strong> (or use the link below).
+              Answers were prepared on our server — paste them into that tab from
+              the list below, then click <strong>Complete</strong>.
             </p>
             {applyUrl ? (
               <a
                 href={applyUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex font-medium text-amber-900 underline underline-offset-2"
+                className="inline-flex font-semibold text-amber-900 underline underline-offset-2"
               >
-                Open company apply page →
+                Open / focus company apply page →
               </a>
             ) : null}
           </div>
@@ -251,7 +251,7 @@ export function AutofillPanel({
         {!isComplete && !inProgress && data && (
           <p className="text-xs text-slate-500">
             {data.filledInHeadlessPreview
-              ? "Preview fill only — copy answers into the company site. Multi-step? Click Continue Autofill after advancing the form."
+              ? "Server prepared answers — paste into your open apply tab. Multi-step? Click Continue Autofill after advancing the form."
               : needsMorePasses
               ? `Multi-step form — advanced through ${data.stepsAdvanced ?? data.passes} step(s). Click Continue Autofill to fill remaining pages.`
               : data.verified
@@ -280,7 +280,7 @@ export function AutofillPanel({
               <span>Chrome left open for review (matches screenshot)</span>
             )}
             {data.filledInHeadlessPreview && (
-              <span>Preview fill — copy into company site</span>
+              <span>Answers ready — paste into your apply tab</span>
             )}
           </div>
         )}

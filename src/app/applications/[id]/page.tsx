@@ -470,10 +470,8 @@ export default function ApplicationDetailPage() {
   }, [guideStep, statusHighlight]);
 
   async function autofill(headless: boolean, continueSession = false) {
-    // Do not open a blank apply tab up front — that tab stayed empty while
-    // Playwright filled a different browser (screenshot looked filled).
-    // Headed: review the Chrome window we open. Headless: open apply page after
-    // fill so you can copy answers from the panel / screenshot.
+    // Production: AutofillHero opens the apply tab on click (user gesture).
+    // Local headed: Playwright opens Chrome with the filled form.
 
     if (dirty) await saveDocs();
     setAutofilling(true);

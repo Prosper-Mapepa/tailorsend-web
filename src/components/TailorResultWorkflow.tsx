@@ -360,8 +360,8 @@ export function TailorResultWorkflow({
   }
 
   async function autofill(headless: boolean, continueSession = false) {
-    // Don't open a blank tab first — Playwright fills a different browser.
-    // Open the company page only after a headless preview fill.
+    // Production: AutofillHero opens the apply tab on click (user gesture).
+    // Local headed: Playwright opens Chrome with the filled form.
 
     if (dirty) await saveDocs();
     setAutofilling(true);
