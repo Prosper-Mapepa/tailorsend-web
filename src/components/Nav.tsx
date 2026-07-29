@@ -35,7 +35,7 @@ function isActive(pathname: string, href: string) {
 }
 
 function navItemClass(active: boolean) {
-  return `flex items-center border-b-2 px-3 py-3.5 text-sm transition-colors outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 focus-visible:ring-offset-2 ${
+  return `flex items-center border-b-2 px-2.5 py-3.5 text-sm transition-colors outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 focus-visible:ring-offset-2 lg:px-3 ${
     active
       ? "border-emerald-600 font-semibold text-emerald-800"
       : "border-transparent font-medium text-slate-600 hover:border-slate-200 hover:text-slate-900"
@@ -116,11 +116,11 @@ function UserMenu({
         className="flex items-center gap-2 rounded-xl border border-transparent py-1 pl-1 pr-2 transition outline-none hover:border-slate-200 hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-emerald-500/40"
       >
         <UserAvatar name={name} email={email} />
-        <span className="hidden max-w-[120px] truncate text-sm text-slate-700 sm:inline">
+        <span className="hidden max-w-[7rem] truncate text-sm text-slate-700 lg:inline xl:max-w-[9rem]">
           {name || email.split("@")[0]}
         </span>
         <svg
-          className={`hidden h-4 w-4 text-slate-400 transition sm:block ${open ? "rotate-180" : ""}`}
+          className={`hidden h-4 w-4 text-slate-400 transition lg:block ${open ? "rotate-180" : ""}`}
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -191,16 +191,16 @@ export function Nav() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/95 backdrop-blur-md">
-      <div className="relative mx-auto flex h-14 w-full max-w-6xl items-stretch px-4 sm:px-6">
-        <div className="relative z-10 flex shrink-0 items-center">
+      <div className="mx-auto grid h-14 w-full max-w-6xl grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-stretch gap-2 px-4 sm:gap-3 sm:px-6">
+        <div className="flex min-w-0 items-center justify-self-start">
           <SiteLogo size="sm" variant="light" hideNameBelow="md" />
         </div>
 
         <nav
-          className="pointer-events-none absolute inset-x-4 top-0 hidden h-14 items-stretch justify-center md:flex sm:inset-x-6"
+          className="hidden items-stretch justify-self-center md:flex"
           aria-label="Main"
         >
-          <div className="pointer-events-auto flex items-stretch">
+          <div className="flex items-stretch">
             {MAIN_LINKS.map((l) => (
               <NavLink
                 key={l.href}
@@ -212,15 +212,15 @@ export function Nav() {
           </div>
         </nav>
 
-        <div className="relative z-10 ml-auto flex items-center gap-1 sm:gap-2">
+        <div className="flex min-w-0 items-center justify-end justify-self-end gap-1 sm:gap-2">
           {!loading && user && (
             <>
               <UsageNavMenu />
               <span
-                className="hidden h-5 w-px bg-slate-200 md:block"
+                className="hidden h-5 w-px shrink-0 bg-slate-200 md:block"
                 aria-hidden
               />
-              <div className="hidden md:block">
+              <div className="hidden min-w-0 md:block">
                 <UserMenu
                   name={user.name}
                   email={user.email}

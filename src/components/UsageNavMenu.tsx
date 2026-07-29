@@ -97,17 +97,18 @@ export function UsageNavMenu() {
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
         aria-haspopup="dialog"
-        className="flex max-w-[11rem] items-center gap-1.5 rounded-xl border border-transparent py-1 pl-2.5 pr-2 text-left transition outline-none hover:border-slate-200 hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-emerald-500/40 lg:max-w-none"
+        title={`${plan} · ${hint}`}
+        className="flex max-w-[9.5rem] items-center gap-1 rounded-xl border border-transparent py-1 pl-2 pr-1.5 text-left transition outline-none hover:border-slate-200 hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-emerald-500/40 xl:max-w-[14rem]"
       >
         <span className="truncate text-sm font-medium text-slate-800">{plan}</span>
-        <span className="hidden text-slate-300 lg:inline" aria-hidden>
+        <span className="hidden text-slate-300 xl:inline" aria-hidden>
           ·
         </span>
-        <span className="hidden truncate text-sm text-slate-500 lg:inline">
+        <span className="hidden truncate text-sm text-slate-500 xl:inline">
           {hint}
         </span>
         <svg
-          className={`ml-0.5 h-4 w-4 shrink-0 text-slate-400 transition ${open ? "rotate-180" : ""}`}
+          className={`h-4 w-4 shrink-0 text-slate-400 transition ${open ? "rotate-180" : ""}`}
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
