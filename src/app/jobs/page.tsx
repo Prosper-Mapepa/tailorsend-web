@@ -58,6 +58,9 @@ const DATE_OPTIONS: { id: DatePosted; label: string }[] = [
 
 const field = inputClass;
 
+const ROLE_PREVIEW = 4;
+const BOARD_PREVIEW = 6;
+
 function timeAgo(iso: string | null): string {
   if (!iso) return "";
   const d = new Date(iso).getTime();
@@ -199,6 +202,8 @@ export default function JobsPage() {
   const [page, setPage] = useState(1);
   const [jobTab, setJobTab] = useState<JobListTab>("autofill");
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [rolesExpanded, setRolesExpanded] = useState(false);
+  const [boardsExpanded, setBoardsExpanded] = useState(false);
   const router = useRouter();
   const [targetRoles, setTargetRoles] = useState<string[]>([]);
   const [jobBoards, setJobBoards] = useState<
@@ -393,76 +398,123 @@ export default function JobsPage() {
         )}
       </header>
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+      <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm sm:p-5">
         {(targetRoles.length > 0 || jobBoards.length > 0) && (
-          <div className="mb-4 space-y-2">
+          <div className="mb-4 divide-y divide-slate-100 rounded-xl border border-slate-100 bg-slate-50/40">
             {targetRoles.length > 0 && (
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs font-medium text-slate-400">Roles</span>
-                {targetRoles.map((t) => (
-                  <button
-                    key={t}
-                    type="button"
-                    onClick={() => setQuery(t)}
-                    className="rounded-lg bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-900 ring-1 ring-emerald-100 hover:bg-emerald-100"
-                  >
-                    {t}
-                  </button>
-                ))}
+              <div className="flex items-start gap-3 px-3 py-2.5 sm:px-4">
+                <div className="min-w-0 flex-1">
+                  <div className="mb-1.5 flex items-center gap-2">
+                    <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                      Roles
+                    </span>
+                    <span className="rounded-md bg-white px-1.5 py-0.5 text-[11px] font-medium tabular-nums text-slate-600 ring-1 ring-slate-200/80">
+                      {targetRoles.length}
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {(rolesExpanded
+                      ? targetRoles
+                      : targetRoles.slice(0, ROLE_PREVIEW)
+                    ).map((t) => (
+                      <button
+                        key={t}
+                        type="button"
+                        onClick={() => setQuery(t)}
+                        className="rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-900 ring-1 ring-emerald-100/80 transition hover:bg-emerald-100"
+                      >
+                        {t}
+                      </button>
+                    ))}
+                    {targetRoles.length > ROLE_PREVIEW && (
+                      <button
+                        type="button"
+                        onClick={() => setRolesExpanded((o) => !o)}
+                        className="rounded-md px-2 py-0.5 text-xs font-medium text-slate-500 hover:bg-white hover:text-slate-800"
+                      >
+                        {rolesExpanded
+                          ? "Show less"
+                          : `+${targetRoles.length - ROLE_PREVIEW} more`}
+                      </button>
+                    )}
+                  </div>
+                </div>
                 <Link
                   href="/profile#roles"
-                  className="text-xs font-medium text-emerald-700 hover:underline"
+                  className="shrink-0 pt-0.5 text-xs font-semibold text-emerald-700 hover:text-emerald-800"
                 >
                   Edit
                 </Link>
               </div>
             )}
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs font-medium text-slate-400">
-                Boards
-              </span>
-              {jobBoards.length === 0 ? (
-                <span className="text-xs text-slate-400">
-                  None — add company career sites for your field
-                </span>
-              ) : (
-                jobBoards.map((b) => (
-                  <span
-                    key={b.input}
-                    className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700 ring-1 ring-slate-200"
-                    title={b.input}
-                  >
-                    {b.label.trim() || b.input}
+
+            <div className="flex items-start gap-3 px-3 py-2.5 sm:px-4">
+              <div className="min-w-0 flex-1">
+                <div className="mb-1.5 flex items-center gap-2">
+                  <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                    Boards
                   </span>
-                ))
-              )}
+                  <span className="rounded-md bg-white px-1.5 py-0.5 text-[11px] font-medium tabular-nums text-slate-600 ring-1 ring-slate-200/80">
+                    {jobBoards.length}
+                  </span>
+                </div>
+                {jobBoards.length === 0 ? (
+                  <p className="text-xs text-slate-500">
+                    None yet — add company career sites for your field.
+                  </p>
+                ) : (
+                  <div className="flex flex-wrap gap-1.5">
+                    {(boardsExpanded
+                      ? jobBoards
+                      : jobBoards.slice(0, BOARD_PREVIEW)
+                    ).map((b) => (
+                      <span
+                        key={b.input}
+                        className="max-w-[10rem] truncate rounded-md bg-white px-2 py-0.5 text-xs text-slate-700 ring-1 ring-slate-200/70"
+                        title={b.input}
+                      >
+                        {b.label.trim() || b.input}
+                      </span>
+                    ))}
+                    {jobBoards.length > BOARD_PREVIEW && (
+                      <button
+                        type="button"
+                        onClick={() => setBoardsExpanded((o) => !o)}
+                        className="rounded-md px-2 py-0.5 text-xs font-medium text-slate-500 hover:bg-white hover:text-slate-800"
+                      >
+                        {boardsExpanded
+                          ? "Show less"
+                          : `+${jobBoards.length - BOARD_PREVIEW} more`}
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
               <Link
                 href="/profile#boards"
-                className="text-xs font-medium text-emerald-700 hover:underline"
+                className="shrink-0 pt-0.5 text-xs font-semibold text-emerald-700 hover:text-emerald-800"
               >
-                {jobBoards.length ? "Edit" : "Add sites"}
+                {jobBoards.length ? "Edit" : "Add"}
               </Link>
             </div>
           </div>
         )}
+
         {targetRoles.length === 0 && jobBoards.length === 0 && (
-          <div className="mb-4 flex flex-wrap items-center gap-2 text-xs text-slate-500">
-            <span>
-              Tip: add{" "}
-              <Link
-                href="/profile#boards"
-                className="font-medium text-emerald-700 hover:underline"
-              >
-                job boards &amp; companies
-              </Link>{" "}
-              on your profile so Scan targets the right employers for your
-              profession.
-            </span>
-          </div>
+          <p className="mb-4 text-xs leading-relaxed text-slate-500">
+            Tip: add{" "}
+            <Link
+              href="/profile#boards"
+              className="font-medium text-emerald-700 hover:underline"
+            >
+              job boards &amp; companies
+            </Link>{" "}
+            on your profile so Scan targets the right employers.
+          </p>
         )}
 
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-          <div className="grid min-w-0 flex-1 grid-cols-1 gap-3 sm:grid-cols-2">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-stretch">
+          <div className="grid min-w-0 flex-1 grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3">
             <input
               className={field}
               placeholder="Role keywords"
@@ -486,13 +538,13 @@ export default function JobsPage() {
             onClick={runSearch}
             disabled={searching}
             size="lg"
-            className="shrink-0 lg:min-w-[9rem]"
+            className="shrink-0 sm:min-w-[8.5rem]"
           >
             {searching ? "Scanning…" : "Scan jobs"}
           </Button>
         </div>
 
-        <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-slate-600">
+        <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-slate-100 pt-3 text-sm text-slate-600">
           <label className="flex items-center gap-1.5">
             <input
               type="checkbox"
@@ -509,7 +561,7 @@ export default function JobsPage() {
             />
             Full-time
           </label>
-          <label className="flex items-center gap-1.5 font-medium text-emerald-900">
+          <label className="flex items-center gap-1.5">
             <input
               type="checkbox"
               checked={sponsorshipFriendly}
@@ -520,9 +572,9 @@ export default function JobsPage() {
           <button
             type="button"
             onClick={() => setFiltersOpen((o) => !o)}
-            className="text-xs font-medium text-slate-500 hover:text-slate-800"
+            className="ml-auto text-xs font-medium text-slate-500 hover:text-slate-800"
           >
-            {filtersOpen ? "Less" : "More filters"}
+            {filtersOpen ? "Less filters" : "More filters"}
           </button>
         </div>
 
