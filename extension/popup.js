@@ -1,6 +1,7 @@
 const statusEl = document.getElementById("status");
 const refillBtn = document.getElementById("refill");
 const clearBtn = document.getElementById("clear");
+const stepsEl = document.getElementById("steps");
 
 async function load() {
   const ping = await chrome.runtime.sendMessage({ type: "TAILORSEND_PING" });
@@ -8,34 +9,43 @@ async function load() {
     type: "TAILORSEND_GET_PENDING",
   });
   const pending = pendingRes?.pending;
+
   if (ping?.ok) {
-    statusEl.textContent = pending
-      ? `Ready · ${pending.fields?.length ?? 0} answers queued`
-      : `Installed v${ping.version} · waiting for TailorSend`;
-    statusEl.className = "ok";
+    if (pending) {
+      statusEl.textContent = `Ready · ${pending.fields?.length ?? 0} answers queued`;
+      statusEl.className = "ok";
+    } else if (ping.signedIn) {
+      statusEl.textContent = `Connected v${ping.version} · open an apply page`;
+      statusEl.className = "ok";
+    } else {
+      statusEl.textContent = `Installed v${ping.version} · sign in at tailorsend.cc`;
+      statusEl.className = "bad";
+    }
   } else {
     statusEl.textContent = "Extension not responding";
     statusEl.className = "bad";
   }
-  refillBtn.disabled = !pending;
+
+  if (stepsEl) {
+    stepsEl.innerHTML = ping?.signedIn
+      ? `<li>Open a company apply form — the TailorSend panel appears automatically</li>
+         <li>Click <strong>Fill this form</strong> on the panel</li>
+         <li>Review everything and submit on the company site</li>`
+      : `<li>Install this extension, then sign in at <strong>tailorsend.cc</strong></li>
+         <li>Open an apply page — the panel appears in the corner</li>
+         <li>Click <strong>Fill this form</strong>, review, then submit</li>`;
+  }
+
+  refillBtn.disabled = false;
   clearBtn.disabled = !pending;
 }
 
 refillBtn.addEventListener("click", async () => {
-  const pendingRes = await chrome.runtime.sendMessage({
-    type: "TAILORSEND_GET_PENDING",
-  });
-  const pending = pendingRes?.pending;
-  if (!pending) return;
   refillBtn.disabled = true;
   refillBtn.textContent = "Filling…";
   const res = await chrome.runtime.sendMessage({
     type: "TAILORSEND_FILL_ACTIVE_TAB",
-    payload: {
-      fields: pending.fields,
-      resumePdf: pending.resumePdf || null,
-      coverPdf: pending.coverPdf || null,
-    },
+    payload: {},
   });
   const bits = [];
   if (res?.filledCount) bits.push(`${res.filledCount} fields`);

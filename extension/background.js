@@ -1,13 +1,28 @@
 /** @typedef {{ label: string; fieldType: string; answer: string }} FormField */
 /** @typedef {{ filename: string; base64: string; mimeType?: string }} PdfAttachment */
 
-const STORAGE_KEY = "tailorsendPendingFill";
+const PENDING_KEY = "tailorsendPendingFill";
+const AUTH_KEY = "tailorsendAuth";
+const DEFAULT_API_BASE = "https://tailorsend.cc";
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (!message || typeof message !== "object") return;
 
   if (message.type === "TAILORSEND_PING") {
-    sendResponse({ ok: true, version: chrome.runtime.getManifest().version });
+    getAuth().then((auth) => {
+      sendResponse({
+        ok: true,
+        version: chrome.runtime.getManifest().version,
+        signedIn: Boolean(auth?.token),
+      });
+    });
+    return true;
+  }
+
+  if (message.type === "TAILORSEND_AUTH_SYNC") {
+    syncAuth(message.payload)
+      .then((result) => sendResponse(result))
+      .catch((err) => sendResponse({ ok: false, error: err?.message || String(err) }));
     return true;
   }
 
@@ -29,30 +44,251 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     return true;
   }
 
+  if (message.type === "TAILORSEND_MATCH_PAGE") {
+    matchPage(message.payload?.url)
+      .then((result) => sendResponse(result))
+      .catch((err) =>
+        sendResponse({ ok: false, error: err?.message || String(err) }),
+      );
+    return true;
+  }
+
+  if (message.type === "TAILORSEND_FILL_APPLICATION") {
+    fillApplicationOnActiveTab(message.payload)
+      .then((result) => sendResponse(result))
+      .catch((err) =>
+        sendResponse({ ok: false, error: err?.message || String(err) }),
+      );
+    return true;
+  }
+
   if (message.type === "TAILORSEND_GET_PENDING") {
-    chrome.storage.session.get(STORAGE_KEY).then((data) => {
-      sendResponse({ ok: true, pending: data[STORAGE_KEY] ?? null });
+    chrome.storage.session.get(PENDING_KEY).then((data) => {
+      sendResponse({ ok: true, pending: data[PENDING_KEY] ?? null });
     });
     return true;
   }
 
   if (message.type === "TAILORSEND_CLEAR_PENDING") {
-    chrome.storage.session.remove(STORAGE_KEY).then(() => sendResponse({ ok: true }));
+    chrome.storage.session.remove(PENDING_KEY).then(() => sendResponse({ ok: true }));
     return true;
   }
 
   return false;
 });
 
+async function getAuth() {
+  const data = await chrome.storage.local.get(AUTH_KEY);
+  return data[AUTH_KEY] || null;
+}
+
+async function syncAuth(payload) {
+  const token = String(payload?.token || "").trim() || null;
+  const apiBase = String(payload?.apiBase || DEFAULT_API_BASE).replace(/\/$/, "") || DEFAULT_API_BASE;
+  if (!token) {
+    await chrome.storage.local.remove(AUTH_KEY);
+    return { ok: true, signedIn: false };
+  }
+  await chrome.storage.local.set({
+    [AUTH_KEY]: { token, apiBase, syncedAt: Date.now() },
+  });
+  return { ok: true, signedIn: true, apiBase };
+}
+
+async function apiFetch(path, init = {}) {
+  const auth = await getAuth();
+  if (!auth?.token) {
+    const err = new Error("Sign in at tailorsend.cc to connect the extension.");
+    err.code = "AUTH";
+    throw err;
+  }
+  const base = auth.apiBase || DEFAULT_API_BASE;
+  const headers = new Headers(init.headers || {});
+  headers.set("Authorization", `Bearer ${auth.token}`);
+  if (init.body && !headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
+  const res = await fetch(`${base}${path}`, { ...init, headers });
+  if (res.status === 401) {
+    const err = new Error("Session expired. Sign in again at tailorsend.cc.");
+    err.code = "AUTH";
+    throw err;
+  }
+  return res;
+}
+
+async function matchPage(pageUrl) {
+  const url = String(pageUrl || "").trim();
+  if (!url) return { ok: false, error: "Missing page URL." };
+
+  const auth = await getAuth();
+  if (!auth?.token) {
+    return {
+      ok: false,
+      auth: false,
+      error: "Sign in at tailorsend.cc (this extension syncs automatically).",
+    };
+  }
+
+  const res = await apiFetch(`/api/applications/match?url=${encodeURIComponent(url)}`);
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    return {
+      ok: false,
+      auth: true,
+      error: data.error || `Match failed (${res.status})`,
+    };
+  }
+  return {
+    ok: true,
+    auth: true,
+    matches: data.matches || [],
+    best: data.best || null,
+  };
+}
+
 /**
- * @param {{
- *   applicationId?: string;
- *   applyUrl: string;
- *   fields: FormField[];
- *   resumePdf?: PdfAttachment;
- *   coverPdf?: PdfAttachment;
- * }} payload
+ * Overlay: fill the current tab from a TailorSend application id.
  */
+async function fillApplicationOnActiveTab(payload) {
+  const applicationId = String(payload?.applicationId || "").trim();
+  if (!applicationId) return { ok: false, error: "No application selected." };
+
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  if (!tab?.id) return { ok: false, error: "No active tab." };
+
+  const pack = await loadFillPack(applicationId);
+  await storePending({
+    applicationId,
+    applyUrl: payload?.pageUrl || tab.url || pack.applyUrl,
+    fields: pack.fields,
+    resumePdf: pack.resumePdf,
+    coverPdf: pack.coverPdf,
+    createdAt: Date.now(),
+  });
+
+  const fillResult = await tryFillTab(
+    tab.id,
+    pack.fields,
+    pack.resumePdf,
+    pack.coverPdf,
+    5,
+  );
+
+  return {
+    ok: Boolean(fillResult?.ok),
+    filled: Boolean(fillResult?.ok),
+    filledCount: fillResult?.filledCount ?? 0,
+    skippedCount: fillResult?.skippedCount ?? 0,
+    uploadedResume: Boolean(fillResult?.uploadedResume),
+    uploadedCover: Boolean(fillResult?.uploadedCover),
+    error: fillResult?.error,
+  };
+}
+
+async function loadFillPack(applicationId) {
+  const res = await apiFetch(`/api/applications/${applicationId}/fill-pack`);
+  const pack = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(pack.error || "Could not load application.");
+  }
+
+  const fields = Array.isArray(pack.fields) ? pack.fields : [];
+  const copyable = fields.filter(
+    (f) =>
+      f &&
+      String(f.fieldType || "").toLowerCase() !== "file" &&
+      String(f.answer || "").trim(),
+  );
+
+  const company = pack.company || "Application";
+  const slug =
+    String(company)
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "") || "application";
+
+  let resumePdf = null;
+  let coverPdf = null;
+  if (String(pack.resumeMarkdown || "").trim()) {
+    resumePdf = await buildPdfAttachment({
+      markdown: pack.resumeMarkdown,
+      title: `Resume — ${company}`,
+      filename: `resume-${slug}.pdf`,
+      kind: "resume",
+    });
+  }
+  if (String(pack.coverMarkdown || "").trim()) {
+    coverPdf = await buildPdfAttachment({
+      markdown: pack.coverMarkdown,
+      title: `Cover letter — ${company}`,
+      filename: `cover-letter-${slug}.pdf`,
+      kind: "cover",
+    });
+  }
+
+  return {
+    applyUrl: pack.applyUrl || "",
+    fields: copyable.map((f) => ({
+      label: f.label,
+      fieldType: f.fieldType,
+      answer: f.answer,
+    })),
+    resumePdf,
+    coverPdf,
+  };
+}
+
+async function buildPdfAttachment({ markdown, title, filename, kind }) {
+  const res = await apiFetch("/api/tailor/pdf", {
+    method: "POST",
+    body: JSON.stringify({ markdown, title, filename, kind }),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.error || "PDF generation failed.");
+  }
+  const buf = await res.arrayBuffer();
+  const bytes = new Uint8Array(buf);
+  let binary = "";
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
+  }
+  return {
+    filename,
+    base64: btoa(binary),
+    mimeType: "application/pdf",
+  };
+}
+
+async function storePending(pending) {
+  try {
+    await chrome.storage.session.set({ [PENDING_KEY]: pending });
+  } catch {
+    await chrome.storage.session.set({
+      [PENDING_KEY]: {
+        applicationId: pending.applicationId,
+        applyUrl: pending.applyUrl,
+        fields: pending.fields,
+        createdAt: pending.createdAt,
+      },
+    });
+  }
+}
+
+function normalizePdf(pdf) {
+  if (!pdf || typeof pdf !== "object") return null;
+  const filename = String(pdf.filename || "").trim();
+  const base64 = String(pdf.base64 || "").trim();
+  if (!filename || !base64) return null;
+  return {
+    filename,
+    base64,
+    mimeType: String(pdf.mimeType || "").trim() || "application/pdf",
+  };
+}
+
 async function handleFillRequest(payload) {
   const applyUrl = String(payload?.applyUrl || "").trim();
   const fields = Array.isArray(payload?.fields) ? payload.fields : [];
@@ -69,38 +305,23 @@ async function handleFillRequest(payload) {
     };
   }
 
-  const pending = {
+  await storePending({
     applicationId: payload.applicationId || null,
     applyUrl,
     fields,
     resumePdf,
     coverPdf,
     createdAt: Date.now(),
-  };
-
-  try {
-    await chrome.storage.session.set({ [STORAGE_KEY]: pending });
-  } catch {
-    // PDFs can exceed session quota; keep a slim pending for re-fill of text fields.
-    await chrome.storage.session.set({
-      [STORAGE_KEY]: {
-        applicationId: pending.applicationId,
-        applyUrl,
-        fields,
-        createdAt: pending.createdAt,
-      },
-    });
-  }
+  });
 
   const tab = await chrome.tabs.create({ url: applyUrl, active: true });
-
   const tabId = tab.id;
   if (tabId == null) {
     return { ok: true, opened: true, filled: false };
   }
 
-  await wait(1800);
-  const fillResult = await tryFillTab(tabId, fields, resumePdf, coverPdf, 6);
+  await wait(2200);
+  const fillResult = await tryFillTab(tabId, fields, resumePdf, coverPdf, 8);
 
   return {
     ok: true,
@@ -114,17 +335,9 @@ async function handleFillRequest(payload) {
   };
 }
 
-/**
- * Re-run fill on the current active tab using pending (or provided) fields.
- * @param {{
- *   fields?: FormField[];
- *   resumePdf?: PdfAttachment;
- *   coverPdf?: PdfAttachment;
- * } | undefined} payload
- */
 async function handleFillActiveTab(payload) {
-  const stored = await chrome.storage.session.get(STORAGE_KEY);
-  const pending = stored[STORAGE_KEY];
+  const stored = await chrome.storage.session.get(PENDING_KEY);
+  const pending = stored[PENDING_KEY];
   const fields =
     (Array.isArray(payload?.fields) && payload.fields.length
       ? payload.fields
@@ -135,6 +348,17 @@ async function handleFillActiveTab(payload) {
     normalizePdf(payload?.coverPdf) || normalizePdf(pending?.coverPdf);
 
   if (!fields.length && !resumePdf && !coverPdf) {
+    // Fallback: match current tab to TailorSend apps
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (tab?.url && tab.id != null) {
+      const matched = await matchPage(tab.url);
+      if (matched.ok && matched.best?.id) {
+        return fillApplicationOnActiveTab({
+          applicationId: matched.best.id,
+          pageUrl: tab.url,
+        });
+      }
+    }
     return { ok: false, error: "No pending TailorSend answers to fill." };
   }
 
@@ -143,7 +367,7 @@ async function handleFillActiveTab(payload) {
     return { ok: false, error: "No active tab." };
   }
 
-  const fillResult = await tryFillTab(tab.id, fields, resumePdf, coverPdf, 4);
+  const fillResult = await tryFillTab(tab.id, fields, resumePdf, coverPdf, 5);
   return {
     ok: Boolean(fillResult?.ok),
     opened: false,
@@ -156,52 +380,42 @@ async function handleFillActiveTab(payload) {
   };
 }
 
-/** @param {unknown} pdf */
-function normalizePdf(pdf) {
-  if (!pdf || typeof pdf !== "object") return null;
-  const filename = String(/** @type {{ filename?: string }} */ (pdf).filename || "").trim();
-  const base64 = String(/** @type {{ base64?: string }} */ (pdf).base64 || "").trim();
-  if (!filename || !base64) return null;
-  return {
-    filename,
-    base64,
-    mimeType:
-      String(/** @type {{ mimeType?: string }} */ (pdf).mimeType || "").trim() ||
-      "application/pdf",
-  };
-}
-
-/**
- * @param {number} tabId
- * @param {FormField[]} fields
- * @param {PdfAttachment | null} resumePdf
- * @param {PdfAttachment | null} coverPdf
- * @param {number} attempts
- */
 async function tryFillTab(tabId, fields, resumePdf, coverPdf, attempts) {
   let lastError = "Could not fill the page.";
   let lastResult = null;
   for (let i = 0; i < attempts; i++) {
     try {
-      const [{ result }] = await chrome.scripting.executeScript({
-        target: { tabId },
+      // Prefer main frame; also try all frames (Greenhouse iframes).
+      const results = await chrome.scripting.executeScript({
+        target: { tabId, allFrames: true },
         func: fillFormInPage,
         args: [fields, resumePdf, coverPdf],
       });
-      lastResult = result;
-      if (
-        result?.ok &&
-        ((result.filledCount ?? 0) > 0 ||
-          result.uploadedResume ||
-          result.uploadedCover)
-      ) {
-        return result;
+      const merged = {
+        ok: false,
+        filledCount: 0,
+        skippedCount: 0,
+        uploadedResume: false,
+        uploadedCover: false,
+        error: undefined,
+      };
+      for (const row of results || []) {
+        const r = row?.result;
+        if (!r) continue;
+        merged.filledCount += r.filledCount || 0;
+        merged.skippedCount += r.skippedCount || 0;
+        merged.uploadedResume = merged.uploadedResume || Boolean(r.uploadedResume);
+        merged.uploadedCover = merged.uploadedCover || Boolean(r.uploadedCover);
       }
-      lastError = result?.error || lastError;
+      merged.ok =
+        merged.filledCount > 0 || merged.uploadedResume || merged.uploadedCover;
+      lastResult = merged;
+      if (merged.ok) return merged;
+      lastError = merged.error || lastError;
     } catch (err) {
       lastError = err?.message || String(err);
     }
-    await wait(1500);
+    await wait(1600);
   }
   return (
     lastResult || {
@@ -220,10 +434,7 @@ function wait(ms) {
 }
 
 /**
- * Runs in the page context (via chrome.scripting). Keep self-contained.
- * @param {FormField[]} fields
- * @param {PdfAttachment | null} resumePdf
- * @param {PdfAttachment | null} coverPdf
+ * Runs in the page / frame context. Keep self-contained.
  */
 function fillFormInPage(fields, resumePdf, coverPdf) {
   function norm(s) {
@@ -239,8 +450,12 @@ function fillFormInPage(fields, resumePdf, coverPdf) {
     const aria = el.getAttribute("aria-label");
     if (aria) return aria;
     if (el.id) {
-      const byFor = document.querySelector(`label[for="${CSS.escape(el.id)}"]`);
-      if (byFor) return byFor.innerText || byFor.textContent || "";
+      try {
+        const byFor = document.querySelector(`label[for="${CSS.escape(el.id)}"]`);
+        if (byFor) return byFor.innerText || byFor.textContent || "";
+      } catch {
+        /* ignore */
+      }
     }
     const wrap = el.closest("label");
     if (wrap) return wrap.innerText || wrap.textContent || "";
@@ -303,20 +518,24 @@ function fillFormInPage(fields, resumePdf, coverPdf) {
     const wantYes = /^(yes|y|true|1|on|checked)$/i.test(String(answer).trim());
     const wantNo = /^(no|n|false|0|off)$/i.test(String(answer).trim());
     if (el.type === "radio") {
-      const group = document.querySelectorAll(
-        `input[type="radio"][name="${CSS.escape(el.name)}"]`,
-      );
-      for (const r of group) {
-        const lab = norm(labelForControl(r));
-        if (
-          (wantYes && /yes|agree/.test(lab)) ||
-          (wantNo && /no|disagree/.test(lab)) ||
-          scoreMatch(answer, lab) >= 70
-        ) {
-          r.checked = true;
-          r.dispatchEvent(new Event("change", { bubbles: true }));
-          return true;
+      try {
+        const group = document.querySelectorAll(
+          `input[type="radio"][name="${CSS.escape(el.name)}"]`,
+        );
+        for (const r of group) {
+          const lab = norm(labelForControl(r));
+          if (
+            (wantYes && /yes|agree/.test(lab)) ||
+            (wantNo && /no|disagree/.test(lab)) ||
+            scoreMatch(answer, lab) >= 70
+          ) {
+            r.checked = true;
+            r.dispatchEvent(new Event("change", { bubbles: true }));
+            return true;
+          }
         }
+      } catch {
+        return false;
       }
       return false;
     }
@@ -422,7 +641,7 @@ function fillFormInPage(fields, resumePdf, coverPdf) {
       }
     }
 
-    if (!best || bestScore < 45) {
+    if (!best || bestScore < 40) {
       skippedCount++;
       continue;
     }
@@ -493,8 +712,12 @@ function fillFormInPage(fields, resumePdf, coverPdf) {
       }
     }
 
-    // Fallback: single unlabeled file input → resume
-    if (resumeFile && !uploadedResume && fileInputs.length === 1 && !usedFiles.has(fileInputs[0])) {
+    if (
+      resumeFile &&
+      !uploadedResume &&
+      fileInputs.length === 1 &&
+      !usedFiles.has(fileInputs[0])
+    ) {
       if (attachFile(fileInputs[0], resumeFile)) uploadedResume = true;
     }
   }
@@ -508,6 +731,6 @@ function fillFormInPage(fields, resumePdf, coverPdf) {
     uploadedCover,
     error: ok
       ? undefined
-      : "No matching fields or file uploads found on this page yet (try Apply, then click Fill again from the extension popup).",
+      : "No matching fields found yet — open the Apply form, then click Fill again.",
   };
 }

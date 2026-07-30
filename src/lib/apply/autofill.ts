@@ -1845,14 +1845,47 @@ async function openApplyTab(
   if (target !== applyUrl) {
     log.push(`Using derived apply URL → ${target.slice(0, 90)}`);
   }
-  await page.goto(target, {
-    waitUntil: "domcontentloaded",
-    timeout: 45000,
-  });
+  await gotoWithHttp2Fallback(page, target, log);
   await page.waitForTimeout(1000);
   await promoteEmbeddedAtsForm(page, log);
   autofillTabByApplication.set(applicationId, page.url());
   return page;
+}
+
+async function gotoWithHttp2Fallback(
+  page: Page,
+  target: string,
+  log: string[],
+): Promise<void> {
+  try {
+    await page.goto(target, {
+      waitUntil: "domcontentloaded",
+      timeout: 45000,
+    });
+  } catch (err) {
+    const msg = (err as Error).message || String(err);
+    if (/ERR_HTTP2|HTTP2_PROTOCOL|ERR_CONNECTION_RESET|ERR_FAILED/i.test(msg)) {
+      log.push("Navigation retry after protocol error…");
+      await page.goto(target, {
+        waitUntil: "commit",
+        timeout: 60000,
+      });
+      await page.waitForTimeout(2000);
+      return;
+    }
+    throw err;
+  }
+}
+
+function humanizeAutofillError(err: unknown): string {
+  const msg = err instanceof Error ? err.message : String(err);
+  if (/ERR_HTTP2|HTTP2_PROTOCOL/i.test(msg)) {
+    return "This company site blocked the server browser (HTTP/2). Install the Chrome extension from /extension, open the apply page, and click Fill this form on the TailorSend panel.";
+  }
+  if (/Timeout|net::ERR_/i.test(msg)) {
+    return `${msg} — Prefer the Chrome extension on the apply page (/extension) for production fills.`;
+  }
+  return msg;
 }
 
 async function runAutofillPasses(
@@ -2145,7 +2178,7 @@ export async function autofillApplication(
   } catch (err) {
     if (browser && effectiveHeadless) await browser.close().catch(() => {});
     return emptyResult(platform, log, {
-      error: (err as Error).message,
+      error: humanizeAutofillError(err),
     });
   }
 }

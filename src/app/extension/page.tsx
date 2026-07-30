@@ -4,7 +4,7 @@ import { SiteLogo } from "@/components/SiteLogo";
 export const metadata = {
   title: "Install TailorSend Fill — Chrome extension",
   description:
-    "Install the TailorSend Fill Chrome extension to fill real company apply forms from your answers.",
+    "Download and install the TailorSend Fill Chrome extension to autofill company apply forms in production.",
 };
 
 export default function ExtensionInstallPage() {
@@ -22,52 +22,84 @@ export default function ExtensionInstallPage() {
           TailorSend Fill
         </h1>
         <p className="text-base leading-relaxed text-slate-600">
-          Fills the real company apply page from your TailorSend answers. You
-          review and submit on the employer&apos;s site.
+          Appears automatically on company apply pages (like FrogHire). Fills
+          your TailorSend answers, attaches resume/cover PDFs, and leaves submit
+          to you.
         </p>
       </header>
 
+      <section className="space-y-4 rounded-2xl border border-emerald-200 bg-emerald-50/60 p-5 shadow-sm">
+        <h2 className="text-lg font-semibold text-slate-900">
+          1. Download for production
+        </h2>
+        <a
+          href="/api/extension/download"
+          className="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-emerald-500"
+        >
+          Download TailorSend Fill (.zip)
+        </a>
+        <p className="text-sm text-slate-600">
+          Unzip the file. You&apos;ll load the{" "}
+          <code className="rounded bg-white px-1.5 py-0.5 text-xs">
+            tailorsend-fill
+          </code>{" "}
+          folder in Chrome (next step).
+        </p>
+      </section>
+
       <section className="space-y-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h2 className="text-lg font-semibold text-slate-900">Install</h2>
+        <h2 className="text-lg font-semibold text-slate-900">2. Install</h2>
         <ol className="list-decimal space-y-2 pl-5 text-sm leading-relaxed text-slate-700">
           <li>
-            Open Chrome and go to{" "}
+            Open{" "}
             <code className="rounded bg-slate-100 px-1.5 py-0.5 text-xs">
               chrome://extensions
             </code>
           </li>
-          <li>Turn on <strong>Developer mode</strong> (top right)</li>
+          <li>
+            Turn on <strong>Developer mode</strong> (top right)
+          </li>
           <li>
             Click <strong>Load unpacked</strong>
           </li>
           <li>
-            Select the <code className="rounded bg-slate-100 px-1.5 py-0.5 text-xs">extension</code>{" "}
-            folder from the TailorSend repo (the folder that contains{" "}
-            <code className="rounded bg-slate-100 px-1.5 py-0.5 text-xs">manifest.json</code>)
+            Select the unzipped{" "}
+            <code className="rounded bg-slate-100 px-1.5 py-0.5 text-xs">
+              tailorsend-fill
+            </code>{" "}
+            folder (the one that contains{" "}
+            <code className="rounded bg-slate-100 px-1.5 py-0.5 text-xs">
+              manifest.json
+            </code>
+            )
           </li>
-          <li>Refresh TailorSend, open an application → Apply</li>
+          <li>
+            Sign in at{" "}
+            <Link href="/" className="font-medium text-emerald-700 hover:underline">
+              tailorsend.cc
+            </Link>{" "}
+            so the extension can sync your account
+          </li>
         </ol>
       </section>
 
       <section className="space-y-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h2 className="text-lg font-semibold text-slate-900">Use</h2>
+        <h2 className="text-lg font-semibold text-slate-900">3. Use</h2>
         <ol className="list-decimal space-y-2 pl-5 text-sm leading-relaxed text-slate-700">
-          <li>Generate or edit form answers on the Apply step</li>
+          <li>Tailor a job in TailorSend (resume + answers)</li>
+          <li>Open the company apply page</li>
           <li>
-            Click <strong>Fill with extension</strong>
+            The green <strong>TailorSend</strong> panel appears bottom-right
           </li>
-          <li>Chrome opens the company form and fills matching fields</li>
           <li>
-            If you&apos;re still on a listing, click Apply there, then use{" "}
-            <strong>Fill form</strong> on the banner or{" "}
-            <strong>Re-fill active tab</strong> in the extension popup
+            Click <strong>Fill this form</strong>, review fields and file
+            uploads, then submit on the employer site
           </li>
-          <li>Review everything and submit on the company site</li>
         </ol>
         <p className="text-sm text-slate-500">
-          Resume and cover letter PDFs are generated from your tailored docs and
-          attached to matching file inputs when the form labels them (Resume/CV
-          vs Cover letter). Always confirm the attachments before submitting.
+          You can also click <strong>Fill with extension</strong> from the Apply
+          step in TailorSend. Server “preview fill” often fails on production
+          ATS sites — the extension is the real path.
         </p>
       </section>
 

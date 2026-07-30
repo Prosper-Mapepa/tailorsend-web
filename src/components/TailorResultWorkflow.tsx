@@ -546,6 +546,7 @@ export function TailorResultWorkflow({
                 coverMarkdown={cover}
                 downloadSlug={slug}
                 companyName={initial.job.company}
+                onEnsureAnswers={generateFormResponses}
               />
 
               {(showAutofill || autofilling || autofillResult) &&

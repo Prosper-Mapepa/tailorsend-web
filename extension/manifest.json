@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "TailorSend Fill",
-  "version": "0.2.0",
-  "description": "Fill company apply forms from TailorSend answers and attach resume/cover PDFs, then review and submit yourself.",
+  "version": "0.3.0",
+  "description": "Auto-appears on apply pages. Fills forms and attaches resume/cover from TailorSend. You review and submit.",
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
@@ -20,17 +20,31 @@
     "service_worker": "background.js"
   },
   "permissions": ["storage", "tabs", "scripting", "activeTab"],
-  "host_permissions": ["http://localhost:3000/*", "https://tailorsend.cc/*", "https://*/*", "http://*/*"],
+  "host_permissions": [
+    "http://localhost:3000/*",
+    "https://tailorsend.cc/*",
+    "https://*.tailorsend.cc/*",
+    "https://*/*",
+    "http://*/*"
+  ],
   "content_scripts": [
     {
-      "matches": ["http://localhost:3000/*", "https://tailorsend.cc/*", "https://*.tailorsend.cc/*"],
+      "matches": [
+        "http://localhost:3000/*",
+        "https://tailorsend.cc/*",
+        "https://*.tailorsend.cc/*"
+      ],
       "js": ["content/bridge.js"],
       "run_at": "document_idle"
     },
     {
       "matches": ["http://*/*", "https://*/*"],
-      "exclude_matches": ["http://localhost:3000/*", "https://tailorsend.cc/*", "https://*.tailorsend.cc/*"],
-      "js": ["content/filler.js"],
+      "exclude_matches": [
+        "http://localhost:3000/*",
+        "https://tailorsend.cc/*",
+        "https://*.tailorsend.cc/*"
+      ],
+      "js": ["content/overlay.js"],
       "run_at": "document_idle"
     }
   ]

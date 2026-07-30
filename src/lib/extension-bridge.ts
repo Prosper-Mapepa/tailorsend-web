@@ -103,3 +103,20 @@ export async function requestExtensionFill(
     return { ok: false, error: (err as Error).message };
   }
 }
+
+/** Push TailorSend session token into the extension (for ATS overlay API calls). */
+export function syncExtensionAuth(token: string | null): void {
+  if (typeof window === "undefined") return;
+  window.postMessage(
+    {
+      source: EXTENSION_PAGE_SOURCE,
+      type: "AUTH_SYNC",
+      requestId: requestId(),
+      payload: {
+        token,
+        apiBase: window.location.origin,
+      },
+    },
+    "*",
+  );
+}

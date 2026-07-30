@@ -19,6 +19,7 @@ import {
   setStoredToken,
 } from "@/lib/auth-client";
 import { markOnboardingPending } from "@/lib/onboarding";
+import { syncExtensionAuth } from "@/lib/extension-bridge";
 
 interface AuthContextValue {
   user: AuthUser | null;
@@ -52,6 +53,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .then(setUser)
       .finally(() => setLoading(false));
   }, []);
+
+  // Keep the Chrome extension signed in whenever TailorSend has a session.
+  useEffect(() => {
+    if (loading) return;
+    syncExtensionAuth(user ? getStoredToken() : null);
+  }, [loading, user]);
 
   // Recover when a token exists (e.g. set on /auth/callback) but client user
   // was never loaded — otherwise dashboard SSR can be logged-in while Nav shows Sign in.
@@ -112,6 +119,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = useCallback(async () => {
     await logoutUser();
     setUser(null);
+    syncExtensionAuth(null);
     router.push("/");
     router.refresh();
   }, [router]);

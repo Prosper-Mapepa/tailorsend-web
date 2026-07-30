@@ -10,7 +10,11 @@ import {
   resolveChromiumExecutable,
 } from "@/lib/chromium-launch";
 
-const STEALTH_ARGS = ["--disable-blink-features=AutomationControlled"];
+const STEALTH_ARGS = [
+  "--disable-blink-features=AutomationControlled",
+  // Many ATS sites fail Playwright page.goto with net::ERR_HTTP2_PROTOCOL_ERROR.
+  "--disable-http2",
+];
 
 const MAC_CHROME_PATHS = [
   "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",

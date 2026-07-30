@@ -642,6 +642,7 @@ export default function ApplicationDetailPage() {
               coverMarkdown={cover}
               downloadSlug={slug}
               companyName={app.job.company}
+              onEnsureAnswers={generateFormResponses}
             />
 
             {(showAutofill || autofilling || result) && !manualApply && (

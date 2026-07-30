@@ -10,7 +10,9 @@ import { buildExtensionPdfAttachments } from "@/lib/download";
 import {
   pingTailorSendExtension,
   requestExtensionFill,
+  syncExtensionAuth,
 } from "@/lib/extension-bridge";
+import { getStoredToken } from "@/lib/auth-client";
 import { isCopyableField } from "@/lib/form-field-utils";
 import type { FormFieldResponse } from "@/lib/types";
 
@@ -28,6 +30,7 @@ export function AutofillHero({
   coverMarkdown = "",
   downloadSlug = "application",
   companyName = "",
+  onEnsureAnswers,
 }: {
   busy: boolean;
   disabled: boolean;
@@ -41,6 +44,8 @@ export function AutofillHero({
   coverMarkdown?: string;
   downloadSlug?: string;
   companyName?: string;
+  /** Generate form answers when the user clicks Fill and none exist yet. */
+  onEnsureAnswers?: () => Promise<FormFieldResponse[]>;
 }) {
   const openUserTab = shouldOpenApplyTabForUser();
   const [extensionReady, setExtensionReady] = useState(false);
@@ -49,10 +54,11 @@ export function AutofillHero({
   const [error, setError] = useState<string | null>(null);
 
   const copyable = fields.filter(isCopyableField);
-  const canExtensionFill = Boolean(applyUrl?.trim() && copyable.length > 0);
+  const canExtensionFill = Boolean(applyUrl?.trim());
 
   useEffect(() => {
     let cancelled = false;
+    syncExtensionAuth(getStoredToken());
     pingTailorSendExtension().then((ok) => {
       if (!cancelled) setExtensionReady(ok);
     });
@@ -63,6 +69,7 @@ export function AutofillHero({
         event.data?.type === "READY"
       ) {
         setExtensionReady(true);
+        syncExtensionAuth(getStoredToken());
       }
     };
     window.addEventListener("message", onReady);
@@ -87,14 +94,28 @@ export function AutofillHero({
       setError("No apply page URL for this job.");
       return;
     }
-    if (copyable.length === 0) {
-      setError("Generate form answers below first, then fill with the extension.");
-      return;
-    }
     setExtensionBusy(true);
     setError(null);
     setNote(null);
     try {
+      syncExtensionAuth(getStoredToken());
+
+      let answers = copyable;
+      if (answers.length === 0 && onEnsureAnswers) {
+        setNote("Generating form answers…");
+        const generated = await onEnsureAnswers();
+        answers = generated.filter(isCopyableField);
+      }
+
+      if (answers.length === 0) {
+        // Still open the apply page — overlay can fill from profile + resume.
+        openCompanyApplyTab(applyUrl);
+        setNote(
+          "Opened the apply page. Use the TailorSend panel (bottom-right) → Fill this form.",
+        );
+        return;
+      }
+
       let pdfs: Awaited<ReturnType<typeof buildExtensionPdfAttachments>> = {};
       try {
         pdfs = await buildExtensionPdfAttachments({
@@ -109,7 +130,7 @@ export function AutofillHero({
       const res = await requestExtensionFill({
         applicationId: applicationId ?? undefined,
         applyUrl,
-        fields: copyable.map((f) => ({
+        fields: answers.map((f) => ({
           label: f.label,
           fieldType: f.fieldType,
           answer: f.answer,
@@ -119,7 +140,7 @@ export function AutofillHero({
       if (!res.ok) {
         setError(
           res.error ||
-            "Install TailorSend Fill: chrome://extensions → Load unpacked → extension/",
+            "Install TailorSend Fill from /extension, then reload this page.",
         );
         return;
       }
@@ -131,9 +152,11 @@ export function AutofillHero({
         res.filled
           ? `Filled ${res.filledCount ?? 0} field(s)${
               extras.length ? ` · attached ${extras.join(" & ")}` : ""
-            } in Chrome. Review the apply tab, then submit.`
-          : "Opened the apply page. Click Apply on that site if needed, then use Re-fill in the extension popup.",
+            }. Review the apply tab, then submit.`
+          : "Opened the apply page. Click Apply if needed, then use the TailorSend panel → Fill this form.",
       );
+    } catch (e) {
+      setError((e as Error).message);
     } finally {
       setExtensionBusy(false);
     }
@@ -153,16 +176,21 @@ export function AutofillHero({
           <p className="mt-1.5 max-w-lg text-sm leading-relaxed text-slate-600">
             {openUserTab ? (
               <>
-                <strong>Fill with extension</strong> opens the real company form
-                in Chrome, fills your answers, and attaches resume/cover PDFs when
-                file fields are detected. You review and submit. Server auto-fill
-                is a preview backup when the extension isn’t installed.
+                Install the{" "}
+                <a
+                  href="/extension"
+                  className="font-semibold text-emerald-700 hover:underline"
+                >
+                  Chrome extension
+                </a>
+                . It appears on the company apply page — fill answers and attach
+                resume/cover, then you review and submit. Server preview is a
+                backup only (many sites block it).
               </>
             ) : (
               <>
-                Locally, server auto-fill can open Google Chrome and fill the
-                form. On production, use the Chrome extension for the real
-                apply tab.
+                Locally, server auto-fill can open Google Chrome. On production,
+                use the Chrome extension panel on the apply page.
               </>
             )}
           </p>
@@ -179,14 +207,14 @@ export function AutofillHero({
           )}
           {openUserTab && !extensionReady && (
             <p className="mt-2 text-xs text-slate-500">
-              Extension not detected — open{" "}
-              <code className="text-[11px]">chrome://extensions</code>, Load
-              unpacked → <code className="text-[11px]">extension/</code>, then
-              refresh. Or see{" "}
-              <a href="/extension" className="font-medium text-emerald-700 hover:underline">
-                install guide
+              Extension not detected —{" "}
+              <a
+                href="/extension"
+                className="font-medium text-emerald-700 hover:underline"
+              >
+                download &amp; install
               </a>
-              .
+              , then refresh TailorSend.
             </p>
           )}
         </div>
@@ -200,8 +228,10 @@ export function AutofillHero({
               className="w-full bg-emerald-600 px-6 text-base shadow-lg shadow-emerald-600/30 hover:bg-emerald-500"
             >
               {extensionBusy
-                ? "Preparing PDFs…"
-                : "Fill with extension"}
+                ? "Preparing…"
+                : extensionReady
+                  ? "Fill with extension"
+                  : "Fill with extension"}
             </Button>
           )}
           <Button
@@ -226,7 +256,11 @@ export function AutofillHero({
                   <path d="M11.983 1.904a.75.75 0 00-1.292-.657l-7.25 9.5A.75.75 0 003.75 12h5.558l-1.291 6.096a.75.75 0 001.292.657l7.25-9.5A.75.75 0 0016.25 8h-5.558l1.291-6.096z" />
                 </svg>
               )}
-              {busy ? "Auto-filling…" : openUserTab ? "Server preview fill" : "Start auto-fill"}
+              {busy
+                ? "Auto-filling…"
+                : openUserTab
+                  ? "Server preview fill"
+                  : "Start auto-fill"}
             </span>
           </Button>
           <div className="flex gap-2">
@@ -252,11 +286,6 @@ export function AutofillHero({
               </a>
             )}
           </div>
-          {openUserTab && !canExtensionFill && !disabled && (
-            <p className="text-center text-[11px] text-slate-500">
-              Generate answers below to enable extension fill.
-            </p>
-          )}
         </div>
       </div>
     </div>
