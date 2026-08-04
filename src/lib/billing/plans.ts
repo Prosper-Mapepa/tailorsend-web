@@ -1,4 +1,9 @@
-export type BillingPlan = "free" | "flex" | "annual" | "season";
+export type BillingPlan =
+  | "free"
+  | "flex"
+  | "annual"
+  | "unlimited"
+  | "season";
 
 export type UsageAction = "tailor" | "autofill" | "incorporate";
 
@@ -28,6 +33,9 @@ export const FLEX_PRICE_CENTS = 999; // $9.99/mo → ~$0.40/kit
  */
 export const ANNUAL_MONTHLY_KITS = 25;
 export const ANNUAL_PRICE_CENTS = 8999; // $89.99/yr → ~$7.50/mo · ~$0.30/kit
+
+/** Unlimited — no kit caps while subscribed. */
+export const UNLIMITED_PRICE_CENTS = 4999; // $49.99/mo
 
 /** Kept for existing Season pass holders — no longer sold. */
 export const SEASON_TOTAL_KITS = 60;
@@ -80,11 +88,22 @@ export function freeLimits(isStudent: boolean): FreeLimits {
   return isStudent ? FREE_LIMITS_STUDENT : FREE_LIMITS_DEFAULT;
 }
 
-/** Plans that refresh kits monthly and support pause. */
+/** Plans that refresh a finite kit pool monthly. */
 export function isKitSubscriptionPlan(
   plan: BillingPlan,
 ): plan is "flex" | "annual" {
   return plan === "flex" || plan === "annual";
+}
+
+export function isUnlimitedPlan(plan: BillingPlan): plan is "unlimited" {
+  return plan === "unlimited";
+}
+
+/** Recurring subscriptions that support pause (kit plans + unlimited). */
+export function isPausableSubscriptionPlan(
+  plan: BillingPlan,
+): plan is "flex" | "annual" | "unlimited" {
+  return isKitSubscriptionPlan(plan) || isUnlimitedPlan(plan);
 }
 
 export function subscriptionKitsPerMonth(plan: BillingPlan): number {

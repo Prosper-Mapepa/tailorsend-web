@@ -12,11 +12,15 @@ import { FREE_LIMITS_STUDENT } from "./plans";
 function baseAccount(
   overrides: Partial<UsageAccountSnapshot> = {},
 ): UsageAccountSnapshot {
+  const now = new Date();
+  const periodStart = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1),
+  );
   return {
     plan: "free",
     isStudent: true,
     creditBalance: 0,
-    periodStart: new Date("2026-07-01T00:00:00Z"),
+    periodStart,
     tailorKitsUsed: 0,
     autofillKitsUsed: 0,
     planKitsUsed: 0,
@@ -113,6 +117,37 @@ test("annual plan uses plan kits", () => {
   assert.equal(d.allowed, true);
   assert.equal(d.source, "flex_plan");
   assert.equal(summary.planKitsRemaining, 22);
+});
+
+test("unlimited plan never depletes kits", () => {
+  const summary = buildUsageSummary(
+    baseAccount({ plan: "unlimited", planKitsUsed: 999 }),
+  );
+  assert.equal(summary.unlimited, true);
+  const d = canConsume(summary, "tailor", false);
+  assert.equal(d.allowed, true);
+  assert.equal(d.source, "unlimited_plan");
+  const next = applyConsumption(
+    baseAccount({ plan: "unlimited", planKitsUsed: 999 }),
+    "tailor",
+    "unlimited_plan",
+  );
+  assert.equal(next.planKitsUsed, 999);
+  assert.equal(next.creditBalance, 0);
+});
+
+test("unlimited paused falls back to credits", () => {
+  const summary = buildUsageSummary(
+    baseAccount({
+      plan: "unlimited",
+      flexPausedUntil: new Date("2099-01-01T00:00:00Z"),
+      creditBalance: 1,
+    }),
+  );
+  assert.equal(summary.unlimited, false);
+  const d = canConsume(summary, "autofill", false);
+  assert.equal(d.allowed, true);
+  assert.equal(d.source, "credits");
 });
 
 test("incorporate blocked on free without credits", () => {

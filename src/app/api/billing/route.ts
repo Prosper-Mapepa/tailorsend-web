@@ -17,6 +17,7 @@ import {
   SEASON_MONTHS,
   SEASON_PRICE_CENTS,
   SEASON_TOTAL_KITS,
+  UNLIMITED_PRICE_CENTS,
   isStudentEmail,
   packById,
 } from "@/lib/billing/plans";
@@ -31,7 +32,7 @@ const schema = z.discriminatedUnion("action", [
   }),
   z.object({
     action: z.literal("set_plan"),
-    plan: z.enum(["free", "flex", "annual", "season"]),
+    plan: z.enum(["free", "flex", "annual", "unlimited", "season"]),
   }),
   z.object({
     action: z.literal("pause_flex"),
@@ -95,9 +96,11 @@ export async function POST(req: Request) {
           ? FLEX_PRICE_CENTS
           : data.plan === "annual"
             ? ANNUAL_PRICE_CENTS
-            : data.plan === "season"
-              ? SEASON_PRICE_CENTS
-              : 0;
+            : data.plan === "unlimited"
+              ? UNLIMITED_PRICE_CENTS
+              : data.plan === "season"
+                ? SEASON_PRICE_CENTS
+                : 0;
       return NextResponse.json({
         ok: true,
         usage,
@@ -131,6 +134,7 @@ export async function GET() {
         priceCents: ANNUAL_PRICE_CENTS,
         kitsPerMonth: ANNUAL_MONTHLY_KITS,
       },
+      unlimited: { priceCents: UNLIMITED_PRICE_CENTS, kitsPerMonth: null },
       season: {
         priceCents: SEASON_PRICE_CENTS,
         totalKits: SEASON_TOTAL_KITS,

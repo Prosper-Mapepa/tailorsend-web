@@ -4,6 +4,7 @@ import {
   CREDIT_PACKS,
   FLEX_PRICE_CENTS,
   ANNUAL_PRICE_CENTS,
+  UNLIMITED_PRICE_CENTS,
   SEASON_PRICE_CENTS,
   FLEX_MONTHLY_KITS,
   ANNUAL_MONTHLY_KITS,
@@ -14,7 +15,7 @@ import {
   type CreditPack,
 } from "./plans";
 
-export type CheckoutKind = "pack" | "flex" | "annual" | "season";
+export type CheckoutKind = "pack" | "flex" | "annual" | "unlimited" | "season";
 
 let stripeClient: Stripe | null = null;
 
@@ -106,6 +107,24 @@ export function checkoutLineItems(
     ];
   }
 
+  if (kind === "unlimited") {
+    return [
+      {
+        quantity: 1,
+        price_data: {
+          currency: "usd",
+          unit_amount: UNLIMITED_PRICE_CENTS,
+          recurring: { interval: "month" },
+          product_data: {
+            name: "TailorSend Unlimited",
+            description:
+              "Unlimited tailor, autofill, and incorporate · pause up to 30 days · cancel anytime",
+          },
+        },
+      },
+    ];
+  }
+
   return [
     {
       quantity: 1,
@@ -124,7 +143,9 @@ export function checkoutLineItems(
 export function checkoutMode(
   kind: CheckoutKind,
 ): Stripe.Checkout.SessionCreateParams.Mode {
-  return kind === "flex" || kind === "annual" ? "subscription" : "payment";
+  return kind === "flex" || kind === "annual" || kind === "unlimited"
+    ? "subscription"
+    : "payment";
 }
 
 export { CREDIT_PACKS };

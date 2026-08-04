@@ -1353,3 +1353,140 @@ List common application fields and provide the best copy-paste answer for each.`
 
   return (parsed.fields ?? []).filter((f) => f.label.trim() && f.answer.trim());
 }
+
+export interface JobVisaLlmResult {
+  citizenshipRequired: boolean;
+  greenCardRequired: boolean;
+  securityClearance: boolean;
+  visaSponsorship: boolean | null;
+  optFriendly: boolean | null;
+  stemOptFriendly: boolean | null;
+  mentionsH1b: boolean;
+  mentionsEad: boolean;
+  mentionsEVerify: boolean;
+  remote: boolean;
+  hybrid: boolean;
+  onsite: boolean;
+  experienceYears: number | null;
+  degreeRequired: string | null;
+  internship: boolean;
+  entryLevel: boolean;
+  categories: string[];
+  evidence: { field: string; quote: string }[];
+}
+
+/**
+ * LLM structured visa / F-1 analysis of a job posting.
+ * Returns null if OpenAI is unavailable or the call fails.
+ */
+export async function analyzeJobVisaLlm(
+  title: string,
+  description: string,
+): Promise<JobVisaLlmResult | null> {
+  if (!process.env.OPENAI_API_KEY?.trim()) return null;
+
+  try {
+    const openai = getClient();
+    const completion = await openai.chat.completions.create({
+      model: MODEL,
+      temperature: 0,
+      response_format: {
+        type: "json_schema",
+        json_schema: {
+          name: "job_visa_analysis",
+          strict: true,
+          schema: {
+            type: "object",
+            additionalProperties: false,
+            properties: {
+              citizenshipRequired: { type: "boolean" },
+              greenCardRequired: { type: "boolean" },
+              securityClearance: { type: "boolean" },
+              visaSponsorship: {
+                anyOf: [{ type: "boolean" }, { type: "null" }],
+              },
+              optFriendly: {
+                anyOf: [{ type: "boolean" }, { type: "null" }],
+              },
+              stemOptFriendly: {
+                anyOf: [{ type: "boolean" }, { type: "null" }],
+              },
+              mentionsH1b: { type: "boolean" },
+              mentionsEad: { type: "boolean" },
+              mentionsEVerify: { type: "boolean" },
+              remote: { type: "boolean" },
+              hybrid: { type: "boolean" },
+              onsite: { type: "boolean" },
+              experienceYears: {
+                anyOf: [{ type: "number" }, { type: "null" }],
+              },
+              degreeRequired: {
+                anyOf: [{ type: "string" }, { type: "null" }],
+              },
+              internship: { type: "boolean" },
+              entryLevel: { type: "boolean" },
+              categories: {
+                type: "array",
+                items: { type: "string" },
+              },
+              evidence: {
+                type: "array",
+                items: {
+                  type: "object",
+                  additionalProperties: false,
+                  properties: {
+                    field: { type: "string" },
+                    quote: { type: "string" },
+                  },
+                  required: ["field", "quote"],
+                },
+              },
+            },
+            required: [
+              "citizenshipRequired",
+              "greenCardRequired",
+              "securityClearance",
+              "visaSponsorship",
+              "optFriendly",
+              "stemOptFriendly",
+              "mentionsH1b",
+              "mentionsEad",
+              "mentionsEVerify",
+              "remote",
+              "hybrid",
+              "onsite",
+              "experienceYears",
+              "degreeRequired",
+              "internship",
+              "entryLevel",
+              "categories",
+              "evidence",
+            ],
+          },
+        },
+      },
+      messages: [
+        {
+          role: "system",
+          content: `You analyze U.S. job postings for F-1 student visa compatibility.
+Return structured JSON only.
+Rules:
+- citizenshipRequired / securityClearance / greenCardRequired: true only if the posting clearly requires them.
+- visaSponsorship / optFriendly / stemOptFriendly: true only if explicitly positive; false only if explicitly refused; otherwise null (unknown).
+- Do not invent H-1B or E-Verify from silence — use mentionsH1b / mentionsEVerify only when named.
+- categories: subset of ["software","cybersecurity","ai"] when relevant.
+- evidence: short verbatim quotes (max 8) supporting key flags.`,
+        },
+        {
+          role: "user",
+          content: `Title: ${title}\n\nDescription:\n${truncate(description, 8000)}`,
+        },
+      ],
+    });
+
+    const raw = completion.choices[0]?.message?.content ?? "{}";
+    return JSON.parse(raw) as JobVisaLlmResult;
+  } catch {
+    return null;
+  }
+}

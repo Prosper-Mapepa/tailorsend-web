@@ -1,6 +1,7 @@
 import {
   SEASON_TOTAL_KITS,
   isKitSubscriptionPlan,
+  isUnlimitedPlan,
   subscriptionKitsPerMonth,
   type BillingPlan,
   type FreeLimits,
@@ -26,6 +27,8 @@ export interface UsageSummary extends UsageAccountSnapshot {
   tailorRemaining: number;
   autofillRemaining: number;
   planKitsRemaining: number;
+  /** True when plan is unlimited and not paused. */
+  unlimited: boolean;
   periodResetsAt: Date;
   flexPaused: boolean;
   seasonActive: boolean;
@@ -35,6 +38,7 @@ export type ConsumeSource =
   | "free_monthly"
   | "flex_plan"
   | "season_plan"
+  | "unlimited_plan"
   | "credits"
   | "already_charged";
 
@@ -107,8 +111,12 @@ export function buildUsageSummary(
   const flexPaused = isFlexPaused(normalized, now);
   const seasonActive = isSeasonActive(normalized, now);
 
+  const unlimited = isUnlimitedPlan(normalized.plan) && !flexPaused;
+
   let planKitsRemaining = 0;
-  if (isKitSubscriptionPlan(normalized.plan) && !flexPaused) {
+  if (unlimited) {
+    planKitsRemaining = Number.MAX_SAFE_INTEGER;
+  } else if (isKitSubscriptionPlan(normalized.plan) && !flexPaused) {
     planKitsRemaining = Math.max(
       0,
       subscriptionKitsPerMonth(normalized.plan) - normalized.planKitsUsed,
@@ -127,20 +135,23 @@ export function buildUsageSummary(
     limits.autofillPerMonth - normalized.autofillKitsUsed,
   );
 
-  const pool = planKitsRemaining + normalized.creditBalance;
+  const pool = unlimited
+    ? Number.MAX_SAFE_INTEGER
+    : planKitsRemaining + normalized.creditBalance;
 
   return {
     ...normalized,
     limits,
     tailorRemaining:
       normalized.plan === "free"
-        ? tailorRemainingFree + pool
-        : planKitsRemaining + normalized.creditBalance,
+        ? tailorRemainingFree + (planKitsRemaining + normalized.creditBalance)
+        : pool,
     autofillRemaining:
       normalized.plan === "free"
-        ? autofillRemainingFree + pool
-        : planKitsRemaining + normalized.creditBalance,
+        ? autofillRemainingFree + (planKitsRemaining + normalized.creditBalance)
+        : pool,
     planKitsRemaining,
+    unlimited,
     periodResetsAt: periodResetsAt(normalized.periodStart, now),
     flexPaused,
     seasonActive,
@@ -184,7 +195,10 @@ export function canConsume(
     };
   }
 
-  if (isKitSubscriptionPlan(summary.plan) && summary.flexPaused) {
+  if (
+    (isKitSubscriptionPlan(summary.plan) || isUnlimitedPlan(summary.plan)) &&
+    summary.flexPaused
+  ) {
     if (summary.creditBalance > 0) {
       return { allowed: true, source: "credits" };
     }
@@ -192,6 +206,10 @@ export function canConsume(
       allowed: false,
       reason: "Subscription is paused. Use credits or resume on Billing.",
     };
+  }
+
+  if (summary.unlimited) {
+    return { allowed: true, source: "unlimited_plan" };
   }
 
   if (summary.planKitsRemaining > 0) {
@@ -228,6 +246,9 @@ export function applyConsumption(
     case "flex_plan":
     case "season_plan":
       next.planKitsUsed += 1;
+      break;
+    case "unlimited_plan":
+      // No kit decrement while on Unlimited.
       break;
     case "credits":
       next.creditBalance = Math.max(0, next.creditBalance - 1);

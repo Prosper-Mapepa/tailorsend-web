@@ -7,11 +7,17 @@ export function formatCents(cents: number): string {
 export function formatPlanLabel(plan: string): string {
   if (plan === "flex") return "Student Monthly";
   if (plan === "annual") return "Student Yearly";
+  if (plan === "unlimited") return "Unlimited";
   if (plan === "season") return "Season Pass";
   return "Free";
 }
 
 export function usageKitLabel(summary: UsageSummary): string {
+  if (summary.unlimited) {
+    return summary.creditBalance > 0
+      ? `Unlimited · ${summary.creditBalance} credits`
+      : "Unlimited";
+  }
   if (summary.plan === "free") {
     const tailorLeft = Math.max(
       0,
@@ -27,8 +33,7 @@ export function usageKitLabel(summary: UsageSummary): string {
     }
     return parts.join(" · ");
   }
-  const kits =
-    summary.planKitsRemaining + summary.creditBalance;
+  const kits = summary.planKitsRemaining + summary.creditBalance;
   return `${kits} kits left`;
 }
 

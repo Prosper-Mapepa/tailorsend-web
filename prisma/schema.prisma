@@ -89,31 +89,72 @@ model Profile {
   updatedAt        DateTime @updatedAt
 }
 
+/// Employer profile with F-1 / visa intelligence (extensible).
+model Company {
+  id                         String   @id @default(cuid())
+  slug                       String   @unique
+  name                       String
+  normalizedName             String   @default("")
+  industry                   String   @default("")
+  size                       String   @default("")
+  headquarters               String   @default("")
+  website                    String   @default("")
+  /// Tri-state: yes | no | unknown
+  optFriendly                String   @default("unknown")
+  stemOptFriendly            String   @default("unknown")
+  eVerify                    String   @default("unknown")
+  h1bSponsor                 String   @default("unknown")
+  greenCardSponsor           String   @default("unknown")
+  /// high | medium | low | unknown
+  internationalHiring        String   @default("unknown")
+  citizenshipRequired        Boolean  @default(false)
+  securityClearanceRequired  Boolean  @default(false)
+  visaScore                  Int      @default(50)
+  /// Extensible JSON: H-1B filing years, sources, lastSyncedAt, etc.
+  sponsorshipMeta            String   @default("{}")
+  aliases                    String   @default("[]")
+  createdAt                  DateTime @default(now())
+  updatedAt                  DateTime @updatedAt
+
+  jobs Job[]
+
+  @@index([normalizedName])
+}
+
 /// A vacancy discovered by one of the source adapters.
 model Job {
-  id           String    @id @default(cuid())
-  source       String
-  externalId   String
-  title        String
-  company      String
-  location     String    @default("")
-  remote       Boolean   @default(false)
-  url          String
-  applyUrl     String    @default("")
-  description  String    @default("")
-  salary       String    @default("")
-  postedAt     DateTime?
-  atsPlatform  String    @default("unknown")
-  matchScore   Int       @default(0)
-  visaRisk     String    @default("none")
-  status       String    @default("new")
-  discoveredAt DateTime  @default(now())
+  id             String    @id @default(cuid())
+  source         String
+  externalId     String
+  title          String
+  company        String
+  companyId      String?
+  companyRef     Company?  @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  location       String    @default("")
+  remote         Boolean   @default(false)
+  url            String
+  applyUrl       String    @default("")
+  description    String    @default("")
+  salary         String    @default("")
+  postedAt       DateTime?
+  atsPlatform    String    @default("unknown")
+  matchScore     Int       @default(0)
+  /// JSON: { skills, experience, visa, salary, location, overall }
+  matchBreakdown String    @default("{}")
+  visaRisk       String    @default("none")
+  /// Structured F-1 / visa analysis JSON
+  visaAnalysis   String    @default("{}")
+  visaScore      Int       @default(50)
+  status         String    @default("new")
+  discoveredAt   DateTime  @default(now())
 
   applications Application[]
 
   @@unique([source, externalId])
   @@index([company])
+  @@index([companyId])
   @@index([status])
+  @@index([visaScore])
 }
 
 /// One application attempt for a job, including the tailored documents.

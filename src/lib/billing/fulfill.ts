@@ -70,12 +70,18 @@ export async function fulfillCheckoutSession(
       where: { userId },
       data: { stripeSubscriptionId: null },
     });
-  } else if (kind === "flex" || kind === "annual") {
+  } else if (kind === "flex" || kind === "annual" || kind === "unlimited") {
     const subId =
       typeof session.subscription === "string"
         ? session.subscription
         : session.subscription?.id;
-    await setPlan(userId, user.email, kind === "annual" ? "annual" : "flex");
+    const plan =
+      kind === "annual"
+        ? "annual"
+        : kind === "unlimited"
+          ? "unlimited"
+          : "flex";
+    await setPlan(userId, user.email, plan);
     if (subId) {
       await prisma.usageAccount.update({
         where: { userId },

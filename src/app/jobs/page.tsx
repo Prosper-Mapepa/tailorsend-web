@@ -15,7 +15,11 @@ import { apiFetch } from "@/lib/auth-client";
 import { parseUsageError } from "@/lib/billing/format";
 import { supportsAutofill } from "@/lib/apply/detect";
 import type { DatePosted, VisaRisk } from "@/lib/types";
-import { visaRiskLabel } from "@/lib/visa";
+import {
+  MatchBreakdownInline,
+  VisaBadges,
+  VisaScoreChip,
+} from "@/components/VisaBadges";
 import { CompanyLogo } from "@/components/CompanyLogo";
 import { useTailorProgress, TAILOR_PROGRESS_STEPS } from "@/lib/tailor-progress";
 
@@ -24,15 +28,34 @@ interface JobRow {
   source: string;
   title: string;
   company: string;
+  companySlug?: string | null;
   location: string;
   remote: boolean;
   url: string;
   applyUrl: string;
   salary: string;
   matchScore: number;
+  matchBreakdown?: {
+    overall?: number;
+    visa?: number;
+    skills?: number;
+    experience?: number;
+  };
   status: string;
   atsPlatform: string;
   visaRisk: VisaRisk;
+  visaScore?: number;
+  visaAnalysis?: Record<string, unknown>;
+  companyRef?: {
+    slug?: string;
+    optFriendly?: string;
+    stemOptFriendly?: string;
+    eVerify?: string;
+    h1bSponsor?: string;
+    greenCardSponsor?: string;
+    citizenshipRequired?: boolean;
+    securityClearanceRequired?: boolean;
+  } | null;
   postedAt: string | null;
   applications: { id: string; status: string }[];
 }
@@ -74,21 +97,6 @@ function timeAgo(iso: string | null): string {
   return months === 1 ? "1 month ago" : `${months} months ago`;
 }
 
-function SponsorshipTag({ risk }: { risk: VisaRisk }) {
-  if (risk === "none") {
-    return (
-      <span className="rounded-md bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-800 ring-1 ring-emerald-200/80">
-        Sponsorship OK
-      </span>
-    );
-  }
-  return (
-    <span className="rounded-md bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-900 ring-1 ring-amber-200/80">
-      {visaRiskLabel(risk)}
-    </span>
-  );
-}
-
 function JobCard({
   job,
   tailoringId,
@@ -103,6 +111,14 @@ function JobCard({
   const canAutofill = supportsAutofill(job.applyUrl || job.url, job.atsPlatform);
   const isTailoring = tailoringId === job.id;
   const tailorProgress = useTailorProgress(isTailoring);
+  const companyHref = job.companySlug
+    ? `/companies/${job.companySlug}`
+    : job.companyRef?.slug
+      ? `/companies/${job.companyRef.slug}`
+      : null;
+  const reasons = Array.isArray(job.visaAnalysis?.reasons)
+    ? (job.visaAnalysis!.reasons as string[])
+    : undefined;
 
   return (
     <article className="flex h-full flex-col rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm transition hover:border-emerald-200 hover:shadow-md sm:p-5">
@@ -117,9 +133,18 @@ function JobCard({
           <div className="min-w-0 flex-1">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-slate-900">
-                  {job.company || "Company"}
-                </p>
+                {companyHref ? (
+                  <Link
+                    href={companyHref}
+                    className="truncate text-sm font-semibold text-slate-900 hover:text-emerald-700"
+                  >
+                    {job.company || "Company"}
+                  </Link>
+                ) : (
+                  <p className="truncate text-sm font-semibold text-slate-900">
+                    {job.company || "Company"}
+                  </p>
+                )}
                 <p className="mt-0.5 line-clamp-1 text-xs text-slate-500">
                   {[job.location, posted].filter(Boolean).join(" · ") ||
                     "Location TBD"}
@@ -140,7 +165,14 @@ function JobCard({
         </a>
 
         <div className="mt-3 flex flex-wrap items-center gap-1.5">
-          <SponsorshipTag risk={job.visaRisk} />
+          {typeof job.visaScore === "number" && (
+            <VisaScoreChip score={job.visaScore} reasons={reasons} />
+          )}
+          <VisaBadges
+            analysis={job.visaAnalysis}
+            company={job.companyRef}
+            visaRisk={job.visaRisk}
+          />
           {job.remote && (
             <span className="rounded-md bg-slate-50 px-2 py-0.5 text-[11px] font-medium text-slate-600 ring-1 ring-slate-200/80">
               Remote
@@ -157,6 +189,8 @@ function JobCard({
           )}
           {app && <Badge status={app.status} />}
         </div>
+
+        <MatchBreakdownInline breakdown={job.matchBreakdown} />
 
         {job.salary ? (
           <p className="mt-2 text-xs font-medium text-slate-500">{job.salary}</p>
@@ -222,7 +256,20 @@ export default function JobsPage() {
   const [datePosted, setDatePosted] = useState<DatePosted>("week");
   const [fullTimeOnly, setFullTimeOnly] = useState(true);
   const [sponsorshipFriendly, setSponsorshipFriendly] = useState(true);
-  const [sort, setSort] = useState<"recent" | "match">("recent");
+  const [sort, setSort] = useState<"recent" | "match" | "visa">("recent");
+  const [f1Filters, setF1Filters] = useState({
+    optFriendly: false,
+    stemOpt: false,
+    h1bSponsor: false,
+    greenCardSponsor: false,
+    eVerify: false,
+    noCitizenship: false,
+    noClearance: false,
+    hybrid: false,
+    entryLevel: false,
+    internship: false,
+    category: "" as "" | "software" | "cybersecurity" | "ai",
+  });
   const [selectedSources, setSelectedSources] = useState<string[]>(
     ALL_SOURCES.map((s) => s.id),
   );
@@ -266,12 +313,24 @@ export default function JobsPage() {
       sort,
     });
     if (sponsorshipFriendly) params.set("sponsorshipFriendly", "1");
+    if (f1Filters.optFriendly) params.set("optFriendly", "1");
+    if (f1Filters.stemOpt) params.set("stemOpt", "1");
+    if (f1Filters.h1bSponsor) params.set("h1bSponsor", "1");
+    if (f1Filters.greenCardSponsor) params.set("greenCardSponsor", "1");
+    if (f1Filters.eVerify) params.set("eVerify", "1");
+    if (f1Filters.noCitizenship) params.set("noCitizenship", "1");
+    if (f1Filters.noClearance) params.set("noClearance", "1");
+    if (f1Filters.hybrid) params.set("hybrid", "1");
+    if (f1Filters.entryLevel) params.set("entryLevel", "1");
+    if (f1Filters.internship) params.set("internship", "1");
+    if (f1Filters.category) params.set("category", f1Filters.category);
+    if (remoteOnly) params.set("remote", "1");
     const res = await apiFetch(`/api/jobs?${params.toString()}`);
     const data = await res.json();
     setJobs(data.jobs ?? []);
     setLoading(false);
     setPage(1);
-  }, [minScore, sort, sponsorshipFriendly]);
+  }, [minScore, sort, sponsorshipFriendly, f1Filters, remoteOnly]);
 
   useEffect(() => {
     loadJobs();
@@ -598,6 +657,20 @@ export default function JobsPage() {
             />
             Sponsorship OK
           </label>
+          <label className="flex items-center gap-2 text-sm text-slate-600">
+            Sort
+            <select
+              className={field}
+              value={sort}
+              onChange={(e) =>
+                setSort(e.target.value as "recent" | "match" | "visa")
+              }
+            >
+              <option value="recent">Recent</option>
+              <option value="match">Best match</option>
+              <option value="visa">Visa score</option>
+            </select>
+          </label>
           <button
             type="button"
             onClick={() => setFiltersOpen((o) => !o)}
@@ -609,6 +682,51 @@ export default function JobsPage() {
 
         {filtersOpen && (
           <div className="mt-3 space-y-3 rounded-xl border border-slate-100 bg-slate-50/60 p-3">
+            <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-slate-600">
+              {(
+                [
+                  ["optFriendly", "OPT Friendly"],
+                  ["stemOpt", "STEM OPT"],
+                  ["h1bSponsor", "H-1B Sponsor"],
+                  ["greenCardSponsor", "Green Card Sponsor"],
+                  ["eVerify", "E-Verify"],
+                  ["noCitizenship", "No citizenship req."],
+                  ["noClearance", "No clearance"],
+                  ["hybrid", "Hybrid"],
+                  ["entryLevel", "Entry level"],
+                  ["internship", "Internship"],
+                ] as const
+              ).map(([key, label]) => (
+                <label key={key} className="flex items-center gap-1.5">
+                  <input
+                    type="checkbox"
+                    checked={f1Filters[key]}
+                    onChange={(e) =>
+                      setF1Filters((f) => ({ ...f, [key]: e.target.checked }))
+                    }
+                  />
+                  {label}
+                </label>
+              ))}
+              <label className="flex items-center gap-2">
+                Field
+                <select
+                  className={field}
+                  value={f1Filters.category}
+                  onChange={(e) =>
+                    setF1Filters((f) => ({
+                      ...f,
+                      category: e.target.value as typeof f.category,
+                    }))
+                  }
+                >
+                  <option value="">Any</option>
+                  <option value="software">Software Eng</option>
+                  <option value="cybersecurity">Cybersecurity</option>
+                  <option value="ai">AI / ML</option>
+                </select>
+              </label>
+            </div>
             <div className="flex flex-wrap items-center gap-4">
               <label className="flex items-center gap-2 text-sm text-slate-600">
                 Posted
@@ -729,10 +847,13 @@ export default function JobsPage() {
               <select
                 className={`${field} py-1.5`}
                 value={sort}
-                onChange={(e) => setSort(e.target.value as "recent" | "match")}
+                onChange={(e) =>
+                  setSort(e.target.value as "recent" | "match" | "visa")
+                }
               >
                 <option value="recent">Recent</option>
                 <option value="match">Match</option>
+                <option value="visa">Visa score</option>
               </select>
             </label>
           </div>

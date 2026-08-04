@@ -27,6 +27,8 @@ Alternatives considered:
 | Credit packs (5 / 15 / 40 kits) | `payment` | `addCredits()` |
 | Season Pass | `payment` | `setPlan("season")` |
 | Flex | `subscription` | `setPlan("flex")` + store `stripeSubscriptionId` |
+| Annual | `subscription` | `setPlan("annual")` + store `stripeSubscriptionId` |
+| Unlimited | `subscription` | `setPlan("unlimited")` + store `stripeSubscriptionId` |
 
 **API routes**
 
@@ -104,7 +106,7 @@ Adds `stripeCustomerId`, `stripeSubscriptionId` on `UsageAccount` and `StripeChe
 
 ## Student pricing
 
-`.edu` emails still unlock higher **free** monthly allowances. Pack and subscription amounts come from `src/lib/billing/plans.ts` (Student Monthly **$9.99/mo**, Student Yearly **$89.99/yr**, Campus **$5** / 8 kits, Sprint **$29.99** / 50 kits).
+`.edu` emails still unlock higher **free** monthly allowances. Pack and subscription amounts come from `src/lib/billing/plans.ts` (Student Monthly **$9.99/mo**, Student Yearly **$89.99/yr**, Unlimited **$49.99/mo**, Campus **$5** / 8 kits, Sprint **$29.99** / 50 kits).
 
 Promotion codes can be enabled in Checkout (`allow_promotion_codes: true`).
 

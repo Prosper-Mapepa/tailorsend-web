@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
+import { upsertCompanyFromJob } from "@/lib/company";
 import { mergeSearchBoards } from "@/lib/job-boards";
-import { scoreJob } from "@/lib/match";
+import { scoreJobDetailed } from "@/lib/match";
 import { ALL_SOURCE_IDS, searchAllSources, type SourceId } from "@/lib/sources";
 import type {
   DatePosted,
@@ -8,9 +9,11 @@ import type {
   NormalizedJob,
   SearchParams,
   TargetRole,
+  WorkExperience,
 } from "@/lib/types";
 import { detectClosed, safeJson } from "@/lib/util";
-import { detectVisaRisk } from "@/lib/visa";
+import type { JobVisaAnalysis } from "@/lib/visa-analyze";
+import { analyzeJobVisaFull } from "@/lib/visa-pipeline";
 
 export interface RunSearchOptions {
   /** Override the role/query to search; defaults to the profile's target roles. */
@@ -30,6 +33,8 @@ export interface RunSearchOptions {
   limit?: number;
   /** Minimum match score required to persist a job. */
   minScore?: number;
+  /** Run LLM visa analysis (default true when API key present). */
+  useLlmVisa?: boolean;
 }
 
 /** Convert a recency window into a cutoff Date (or null for "all"). */
@@ -69,25 +74,26 @@ export async function runSearch(
     : null;
   const targetRoles = safeJson<TargetRole[]>(profile?.targetRoles, []);
   const skills = safeJson<string[]>(profile?.skills, []);
+  const workExperience = safeJson<WorkExperience[]>(
+    profile?.workExperience,
+    [],
+  );
   const userSites = safeJson<JobBoardSite[]>(profile?.jobBoards, []);
+  const needsSponsorship = Boolean(profile?.needsSponsorship);
 
-  // F1 students will need sponsorship; default to filtering blocked jobs when
-  // the profile flags it, unless the caller overrides.
   const sponsorshipFriendlyOnly =
-    opts.sponsorshipFriendlyOnly ?? Boolean(profile?.needsSponsorship);
+    opts.sponsorshipFriendlyOnly ?? needsSponsorship;
 
   const country = opts.country ?? "us";
   const datePosted: DatePosted = opts.datePosted ?? "month";
   const fullTimeOnly = opts.fullTimeOnly ?? false;
   const cutoff = recencyCutoff(datePosted);
-  // Default location targets the US unless the user searches remote-only.
   const defaultLocation = opts.remoteOnly ? undefined : "United States";
+  const useLlm =
+    opts.useLlmVisa ?? Boolean(process.env.OPENAI_API_KEY?.trim());
 
-  // Build the list of queries to run. Either the explicit override, or one
-  // query per configured target role.
   const queries: SearchParams[] = [];
 
-  // Per-user career sites (Profile → Job boards) merged with optional env defaults.
   const resolved = mergeSearchBoards({
     envGreenhouse: process.env.GREENHOUSE_BOARDS,
     envLever: process.env.LEVER_BOARDS,
@@ -121,15 +127,12 @@ export async function runSearch(
         country,
         datePosted,
         fullTimeOnly,
-        // Attach company-targeted JSearch queries to the first role only to
-        // stay within free-tier request quotas.
         targetCompanies: i === 0 ? targetCompanies : [],
         boards,
         limit: opts.limit ?? 50,
       });
     });
   } else {
-    // Nothing configured; do a generic pass so the UI isn't empty.
     queries.push({
       query: "software engineer",
       location: defaultLocation,
@@ -145,7 +148,6 @@ export async function runSearch(
   const sources = opts.sources ?? ALL_SOURCE_IDS;
   const minScore = opts.minScore ?? 0;
 
-  // Collect + dedupe across all queries by (source, externalId).
   const dedup = new Map<string, NormalizedJob>();
   const perSourceCount = new Map<string, number>();
   const perSourceError = new Map<string, string>();
@@ -174,24 +176,13 @@ export async function runSearch(
   let skippedClosed = 0;
 
   for (const job of dedup.values()) {
-    // Recency filter: drop postings older than the window when we know the date.
     if (cutoff && job.postedAt && job.postedAt.getTime() < cutoff.getTime()) {
       skippedStale++;
       continue;
     }
 
-    // Skip postings that are closed, filled, or past their deadline.
     if (detectClosed(`${job.title} ${job.description}`)) {
       skippedClosed++;
-      continue;
-    }
-
-    const matchScore = scoreJob(job, { targetRoles, skills });
-    if (matchScore < minScore) continue;
-
-    const visaRisk = detectVisaRisk(`${job.title} ${job.description}`);
-    if (sponsorshipFriendlyOnly && visaRisk !== "none") {
-      skippedVisa++;
       continue;
     }
 
@@ -199,8 +190,53 @@ export async function runSearch(
       where: {
         source_externalId: { source: job.source, externalId: job.externalId },
       },
-      select: { id: true },
+      select: {
+        id: true,
+        visaAnalysis: true,
+        companyId: true,
+      },
     });
+
+    const previous = existing
+      ? safeJson<JobVisaAnalysis | null>(existing.visaAnalysis, null)
+      : null;
+
+    const visa = await analyzeJobVisaFull({
+      title: job.title,
+      description: job.description,
+      remote: job.remote,
+      previous,
+      useLlm,
+    });
+
+    if (sponsorshipFriendlyOnly && visa.visaRisk !== "none") {
+      skippedVisa++;
+      continue;
+    }
+
+    const company = await upsertCompanyFromJob({
+      companyName: job.company,
+      jobUrl: job.url || job.applyUrl,
+      analysis: visa.analysis,
+    });
+
+    // Re-score with company signals for a richer visa score.
+    const visaWithCompany = await analyzeJobVisaFull({
+      title: job.title,
+      description: job.description,
+      remote: job.remote,
+      previous: visa.analysis,
+      useLlm: false,
+      company: company.signals,
+    });
+
+    const breakdown = scoreJobDetailed(
+      { ...job, visaScore: visaWithCompany.visaScore },
+      { targetRoles, skills, workExperience, needsSponsorship },
+      visaWithCompany.analysis,
+    );
+
+    if (breakdown.overall < minScore) continue;
 
     await prisma.job.upsert({
       where: {
@@ -211,27 +247,41 @@ export async function runSearch(
         externalId: job.externalId,
         title: job.title,
         company: job.company,
+        companyId: company.id,
         location: job.location,
-        remote: job.remote,
+        remote: job.remote || visaWithCompany.analysis.remote,
         url: job.url,
         applyUrl: job.applyUrl,
         description: job.description,
         salary: job.salary,
         postedAt: job.postedAt,
         atsPlatform: job.atsPlatform,
-        matchScore,
-        visaRisk,
+        matchScore: breakdown.overall,
+        matchBreakdown: JSON.stringify(breakdown),
+        visaRisk: visaWithCompany.visaRisk,
+        visaAnalysis: JSON.stringify({
+          ...visaWithCompany.analysis,
+          reasons: visaWithCompany.reasons,
+        }),
+        visaScore: visaWithCompany.visaScore,
       },
       update: {
-        // Refresh mutable fields and re-score.
         title: job.title,
+        company: job.company,
+        companyId: company.id,
         location: job.location,
-        remote: job.remote,
+        remote: job.remote || visaWithCompany.analysis.remote,
         description: job.description,
         salary: job.salary,
         applyUrl: job.applyUrl,
-        matchScore,
-        visaRisk,
+        matchScore: breakdown.overall,
+        matchBreakdown: JSON.stringify(breakdown),
+        visaRisk: visaWithCompany.visaRisk,
+        visaAnalysis: JSON.stringify({
+          ...visaWithCompany.analysis,
+          reasons: visaWithCompany.reasons,
+        }),
+        visaScore: visaWithCompany.visaScore,
       },
     });
     if (existing) updated++;

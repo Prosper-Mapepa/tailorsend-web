@@ -12,13 +12,15 @@ import type { CreditPack } from "@/lib/billing/plans";
 import {
   ANNUAL_PRICE_CENTS,
   FLEX_PRICE_CENTS,
-  isKitSubscriptionPlan,
+  UNLIMITED_PRICE_CENTS,
+  isPausableSubscriptionPlan,
   storefrontPacks,
 } from "@/lib/billing/plans";
 import type { UsageSummary } from "@/lib/billing/usage-core";
 import { Alert, Button, PageHeader, PageLoader } from "@/components/ui";
 
 type BillingTab = "subscriptions" | "packs";
+type SubscribePlanId = "flex" | "annual" | "unlimited";
 
 function CheckItem({ children }: { children: string }) {
   return (
@@ -51,7 +53,7 @@ function UsageOverview({ usage }: { usage: UsageSummary }) {
             Student
           </span>
         )}
-        {isKitSubscriptionPlan(usage.plan) && usage.flexPaused && (
+        {isPausableSubscriptionPlan(usage.plan) && usage.flexPaused && (
           <span className="text-xs text-amber-700">
             Paused until{" "}
             {usage.flexPausedUntil
@@ -66,7 +68,12 @@ function UsageOverview({ usage }: { usage: UsageSummary }) {
         )}
       </div>
       <div className="ml-auto flex flex-wrap items-baseline gap-4 tabular-nums">
-        {isFree ? (
+        {usage.unlimited ? (
+          <span>
+            <strong className="text-slate-900">Unlimited</strong>
+            <span className="ml-1 text-xs text-slate-400">kits</span>
+          </span>
+        ) : isFree ? (
           <>
             <span>
               <strong className="text-slate-900">{tailorLeft}</strong>
@@ -199,7 +206,7 @@ function PlanCard({
   onPause,
   canPause,
 }: {
-  planId: "flex" | "annual";
+  planId: SubscribePlanId;
   featured?: boolean;
   current: boolean;
   stripeEnabled: boolean;
@@ -210,12 +217,25 @@ function PlanCard({
   canPause?: boolean;
 }) {
   const plan = getPlanCatalog(planId);
-  const isAnnual = planId === "annual";
-  const amount = isAnnual ? ANNUAL_PRICE_CENTS : FLEX_PRICE_CENTS;
-  const suffix = isAnnual ? "/yr" : "/mo";
-  const meta = isAnnual
-    ? `25 kits/mo · ${formatCents(Math.round(ANNUAL_PRICE_CENTS / 12))}/mo effective`
-    : "25 kits/mo · cancel anytime";
+  const amount =
+    planId === "annual"
+      ? ANNUAL_PRICE_CENTS
+      : planId === "unlimited"
+        ? UNLIMITED_PRICE_CENTS
+        : FLEX_PRICE_CENTS;
+  const suffix = planId === "annual" ? "/yr" : "/mo";
+  const meta =
+    planId === "annual"
+      ? `25 kits/mo · ${formatCents(Math.round(ANNUAL_PRICE_CENTS / 12))}/mo effective`
+      : planId === "unlimited"
+        ? "No kit caps · cancel anytime"
+        : "25 kits/mo · cancel anytime";
+  const cta =
+    planId === "annual"
+      ? "Subscribe yearly"
+      : planId === "unlimited"
+        ? "Go Unlimited"
+        : "Subscribe monthly";
 
   return (
     <PackageShell
@@ -229,13 +249,7 @@ function PlanCard({
             disabled={anyBusy || current}
             onClick={onSubscribe}
           >
-            {current
-              ? "Active"
-              : stripeEnabled
-                ? isAnnual
-                  ? "Subscribe yearly"
-                  : "Subscribe monthly"
-                : `Get ${plan.name}`}
+            {current ? "Active" : stripeEnabled ? cta : `Get ${plan.name}`}
           </Button>
           {canPause && (
             <button
@@ -370,7 +384,7 @@ export default function BillingPage() {
     load()
       .then((u) => {
         if (cancelled || !u) return;
-        if (!isKitSubscriptionPlan(u.plan) && u.plan !== "season") {
+        if (!isPausableSubscriptionPlan(u.plan) && u.plan !== "season") {
           setTab("packs");
         }
       })
@@ -383,7 +397,7 @@ export default function BillingPage() {
   }, [load]);
 
   async function startCheckout(
-    kind: "pack" | "flex" | "annual" | "season",
+    kind: "pack" | "flex" | "annual" | "unlimited" | "season",
     packId?: string,
   ) {
     const busyId = kind === "pack" ? packId! : kind;
@@ -455,8 +469,15 @@ export default function BillingPage() {
     }
   }
 
-  async function changePlan(plan: "free" | "flex" | "annual" | "season") {
-    if (plan === "flex" || plan === "annual" || plan === "season") {
+  async function changePlan(
+    plan: "free" | "flex" | "annual" | "unlimited" | "season",
+  ) {
+    if (
+      plan === "flex" ||
+      plan === "annual" ||
+      plan === "unlimited" ||
+      plan === "season"
+    ) {
       if (stripeEnabled) {
         await startCheckout(plan);
         return;
@@ -516,7 +537,8 @@ export default function BillingPage() {
   const sprint = packs.find((p) => p.id === "pack_15");
   const onFlex = usage?.plan === "flex";
   const onAnnual = usage?.plan === "annual";
-  const onSubscription = onFlex || onAnnual;
+  const onUnlimited = usage?.plan === "unlimited";
+  const onSubscription = onFlex || onAnnual || onUnlimited;
   const onSeason = usage?.plan === "season";
 
   return (
@@ -564,7 +586,7 @@ export default function BillingPage() {
         {tab === "subscriptions" ? (
           <div
             role="tabpanel"
-            className="grid items-stretch gap-5 md:grid-cols-2"
+            className="grid items-stretch gap-5 md:grid-cols-2 xl:grid-cols-3"
           >
             <PlanCard
               planId="flex"
@@ -585,6 +607,17 @@ export default function BillingPage() {
               anyBusy={busy !== null}
               onSubscribe={() => changePlan("annual")}
               canPause={Boolean(onAnnual && usage && !usage.flexPaused)}
+              onPause={pauseFlex}
+            />
+            <PlanCard
+              planId="unlimited"
+              featured
+              current={Boolean(onUnlimited)}
+              stripeEnabled={stripeEnabled}
+              busy={busy === "unlimited"}
+              anyBusy={busy !== null}
+              onSubscribe={() => changePlan("unlimited")}
+              canPause={Boolean(onUnlimited && usage && !usage.flexPaused)}
               onPause={pauseFlex}
             />
           </div>

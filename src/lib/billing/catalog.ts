@@ -6,7 +6,9 @@ import {
   SEASON_MONTHS,
   SEASON_PRICE_CENTS,
   SEASON_TOTAL_KITS,
+  UNLIMITED_PRICE_CENTS,
   type CreditPack,
+  type BillingPlan,
 } from "./plans";
 import { formatCents } from "./format";
 
@@ -22,7 +24,7 @@ export type PackCatalogEntry = {
 };
 
 export type PlanCatalogEntry = {
-  id: "free" | "flex" | "annual" | "season";
+  id: BillingPlan;
   name: string;
   badge?: string;
   tagline: string;
@@ -36,6 +38,7 @@ export type PlanCatalogEntry = {
 
 const flexPrice = formatCents(FLEX_PRICE_CENTS);
 const annualPrice = formatCents(ANNUAL_PRICE_CENTS);
+const unlimitedPrice = formatCents(UNLIMITED_PRICE_CENTS);
 const monthlyIfAnnual = formatCents(Math.round(ANNUAL_PRICE_CENTS / 12));
 const annualSavings = formatCents(FLEX_PRICE_CENTS * 12 - ANNUAL_PRICE_CENTS);
 
@@ -102,8 +105,7 @@ export const PLAN_CATALOG: PlanCatalogEntry[] = [
     name: "Student Monthly",
     badge: "Flexible",
     tagline: "Pay month to month",
-    description:
-      "25 kits every month. Pause or cancel anytime.",
+    description: "25 kits every month. Pause or cancel anytime.",
     highlights: [
       "25 kits every month",
       "Pause up to 30 days",
@@ -119,8 +121,7 @@ export const PLAN_CATALOG: PlanCatalogEntry[] = [
     name: "Student Yearly",
     badge: "Best value",
     tagline: "Same kits · save ~25%",
-    description:
-      `Same 25 kits/mo as Monthly, billed yearly. Save about ${annualSavings}.`,
+    description: `Same 25 kits/mo as Monthly, billed yearly. Save about ${annualSavings}.`,
     highlights: [
       "25 kits every month",
       `${monthlyIfAnnual}/mo effective`,
@@ -130,6 +131,23 @@ export const PLAN_CATALOG: PlanCatalogEntry[] = [
     bestWhen: "You will apply for 6+ months this year",
     priceLabel: `${annualPrice}/yr`,
     kitsLabel: `${ANNUAL_MONTHLY_KITS} kits / month`,
+  },
+  {
+    id: "unlimited",
+    name: "Unlimited",
+    badge: "No kit caps",
+    tagline: "Apply without counting kits",
+    description:
+      "Unlimited tailor, autofill, and incorporate while subscribed. Built for heavy search seasons.",
+    highlights: [
+      "Unlimited tailor, autofill & incorporate",
+      "Pause up to 30 days",
+      "Cancel anytime",
+    ],
+    idealFor: "High-volume applying every week",
+    bestWhen: "25 kits/mo is not enough",
+    priceLabel: `${unlimitedPrice}/mo`,
+    kitsLabel: "Unlimited",
   },
   {
     id: "season",
@@ -164,8 +182,6 @@ export function getPackCatalog(pack: CreditPack): PackCatalogEntry {
   );
 }
 
-export function getPlanCatalog(
-  id: "free" | "flex" | "annual" | "season",
-): PlanCatalogEntry {
+export function getPlanCatalog(id: BillingPlan): PlanCatalogEntry {
   return PLAN_CATALOG.find((p) => p.id === id)!;
 }
