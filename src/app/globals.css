@@ -267,9 +267,8 @@ body {
   max-width: 42rem;
 }
 .cover-letter-preview .cl-page {
-  min-height: 520px;
-  display: flex;
-  flex-direction: column;
+  min-height: auto;
+  display: block;
 }
 .cover-letter-preview .cl-header {
   margin-bottom: 1.5rem;
@@ -301,15 +300,15 @@ body {
   margin: 0 0 1rem;
 }
 .cover-letter-preview .cl-bodies {
-  flex: 1 1 auto;
+  display: block;
 }
 .cover-letter-preview .cl-body {
   margin: 0 0 1rem;
   text-align: justify;
 }
 .cover-letter-preview .cl-footer {
-  margin-top: auto;
-  padding-top: 1.5rem;
+  margin-top: 1rem;
+  padding-top: 0;
 }
 .cover-letter-preview .cl-closing {
   margin: 0 0 0.75rem;

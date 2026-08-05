@@ -1915,9 +1915,7 @@ const COVER_LETTER_CSS = `
   ${DOCUMENT_BASE_CSS}
   body.cover-letter { font-size: 11px; line-height: 1.45; }
   .cl-page {
-    min-height: 9in;
-    display: flex;
-    flex-direction: column;
+    display: block;
   }
   .cl-header { margin-bottom: 0.22in; }
   .cl-sender-name {
@@ -1935,13 +1933,13 @@ const COVER_LETTER_CSS = `
   .cl-muted { margin: 0 0 2px; color: #555; font-style: italic; }
   .cl-gap { height: 10px; }
   .cl-salutation { margin: 0 0 12px; }
-  .cl-bodies { flex: 1 1 auto; }
+  .cl-bodies { display: block; }
   .cl-body {
     margin: 0 0 12px;
     line-height: 1.45;
     text-align: justify;
   }
-  .cl-footer { margin-top: auto; padding-top: 0.3in; }
+  .cl-footer { margin-top: 0.22in; padding-top: 0; }
   .cl-closing { margin: 0 0 12px; }
   .cl-signature { font-weight: 700; margin: 0; }
   .cl-contact { margin: 3px 0 0; font-size: 11px; color: #333; }
@@ -1954,10 +1952,13 @@ export function coverLetterDocumentHtml(md: string, title: string): string {
 <style>${COVER_LETTER_CSS}</style></head><body class="cover-letter">${mdToCoverLetterHtml(md)}</body></html>`;
 }
 
-/** Wrap rendered resume markdown in a print-optimized HTML document. */
+/** Wrap rendered resume markdown in a print-optimized HTML document.
+ * Callers should pass already-prepared markdown (prepareResumeMarkdown)
+ * so project/contact links are not stripped by a second normalize pass.
+ */
 export function resumeDocumentHtml(md: string, title: string): string {
   return `<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="${RESUME_FONT_LINK}"><title>${escapeHtml(
     title,
   )}</title>
-<style>${RESUME_PRINT_CSS}</style></head><body>${mdToHtml(normalizeResumeMarkdown(md), { kind: "resume" })}</body></html>`;
+<style>${RESUME_PRINT_CSS}</style></head><body>${mdToHtml(md, { kind: "resume" })}</body></html>`;
 }

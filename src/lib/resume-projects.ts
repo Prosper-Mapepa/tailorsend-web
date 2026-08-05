@@ -234,17 +234,26 @@ export function boldProjectHeaderLine(line: string): string {
   if (/^\s*[-*]\s/.test(trimmed)) return line;
   if (!trimmed) return line;
 
+  // Preserve Neha-style split headers: **Name** | [Link](url)
+  const splitLink = trimmed.match(
+    /^(\*\*[^*]+\*\*)\s*\|\s*(\[[^\]]+\]\([^)]+\))\s*$/,
+  );
+  if (splitLink) return `${splitLink[1]} | ${splitLink[2]}`;
+
   const { rest, status } = extractTrailingStatus(trimmed);
   let head = rest;
 
-  // Always drop pipe suffixes — links are stripped from headers, so leftover
-  // "| LinkedIn" / "| —" / bare "|" must not survive into the title.
+  // Capture trailing markdown link before stripping pipes (e.g. Name | [Link](url))
+  const trailingLink = head.match(/\|\s*(\[[^\]]+\]\([^)]+\))\s*$/);
+  const preservedLink = trailingLink?.[1] ?? "";
+
+  // Drop other pipe suffixes — leftover "| LinkedIn" / "| —" / bare "|"
   const pipeIdx = head.search(/\s*\|\s*/);
   if (pipeIdx >= 0) {
     head = head.slice(0, pipeIdx).trim();
   }
 
-  // Unwrap any markdown link to plain text and drop the URL entirely.
+  // Unwrap any markdown link in the title to plain text
   head = head.replace(/\[([^\]]+)\]\([^)]*\)/g, "$1");
   head = head.replace(/\s*\|+\s*$/g, "").trim();
 
@@ -254,7 +263,11 @@ export function boldProjectHeaderLine(line: string): string {
   if (!titlePlain) return line;
 
   let result = `**${titlePlain}**`;
-  if (status) result += ` — *(${status})*`;
+  if (preservedLink) {
+    result += ` | ${preservedLink}`;
+  } else if (status) {
+    result += ` — *(${status})*`;
+  }
   return result;
 }
 
