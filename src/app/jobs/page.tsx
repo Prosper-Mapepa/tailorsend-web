@@ -337,6 +337,12 @@ export default function JobsPage() {
   }, [loadJobs]);
 
   async function runSearch() {
+    if (targetRoles.length === 0) {
+      setMessage(
+        "Add at least one target role on your profile before scanning.",
+      );
+      return;
+    }
     setSearching(true);
     setMessage(null);
     try {
@@ -588,7 +594,34 @@ export default function JobsPage() {
           </div>
         )}
 
-        {targetRoles.length === 0 && jobBoards.length === 0 && (
+        {targetRoles.length === 0 && (
+          <p className="mb-4 text-xs leading-relaxed text-amber-800/90">
+            Add{" "}
+            <Link
+              href="/profile#roles"
+              className="font-medium text-emerald-700 hover:underline"
+            >
+              target roles
+            </Link>{" "}
+            on your profile before scanning
+            {jobBoards.length === 0 ? (
+              <>
+                {" "}
+                (and optionally{" "}
+                <Link
+                  href="/profile#boards"
+                  className="font-medium text-emerald-700 hover:underline"
+                >
+                  job boards &amp; companies
+                </Link>
+                )
+              </>
+            ) : null}
+            .
+          </p>
+        )}
+
+        {targetRoles.length > 0 && jobBoards.length === 0 && (
           <p className="mb-4 text-xs leading-relaxed text-slate-500">
             Tip: add{" "}
             <Link
@@ -624,9 +657,14 @@ export default function JobsPage() {
           </div>
           <Button
             onClick={runSearch}
-            disabled={searching}
+            disabled={searching || targetRoles.length === 0}
             size="lg"
             className="shrink-0 sm:min-w-[8.5rem]"
+            title={
+              targetRoles.length === 0
+                ? "Add target roles on your profile first"
+                : undefined
+            }
           >
             {searching ? "Scanning…" : "Scan jobs"}
           </Button>

@@ -131,32 +131,45 @@ Hard rules (never break):
 - If the candidate lacks a quantified result, write a strong qualitative bullet instead of fabricating a number.
 
 Resume best practices to apply:
-- Start with a compact header containing the candidate's name and, on one line, their contact details INCLUDING their LinkedIn URL and portfolio/website URL when provided. Always include those links if present.
-- Lead with a concise professional summary (2 lines max, ~35 words) targeted at this exact role — dense, senior tone, no filler.
-- Use a "Core Skills" section as a bullet list (one skill or short phrase per line, no category paragraphs) that mirrors the keywords/technologies in the job description (only skills the candidate actually has) so it passes ATS keyword matching and renders in multi-column layout.
-- Convert responsibilities into achievement-oriented bullets using strong action verbs and the format: Action + what you built/did + tools + impact.
-- Keep formatting clean Markdown with clear section headers in this order: Summary, Core Skills, Education, Experience, Projects. Mirror the job's exact terminology where truthful.
+- Start with a compact header: candidate name as H1, then ONE contact line: phone | email | [LinkedIn](url) | [GitHub](url) | [Portfolio](url) when present (omit location unless no other contact). Always include LinkedIn/GitHub/portfolio links if provided.
+- Optional short professional summary (2 lines max) only if it adds clear value.
+- Section order MUST be: Work Experience, Projects, Skills and Certifications, Education, then Achievements/Certifications if present. Summary (if any) may appear first after the header.
+- Use "## Skills and Certifications" with category lines (NOT a bullet list). Use these exact category labels when applicable:
+  **Programming Languages:** Advanced Java, Python, …
+  **Tech Stack:** Spring Boot, Hibernate, REST APIs, …
+  **System Design:** Microservices Architecture, Domain-Driven Design (DDD), …
+  **Cloud and Devops:** Kubernetes, Amazon Web Services, Terraform, …
+  **Data & Messaging:** MySQL, DynamoDB, MongoDB, Kafka, …
+  **Certifications:** AWS Certified Cloud Practitioner, …
+  Omit empty categories. Never dump all skills on one "Skills:" line.
+- Convert responsibilities into achievement-oriented bullets using strong action verbs and the format: Action + what you built/did + tools + impact. Bold key tech terms and metrics inside bullets (e.g. **Kafka**, **60%**).
+- Keep formatting clean Markdown with clear ## section headers. Mirror the job's exact terminology where truthful.
 - Do NOT use horizontal rules or separator lines (no "---", "***", or "___"). Use section headings only.
 
 ORDERING (critical):
 - Include EVERY role from the base resume's Work Experience — never omit, merge, or skip a role, even if it seems less relevant to this job. The candidate's most recent role MUST be the first Experience entry.
 - List EVERYTHING strictly in reverse-chronological order by date: most recent first. This applies to Experience, Projects, and Education. Do NOT reorder by relevance — order by date only.
-- Each Experience entry uses EXACTLY this three-line pattern:
-  **Company — Location**
-  **Job Title** *(Month Year – Month Year)*
+- Each Experience entry uses EXACTLY this two-line header pattern (left | right), then bullets:
+  **Company** | Month Year – Month Year
+  *Job Title* | Location
   - achievement bullets (never paragraph text)
-  Company names AND job titles must both be bold. Dates in italics on the role line.
+  Company is bold on the left; dates right-aligned via the pipe. Title is italic on the left; location on the right.
 - Include dates for every role/project/degree when available.
 
 PROJECTS (critical):
 - Include EVERY project from the candidate's profile project list in the PROJECTS section — do NOT omit any. Order them most recent first (reverse-chronological by date). Tailor bullets and emphasis to the role, but every saved profile project must appear.
 - NEVER drop existing projects to make room — compress bullets if needed to stay within two pages.
-- EVERY project MUST use this exact pattern (consistent layout):
-  **[Project Name](web-url)** | [App Store](url) | [Play Store](url) — *(Month Year – Month Year)*
+- EVERY project MUST use this exact header pattern:
+  **Project Name** | [Github Link](url)
   - achievement bullet
   - achievement bullet
-  Include only link types that are actually provided in the verified project-link list (omit Web / App Store / Play Store if not listed). If no project-specific URL exists, use **Project Name** (plain bold, NOT linked). NEVER link a project to the candidate's GitHub profile URL — only use the exact URLs from the verified list for that project. Dates go at the end in italics after an em dash. NEVER use paragraph blocks for project descriptions — always bullets. NEVER put the description or tech stack in the title line or inside a link label — title line is name + optional links + dates ONLY.
-- Include the tech stack and the impact/outcome in the bullets.
+  Use the best available project URL labeled "Github Link" when it is a GitHub URL, otherwise "Link". If no URL exists, use **Project Name** alone (no pipe). NEVER link a project to the candidate's GitHub profile URL — only use the exact URLs from the verified list for that project. NEVER use paragraph blocks for project descriptions — always bullets. NEVER put the description or tech stack in the title line.
+- Include the tech stack and the impact/outcome in the bullets; bold key tech terms.
+
+EDUCATION:
+  **University Name** | Month Year – Month Year
+  ***Degree, Field***
+  Grade: X.XX   (only if a real GPA/grade exists)
 
 COMPLETENESS (goal: maximize interview odds within 2 pages):
 - Include every role and every profile project, but compress ruthlessly: tight phrasing, no duplicate facts, no repeated employer/location lines.
@@ -165,13 +178,13 @@ COMPLETENESS (goal: maximize interview odds within 2 pages):
 - Cover the job's key requirements via skills + top bullets — not by adding prose blocks.
 
 ATS KEYWORD TARGETING (critical — goal: 100% keyword coverage):
-- When a target keyword list is provided, you MUST weave EVERY listed keyword into the resume using the JD's exact phrasing. Place them in Core Skills, the summary, and experience/project bullets where truthful.
+- When a target keyword list is provided, you MUST weave EVERY listed keyword into the resume using the JD's exact phrasing. Place them in Skills and Certifications categories, the summary, and experience/project bullets where truthful.
 - Reframe transferable experience to align with the role: e.g. secure cloud systems → critical infrastructure; fintech compliance → regulated industry; high-availability systems → mission-critical operations. Never claim industry employment you don't have — instead highlight analogous technical outcomes.
 - Mirror the job title's seniority and domain language in the summary and most recent role bullets.
 
 LENGTH (hard rule — senior / high-compensation standard):
 - The rendered PDF MUST fit on TWO pages maximum. If content would exceed two pages, shorten bullets and trim least-relevant older detail before omitting any role or project.
-- Never use paragraph blocks in Core Skills or Skills sections — bullets only. Never duplicate contact lines or section headers.
+- Never use bullet lists in Skills and Certifications — category lines only (**Label:** a, b, c). Never duplicate contact lines or section headers.
 - No extra blank lines between entries. Prefer one-line project headers with 1–2 bullets over long descriptions.
 
 Work authorization:
@@ -332,7 +345,7 @@ export async function enhanceTailoredResume(input: {
       {
         role: "system",
         content:
-          "You edit an already-tailored resume to include specific missing ATS keywords. Add them naturally into Core Skills, the summary, or existing bullets. NEVER invent employers, dates, or experience. NEVER remove or omit any existing projects or roles. NEVER add a Work Authorization section. Return the full updated resume in Markdown only — no commentary.",
+          "You edit an already-tailored resume to include specific missing ATS keywords. Add them naturally into Skills and Certifications category lines (e.g. **Tech Stack:** …), the summary, or existing bullets. NEVER invent employers, dates, or experience. NEVER remove or omit any existing projects or roles. NEVER add a Work Authorization section. Return the full updated resume in Markdown only — no commentary.",
       },
       {
         role: "user",
@@ -414,7 +427,9 @@ Produce a complete, ready-to-edit master resume in clean Markdown that would imp
 
 Rules:
 - Use ONLY facts the candidate provides. Where a detail is missing but important, insert a clearly bracketed placeholder like [Add metric: e.g. "reduced load time 40%"] so the user knows to fill it.
-- Structure: Header (name + contact + LinkedIn/GitHub/portfolio URLs), Professional Summary, Core Skills (grouped, ATS-friendly), Education, Experience (achievement bullets: Action + impact + tools), Projects. Do NOT include a Work Authorization or visa/sponsorship line.
+- Structure: Header (name + contact + LinkedIn/GitHub/portfolio URLs), optional Professional Summary, Work Experience, Projects, Skills and Certifications (category lines), Education, Achievements. Do NOT include a Work Authorization or visa/sponsorship line.
+- Experience headers: **Company** | dates then *Title* | Location
+- Skills: **Category:** comma-separated list (not bullets)
 - Make bullets quantified and outcome-driven; never fabricate real numbers (use placeholders instead).
 - Target the listed role(s). Keep it tight and senior-sounding.`;
 
@@ -488,22 +503,28 @@ Hard rules (never break):
 
 Structure (use these exact section headings as ## headings):
 # FULL NAME (first line)
-Contact line: email | phone | location | [LinkedIn](url) | [Portfolio](url) when present
-## SUMMARY (or PROFESSIONAL SUMMARY if that's what the source uses)
-## CORE SKILLS — bullet list; if 12+ skills, keep as one list (columns are applied at render time)
-## EDUCATION — each entry MUST follow:
-  **School — Location**
-  **Degree** *(Graduation / expected date)*
-  - Completed LeaderShape Institute Leadership Program, … (standalone bullet if present)
-  - Relevant Coursework: … (standalone bullet if present)
+Contact line: phone | email | [LinkedIn](url) | [GitHub](url) | [Portfolio](url) when present
+## SUMMARY (optional — only if the source has one)
 ## WORK EXPERIENCE — each role MUST follow:
-  **Company — Location**
-  **Job Title** *(Month Year – Month Year)*
-  - achievement bullets (never paragraph text)
+  **Company** | Month Year – Month Year
+  *Job Title* | Location
+  - achievement bullets (never paragraph text; bold key tech/metrics)
 ## PROJECTS — each project MUST follow:
-  **[Project Name](web-url)** | [App Store](url) | [Play Store](url) — *(dates)*
+  **Project Name** | [Github Link](url)
   - achievement bullets (never paragraph text; convert descriptions to bullets)
-## SKILLS or other sections — only if they exist in the source
+## Skills and Certifications — category lines (NOT bullets), e.g.:
+  **Programming Languages:** Advanced Java, Python
+  **Tech Stack:** Spring Boot, Hibernate, REST APIs
+  **System Design:** Microservices Architecture, Domain-Driven Design (DDD), Event-Driven Systems, Design Patterns
+  **Cloud and Devops:** Kubernetes, Amazon Web Services, Terraform, Github, Jenkins
+  **Data & Messaging:** MySQL, DynamoDB, MongoDB, Kafka
+  **Certifications:** AWS Certified Cloud Practitioner
+  (Omit any category with no real items from the source.)
+## EDUCATION — each entry MUST follow:
+  **School** | Month Year – Month Year
+  ***Degree, Field***
+  Grade: … (only if present)
+## ACHIEVEMENTS — only if they exist in the source (bullets)
 
 Polish bullets for clarity but do not fabricate numbers. Keep the document tight (2 pages max when printed).`;
 

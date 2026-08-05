@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireAuthUser, isAuthUser } from "@/lib/auth";
+import { prisma } from "@/lib/db";
 import { runSearch } from "@/lib/search-service";
 import { ALL_SOURCE_IDS, type SourceId } from "@/lib/sources";
+import { safeJson } from "@/lib/util";
+import type { TargetRole } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -30,6 +33,23 @@ export async function POST(req: Request) {
   const parsed = schema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+  }
+
+  const profile = await prisma.profile.findUnique({
+    where: { userId: auth.id },
+    select: { targetRoles: true },
+  });
+  const targetRoles = safeJson<TargetRole[]>(profile?.targetRoles, []).filter(
+    (r) => r.title?.trim(),
+  );
+  if (targetRoles.length === 0) {
+    return NextResponse.json(
+      {
+        error:
+          "Add at least one target role on your profile before scanning.",
+      },
+      { status: 400 },
+    );
   }
 
   const requested = parsed.data.sources as SourceId[] | undefined;

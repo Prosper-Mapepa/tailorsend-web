@@ -20,6 +20,7 @@ const SECTION_TITLES = new Set([
   "SKILLS",
   "TECHNICAL SKILLS",
   "KEY SKILLS",
+  "SKILLS AND CERTIFICATIONS",
   "EXPERIENCE",
   "WORK EXPERIENCE",
   "PROFESSIONAL EXPERIENCE",
@@ -105,7 +106,8 @@ function looksLikePersonName(line: string): boolean {
 }
 
 /**
- * Canonical section order: Summary → Skills → Education → Experience → Projects → rest.
+ * Canonical section order (Neha-style):
+ * Summary → Work Experience → Projects → Skills → Education → Achievements → rest.
  */
 export function reorderResumeSections(md: string): string {
   const lines = md.replace(/\r/g, "").split("\n");
@@ -135,19 +137,25 @@ export function reorderResumeSections(md: string): string {
   const rankOf = (title: string): number => {
     const t = title.toUpperCase();
     if (/^(PROFESSIONAL SUMMARY|SUMMARY|OBJECTIVE|PROFILE)$/.test(t)) return 0;
-    if (/^(CORE SKILLS|SKILLS|TECHNICAL SKILLS|KEY SKILLS)$/.test(t)) return 1;
-    if (/^EDUCATION$/.test(t)) return 2;
     if (
       /^(WORK EXPERIENCE|EXPERIENCE|PROFESSIONAL EXPERIENCE|EMPLOYMENT|EMPLOYMENT HISTORY)$/.test(
         t,
       )
     ) {
-      return 3;
+      return 1;
     }
     if (/^(PROJECTS|PROJECT EXPERIENCE|SELECTED PROJECTS|SELECTED INITIATIVES|INITIATIVES)$/.test(t)) {
-      return 4;
+      return 2;
     }
-    if (/^(CERTIFICATIONS|AWARDS|ACHIEVEMENTS|PUBLICATIONS|VOLUNTEERING)$/.test(t)) {
+    if (
+      /^(CORE SKILLS|SKILLS|TECHNICAL SKILLS|KEY SKILLS|SKILLS AND CERTIFICATIONS)$/.test(
+        t,
+      )
+    ) {
+      return 3;
+    }
+    if (/^EDUCATION$/.test(t)) return 4;
+    if (/^(ACHIEVEMENTS|AWARDS|CERTIFICATIONS|PUBLICATIONS|VOLUNTEERING)$/.test(t)) {
       return 5;
     }
     return 40;
@@ -195,16 +203,18 @@ export function normalizeResumeMarkdown(md: string): string {
   }
   // Drop any leftover fence lines so they never become H1 or body text.
   const cleaned = lines.filter((l) => !/^\s*#?\s*```/.test(l.trim()));
-  return normalizeResumeEntries(
-    normalizeProjectHeaders(
-      normalizeEducationEntries(
-        reorderExperienceEntries(
-          mergeOrphanRoleDates(
-            normalizeProjectParagraphs(
-              consolidateProjectSections(
-                normalizeSkillsLists(
-                  reorderResumeSections(
-                    collapseExcessBlankLines(cleaned.join("\n")),
+  return toSplitEntryLayout(
+    normalizeResumeEntries(
+      normalizeProjectHeaders(
+        normalizeEducationEntries(
+          reorderExperienceEntries(
+            mergeOrphanRoleDates(
+              normalizeProjectParagraphs(
+                consolidateProjectSections(
+                  normalizeSkillsLists(
+                    reorderResumeSections(
+                      collapseExcessBlankLines(cleaned.join("\n")),
+                    ),
                   ),
                 ),
               ),
@@ -437,7 +447,7 @@ const EDUCATION_SECTIONS = /^EDUCATION$/i;
 const PROJECT_SECTIONS = /^PROJECTS/i;
 
 const SKILLS_SECTIONS =
-  /^(CORE SKILLS|SKILLS|TECHNICAL SKILLS|KEY SKILLS)$/i;
+  /^(CORE SKILLS|SKILLS|TECHNICAL SKILLS|KEY SKILLS|SKILLS AND CERTIFICATIONS)$/i;
 
 const DEGREE_KEYWORDS =
   /\b(MBA|M\.?S\.?|B\.?S\.?|B\.?A\.?|M\.?A\.?|Ph\.?D\.?|Bachelor|Master|Doctor|Associate)\b/i;
@@ -758,6 +768,7 @@ const SKILL_ACRONYMS: Record<string, string> = {
   sql: "SQL",
   nosql: "NoSQL",
   rest: "REST",
+  "rest apis": "REST APIs",
   graphql: "GraphQL",
   html: "HTML",
   css: "CSS",
@@ -768,17 +779,45 @@ const SKILL_ACRONYMS: Record<string, string> = {
   ios: "iOS",
   ml: "ML",
   ai: "AI",
+  mysql: "MySQL",
+  mongodb: "MongoDB",
+  dynamodb: "DynamoDB",
+  postgresql: "PostgreSQL",
+  postgres: "PostgreSQL",
+  ddd: "DDD",
+  "domain-driven": "Domain-Driven",
+  "domain-driven design": "Domain-Driven Design",
+  "domain-driven design (ddd)": "Domain-Driven Design (DDD)",
+  kafka: "Kafka",
+  redis: "Redis",
+  kubernetes: "Kubernetes",
 };
 
 function titleCaseSkill(skill: string): string {
   const trimmed = skill.trim();
   if (!trimmed) return trimmed;
 
+  const fullKey = trimmed.toLowerCase();
+  if (SKILL_ACRONYMS[fullKey]) return SKILL_ACRONYMS[fullKey];
+
   return trimmed
     .split(/\s+/)
     .map((word) => {
       const key = word.toLowerCase();
       if (SKILL_ACRONYMS[key]) return SKILL_ACRONYMS[key];
+      // Preserve Domain-Driven style hyphenated tokens
+      if (word.includes("-")) {
+        return word
+          .split("-")
+          .map((p) => {
+            const k = p.toLowerCase();
+            return (
+              SKILL_ACRONYMS[k] ??
+              p.charAt(0).toUpperCase() + p.slice(1).toLowerCase()
+            );
+          })
+          .join("-");
+      }
       if (/^[A-Z0-9+/#.]{2,}$/.test(word)) return word;
       if (word.includes("/")) {
         return word
@@ -789,14 +828,258 @@ function titleCaseSkill(skill: string): string {
           })
           .join("/");
       }
+      // Keep parenthetical acronyms: (DDD)
+      const paren = word.match(/^\((.+)\)$/);
+      if (paren) {
+        const inner = paren[1];
+        const k = inner.toLowerCase();
+        return `(${SKILL_ACRONYMS[k] ?? inner.toUpperCase()})`;
+      }
       return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
     })
     .join(" ");
 }
 
-function pushSkill(out: string[], skill: string) {
-  const formatted = titleCaseSkill(skill);
-  if (formatted) out.push(`- ${formatted}`);
+const SKILL_CATEGORY_ORDER = [
+  "Programming Languages",
+  "Tech Stack",
+  "System Design",
+  "Cloud and Devops",
+  "Data & Messaging",
+  "Tools",
+  "Certifications",
+  "Skills",
+] as const;
+
+type SkillCategory = (typeof SKILL_CATEGORY_ORDER)[number];
+
+/** Keyword → category for auto-grouping flat skill lists. */
+const SKILL_CATEGORY_RULES: { category: SkillCategory; patterns: RegExp[] }[] = [
+  {
+    category: "Programming Languages",
+    patterns: [
+      /^(advanced\s+)?(java|python|javascript|typescript|go|golang|rust|c\+\+|c#|ruby|php|swift|kotlin|scala|r|matlab|bash|shell|sql)$/i,
+    ],
+  },
+  {
+    category: "Certifications",
+    patterns: [
+      /\b(certified|certification|practitioner|associate|professional|cka|ckad|pmp|cissp|comptia|scrum master)\b/i,
+    ],
+  },
+  {
+    category: "System Design",
+    patterns: [
+      /\b(microservice|microservices|domain-driven|ddd|event-driven|design pattern|system design|distributed system|scalability|high availability|architecture)\b/i,
+    ],
+  },
+  {
+    category: "Cloud and Devops",
+    patterns: [
+      /\b(kubernetes|k8s|aws|amazon web services|gcp|google cloud|azure|terraform|jenkins|github actions|gitlab ci|ci\/?cd|docker|devops|ansible|helm|prometheus|grafana|cloudformation|pulumi|lambda|ecs|eks|ec2)\b/i,
+      /^(github|gitlab|bitbucket)$/i,
+    ],
+  },
+  {
+    category: "Data & Messaging",
+    patterns: [
+      /\b(mysql|postgres|postgresql|mongodb|dynamodb|redis|cassandra|elasticsearch|kafka|rabbitmq|sqs|pubsub|spark|hadoop|snowflake|bigquery|data warehouse|messaging)\b/i,
+    ],
+  },
+  {
+    category: "Tech Stack",
+    patterns: [
+      /\b(spring|hibernate|react|angular|vue|next\.?js|node\.?js|express|django|flask|fastapi|rails|\.net|rest(\s*apis?)?|graphql|grpc|nestjs|laravel)\b/i,
+    ],
+  },
+];
+
+function categorizeSkill(skill: string): SkillCategory {
+  const s = skill.trim();
+  if (!s) return "Skills";
+  for (const rule of SKILL_CATEGORY_RULES) {
+    if (rule.patterns.some((re) => re.test(s))) return rule.category;
+  }
+  if (/\b(api|framework|library|sdk|orm)\b/i.test(s)) return "Tech Stack";
+  return "Tech Stack";
+}
+
+function formatSkillCategoryLines(skills: string[]): string[] {
+  const buckets = new Map<SkillCategory, string[]>();
+  const seen = new Set<string>();
+
+  for (const raw of skills) {
+    const skill = titleCaseSkill(raw);
+    if (!skill) continue;
+    const key = skill.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const cat = categorizeSkill(skill);
+    const list = buckets.get(cat) ?? [];
+    list.push(skill);
+    buckets.set(cat, list);
+  }
+
+  // Fold generic "Skills" leftovers into Tech Stack
+  const leftovers = buckets.get("Skills");
+  if (leftovers?.length) {
+    const tech = buckets.get("Tech Stack") ?? [];
+    tech.push(...leftovers);
+    buckets.set("Tech Stack", tech);
+    buckets.delete("Skills");
+  }
+
+  const lines: string[] = [];
+  for (const cat of SKILL_CATEGORY_ORDER) {
+    if (cat === "Skills") continue;
+    const items = buckets.get(cat);
+    if (!items?.length) continue;
+    lines.push(`**${cat}:** ${items.join(", ")}`);
+  }
+  return lines;
+}
+
+function normalizeSkillLabel(label: string): string {
+  return label
+    .replace(/\*+/g, "")
+    .replace(/:+/g, "")
+    .trim()
+    .replace(/\bdevops\b/i, "Devops");
+}
+
+/** Convert comma/bullet skills into category lines: **Label:** a, b, c */
+function normalizeSkillsLists(md: string): string {
+  const lines = md.replace(/\r/g, "").split("\n");
+  let inSkills = false;
+  const out: string[] = [];
+  const pendingBullets: string[] = [];
+  const pendingCategories: { label: string; items: string[] }[] = [];
+
+  const flushBullets = () => {
+    if (!pendingBullets.length) return;
+    const skills = pendingBullets.map(titleCaseSkill).filter(Boolean);
+    pendingBullets.length = 0;
+    out.push(...formatSkillCategoryLines(skills));
+  };
+
+  const flushCategories = () => {
+    if (!pendingCategories.length) return;
+    for (const cat of pendingCategories) {
+      const label = normalizeSkillLabel(cat.label);
+      const body = cat.items.filter(Boolean).join(", ");
+      if (label && body) out.push(`**${label}:** ${body}`);
+    }
+    pendingCategories.length = 0;
+  };
+
+  const parseSkillItems = (body: string): string[] =>
+    body
+      .split(/,\s*/)
+      .map((p) =>
+        titleCaseSkill(
+          p
+            .trim()
+            .replace(/^:+\s*/, "")
+            .replace(/\.\s*$/, "")
+            .replace(
+              /^(Proficient in|Expertise in|Skilled in|Experienced with|Certified in|Deep knowledge of)\s+/i,
+              "",
+            ),
+        ),
+      )
+      .filter(Boolean);
+
+  for (const raw of lines) {
+    const trimmed = raw.trim();
+
+    if (/^##\s+/.test(trimmed)) {
+      flushBullets();
+      flushCategories();
+      const title = trimmed.replace(/^##\s+/, "").trim();
+      inSkills = SKILLS_SECTIONS.test(title);
+      if (
+        inSkills &&
+        /^(CORE SKILLS|SKILLS|TECHNICAL SKILLS|KEY SKILLS)$/i.test(title)
+      ) {
+        out.push("## Skills and Certifications");
+      } else {
+        out.push(raw);
+      }
+      continue;
+    }
+
+    if (!inSkills) {
+      out.push(raw);
+      continue;
+    }
+
+    if (!trimmed) {
+      flushBullets();
+      flushCategories();
+      continue;
+    }
+
+    if (/^[-*]\s+/.test(trimmed)) {
+      const item = trimmed.replace(/^[-*]\s+/, "").trim();
+      const bulletLabeled = item.match(
+        /^(?:\*\*)?([^:*]+?)(?:\*\*)?\s*:\s*:?\s*(.+)$/,
+      );
+      if (
+        bulletLabeled &&
+        /[A-Za-z]/.test(bulletLabeled[1]) &&
+        bulletLabeled[2].trim()
+      ) {
+        flushBullets();
+        pendingCategories.push({
+          label: normalizeSkillLabel(bulletLabeled[1]),
+          items: parseSkillItems(bulletLabeled[2]),
+        });
+        continue;
+      }
+      if (item.includes(",") && item.split(",").length >= 3) {
+        for (const part of item.split(",")) {
+          const s = titleCaseSkill(part);
+          if (s) pendingBullets.push(s);
+        }
+      } else {
+        const s = titleCaseSkill(item);
+        if (s) pendingBullets.push(s);
+      }
+      continue;
+    }
+
+    // Category line: **Label:** items (tolerate accidental ::)
+    const labeled = trimmed.match(
+      /^(?:\*\*)?([^:*]+?)(?:\*\*)?\s*:\s*:?\s*(.+)$/,
+    );
+    if (labeled) {
+      flushBullets();
+      const label = normalizeSkillLabel(labeled[1]);
+      // Re-categorize generic "Skills:" dumps
+      if (/^(skills|technical skills|core skills|key skills)$/i.test(label)) {
+        pendingBullets.push(...parseSkillItems(labeled[2]));
+        continue;
+      }
+      pendingCategories.push({
+        label,
+        items: parseSkillItems(labeled[2]),
+      });
+      continue;
+    }
+
+    if (trimmed.includes(",")) {
+      for (const part of trimmed.split(",")) {
+        const s = titleCaseSkill(part);
+        if (s) pendingBullets.push(s);
+      }
+    } else {
+      pendingBullets.push(titleCaseSkill(trimmed));
+    }
+  }
+
+  flushBullets();
+  flushCategories();
+  return out.join("\n");
 }
 
 function boldCompanyLine(line: string): string {
@@ -805,66 +1088,201 @@ function boldCompanyLine(line: string): string {
   return `**${stripMd(trimmed)}**`;
 }
 
-/** Convert comma-separated skill lines into bullets so PDF columns render correctly. */
-function normalizeSkillsLists(md: string): string {
+/**
+ * Convert legacy stacked headers into Neha-style split rows:
+ *   **Company** | dates
+ *   *Title* | Location
+ *   **Project** | [Github Link](url)
+ *   **School** | dates
+ *   ***Degree***
+ */
+export function toSplitEntryLayout(md: string): string {
   const lines = md.replace(/\r/g, "").split("\n");
-  let inSkills = false;
+  let section = "";
   const out: string[] = [];
+  let i = 0;
 
-  for (const raw of lines) {
+  const alreadySplit = (line: string) =>
+    /\|/.test(line) && !isLegacyCompanyDash(line);
+
+  const isLegacyCompanyDash = (line: string) => {
+    const plain = stripMd(line);
+    return /^(.+?)\s+[—–-]\s+(.+)$/.test(plain) && !DATE_RANGE.test(plain);
+  };
+
+  while (i < lines.length) {
+    const raw = lines[i];
     const trimmed = raw.trim();
 
     if (/^##\s+/.test(trimmed)) {
-      const title = trimmed.replace(/^##\s+/, "").trim();
-      inSkills = SKILLS_SECTIONS.test(title);
+      section = trimmed.replace(/^##\s+/, "").trim();
       out.push(raw);
+      i++;
       continue;
     }
 
-    if (!inSkills || !trimmed) {
+    if (!trimmed || /^[-*]\s/.test(trimmed)) {
       out.push(raw);
+      i++;
       continue;
     }
 
-    if (/^[-*]\s+/.test(trimmed)) {
-      const item = trimmed.replace(/^[-*]\s+/, "");
-      if (item.includes(",") && item.split(",").length >= 4) {
-        for (const part of item.split(",")) {
-          pushSkill(out, part);
+    // Experience: company + role → split rows
+    if (EXP_SECTIONS.test(section) && !alreadySplit(trimmed)) {
+      const next = lines[i + 1]?.trim() ?? "";
+      const companyLike =
+        isCompanyLine(trimmed) ||
+        (/^\*\*/.test(trimmed) &&
+          !DATE_IN_PARENS.test(stripMd(trimmed)) &&
+          !DATE_RANGE.test(stripMd(trimmed)) &&
+          !isRoleLine(trimmed));
+      const roleLike =
+        next &&
+        !/^[-*]\s/.test(next) &&
+        !/^##/.test(next) &&
+        (isRoleLine(next) ||
+          looksLikeJobTitle(next) ||
+          /^\*\*/.test(next) ||
+          (/^\*[^*]/.test(next) && !/^\*\*/.test(next)));
+
+      if (companyLike && roleLike) {
+        const { company, location } = parseCompanyLocation(trimmed);
+        const { title, dates } = parseRoleDates(next);
+        out.push(`**${company}** | ${dates || ""}`.replace(/\s+\|\s*$/, ""));
+        if (location) {
+          out.push(`*${title}* | ${location}`);
+        } else {
+          out.push(`*${title}*`);
         }
-      } else {
-        pushSkill(out, item);
+        i += 2;
+        continue;
       }
-      continue;
-    }
 
-    const labeled = trimmed.match(/^([^:]+):\s*(.+)$/);
-    if (labeled) {
-      const body = labeled[2];
-      const chunks = body.split(/,\s*/);
-      if (chunks.length >= 2) {
-        for (const part of chunks) {
-          let skill = part.trim().replace(/\.\s*$/, "");
-          skill = skill.replace(
-            /^(Proficient in|Expertise in|Skilled in|Experienced with|Certified in|Deep knowledge of)\s+/i,
-            "",
-          );
-          if (skill) pushSkill(out, skill);
-        }
+      // Single role line with embedded dates (no company above)
+      if (isRoleLine(trimmed) || DATE_IN_PARENS.test(stripMd(trimmed))) {
+        const { title, dates } = parseRoleDates(trimmed);
+        out.push(
+          dates ? `*${title}* | ${dates}` : `*${title}*`,
+        );
+        i++;
         continue;
       }
     }
 
-    if (trimmed.includes(",")) {
-      for (const part of trimmed.split(",")) {
-        pushSkill(out, part);
+    // Education: school + degree
+    if (EDUCATION_SECTIONS.test(section) && !alreadySplit(trimmed)) {
+      const next = lines[i + 1]?.trim() ?? "";
+      if (
+        (isEducationSchoolLine(trimmed) || /^\*\*/.test(trimmed)) &&
+        next &&
+        (isEducationDegreeLine(next) || /^\*\*/.test(next))
+      ) {
+        const schoolPlain = stripMd(trimmed);
+        const schoolMatch = schoolPlain.match(/^(.+?)\s+[—–-]\s+(.+)$/);
+        const school = schoolMatch ? schoolMatch[1].trim() : schoolPlain;
+        const locFromSchool = schoolMatch ? schoolMatch[2].trim() : "";
+        const { title: degree, dates } = parseRoleDates(next);
+        const right = dates || locFromSchool;
+        out.push(
+          right ? `**${school}** | ${right}` : `**${school}**`,
+        );
+        out.push(`***${degree.replace(/\*/g, "").trim()}***`);
+        i += 2;
+        // Optional Grade line stays as-is (next iteration)
+        continue;
       }
-    } else {
-      pushSkill(out, trimmed);
     }
+
+    // Projects: collapse link soup into Name | Github Link
+    if (PROJECT_SECTIONS.test(section) && !/^[-*]/.test(trimmed)) {
+      out.push(toProjectSplitLine(trimmed));
+      i++;
+      continue;
+    }
+
+    out.push(raw);
+    i++;
   }
 
   return out.join("\n");
+}
+
+function parseCompanyLocation(line: string): {
+  company: string;
+  location: string;
+} {
+  const plain = stripMd(line);
+  const m = plain.match(/^(.+?)\s+[—–-]\s+(.+)$/);
+  if (m) return { company: m[1].trim(), location: m[2].trim() };
+  return { company: plain, location: "" };
+}
+
+function parseRoleDates(line: string): { title: string; dates: string } {
+  const trimmed = line.trim();
+  // **Title** *(dates)*  or  **Title** — *(dates)*
+  let m = trimmed.match(
+    /^\*\*(.+?)\*\*\s*(?:[—–-]\s*)?\*\(?([^)*]+)\)?\*/,
+  );
+  if (m) {
+    return {
+      title: m[1].trim(),
+      dates: m[2].replace(/^\(|\)$/g, "").trim(),
+    };
+  }
+  // **Title** (dates)
+  m = trimmed.match(/^\*\*(.+?)\*\*\s*\(([^)]+)\)\s*$/);
+  if (m) {
+    return { title: m[1].trim(), dates: m[2].trim() };
+  }
+  // *Title* | dates (already partial)
+  m = trimmed.match(/^\*(.+?)\*\s*\|\s*(.+)$/);
+  if (m) {
+    return { title: m[1].trim(), dates: m[2].trim() };
+  }
+  // Title (dates)
+  const plain = stripMd(trimmed);
+  const paren = plain.match(/^(.+?)\s*\(([^)]+)\)\s*$/);
+  if (paren && /\d{4}|Present/i.test(paren[2])) {
+    return { title: paren[1].trim(), dates: paren[2].trim() };
+  }
+  const dash = plain.match(/^(.+?)\s+[—–-]\s+(.+)$/);
+  if (dash && DATE_RANGE.test(dash[2])) {
+    return { title: dash[1].trim(), dates: dash[2].trim() };
+  }
+  return { title: plain.replace(/^\*+|\*+$/g, "").trim(), dates: "" };
+}
+
+function toProjectSplitLine(line: string): string {
+  const trimmed = line.trim();
+  if (/^\*\*[^*]+\*\*\s*\|/.test(trimmed) && !/\]\s*\|/.test(trimmed)) {
+    // Already **Name** | right
+    return trimmed;
+  }
+
+  // Extract first markdown link as the right-side "Github Link" / link
+  const linkMatch = trimmed.match(/\[([^\]]+)\]\(([^)]+)\)/);
+  const url = linkMatch?.[2] ?? "";
+  // Name: from **[Name](url)** or **Name** or [Name](url)
+  let name = "";
+  const boldLink = trimmed.match(/^\*\*\[([^\]]+)\]\([^)]+\)\*\*/);
+  const boldName = trimmed.match(/^\*\*([^*|\]]+?)\*\*/);
+  const plainLink = trimmed.match(/^\[([^\]]+)\]\([^)]+\)/);
+  if (boldLink) name = boldLink[1].trim();
+  else if (boldName) name = boldName[1].replace(/\[|\]/g, "").trim();
+  else if (plainLink) name = plainLink[1].trim();
+  else name = stripMd(trimmed.split(/[|—–-]/)[0] ?? "").trim();
+
+  // Drop trailing dates from name
+  name = name
+    .replace(/\s*[—–-]\s*\*?.*$/, "")
+    .replace(/\s*\([^)]*\d{4}[^)]*\)\s*$/, "")
+    .trim();
+
+  if (url) {
+    const label = /github/i.test(url) ? "Github Link" : "Link";
+    return `**${name}** | [${label}](${url})`;
+  }
+  return `**${name}**`;
 }
 
 /** Wrap a plain job-title line in bold; italicize the date portion. */
@@ -981,6 +1399,7 @@ function inline(s: string): string {
   );
   out = out
     .replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2">$1</a>')
+    .replace(/\*\*\*(.+?)\*\*\*/g, "<strong><em>$1</em></strong>")
     .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
     .replace(/\*(.+?)\*/g, "<em>$1</em>")
     // Bare URLs → links.
@@ -991,9 +1410,6 @@ function inline(s: string): string {
     );
   return out;
 }
-
-// A skills list with at least this many items renders in multiple columns.
-const MULTI_COLUMN_THRESHOLD = 6;
 
 const CLOSING_RE =
   /^(sincerely|best regards|warm regards|respectfully|kind regards|thank you|yours truly),?\.?$/i;
@@ -1094,26 +1510,12 @@ export function mdToCoverLetterHtml(md: string): string {
   return html.join("\n");
 }
 
-/** Convert markdown to HTML; auto-detects cover letters unless kind is set. */
-export function mdToHtml(
-  md: string,
-  opts?: { coverLetter?: boolean; kind?: DocumentKind },
-): string {
-  const asCover =
-    opts?.kind === "cover" ||
-    (opts?.kind !== "resume" &&
-      (opts?.coverLetter === true || isCoverLetter(md)));
-  if (asCover) return mdToCoverLetterHtml(md);
-  return mdToResumeHtml(md);
-}
-
 /** Resume-specific Markdown → HTML (headings, lists, bold/italic, links). */
 function mdToResumeHtml(md: string): string {
   const lines = md.replace(/\r/g, "").split("\n");
   const html: string[] = [];
   let inList = false;
   let listItems: string[] = [];
-  let listIsSkills = false;
   let section = "";
   /** First body line after H1 is the contact bar. */
   let expectContactLine = false;
@@ -1122,47 +1524,72 @@ function mdToResumeHtml(md: string): string {
 
   const closeList = () => {
     if (!inList) return;
-    let cls = "";
-    if (listIsSkills && listItems.length >= MULTI_COLUMN_THRESHOLD) {
-      cls = listItems.length >= 10 ? ' class="cols-3"' : ' class="cols-2"';
-    }
-    html.push(`<ul${cls}>`);
+    html.push(`<ul>`);
     html.push(...listItems);
     html.push("</ul>");
     inList = false;
     listItems = [];
   };
 
+  const pushEntryRow = (cls: string, left: string, right: string) => {
+    if (right) {
+      html.push(
+        `<p class="entry-row ${cls}"><span class="entry-left">${inline(left)}</span><span class="entry-right">${inline(right)}</span></p>`,
+      );
+    } else {
+      html.push(`<p class="${cls}">${inline(left)}</p>`);
+    }
+  };
+
+  const splitSides = (
+    line: string,
+  ): { left: string; right: string } | null => {
+    // Split on " | " outside of markdown links [...](...) 
+    let depth = 0;
+    for (let i = 0; i < line.length - 2; i++) {
+      const ch = line[i];
+      if (ch === "[") depth++;
+      else if (ch === "]") depth = Math.max(0, depth - 1);
+      else if (depth === 0 && line.slice(i, i + 3) === " | ") {
+        return {
+          left: line.slice(0, i).trim(),
+          right: line.slice(i + 3).trim(),
+        };
+      }
+    }
+    return null;
+  };
+
   const paragraphClass = (line: string): string => {
     const trimmed = line.trim();
     const isBold = /^\*\*/.test(trimmed);
+    const isItalicOnly = /^\*[^*]/.test(trimmed) && !/^\*\*/.test(trimmed);
     const plain = stripMd(trimmed);
     const inExperience = EXP_SECTIONS.test(section);
     const inProjects = PROJECT_SECTIONS.test(section);
     const inEducation = EDUCATION_SECTIONS.test(section);
+    const inSkills = SKILLS_SECTIONS.test(section);
+
+    if (inSkills && /:\s*/.test(trimmed)) return "skill-row";
 
     if (inProjects && (isBold || /\[.+?\]\(.+?\)/.test(trimmed))) {
       return "entry-project";
     }
 
     if (inEducation) {
-      if (isBold) {
-        if (
-          DEGREE_KEYWORDS.test(plain) ||
-          /\(Graduation|Expected|GPA/i.test(plain)
-        ) {
-          return "entry-degree";
-        }
-        return "entry-school";
+      if (/^grade\s*:/i.test(plain)) return "entry-grade";
+      if (/^\*\*\*/.test(trimmed) || (isBold && DEGREE_KEYWORDS.test(plain))) {
+        return "entry-degree";
       }
+      if (isBold) return "entry-school";
     }
 
     if (inExperience) {
+      if (isItalicOnly || (expPhase === "after-company" && (isBold || isItalicOnly))) {
+        expPhase = "idle";
+        return "entry-role";
+      }
       if (isBold) {
-        if (expPhase === "after-company") {
-          expPhase = "idle";
-          return "entry-role";
-        }
         expPhase = "after-company";
         return "entry-company";
       }
@@ -1193,7 +1620,6 @@ function mdToResumeHtml(md: string): string {
       } else {
         expPhase = "idle";
         section = heading.trim();
-        listIsSkills = /\bskills?\b/i.test(heading);
         expectContactLine = level === 1;
         html.push(`<h${level}>${inline(heading)}</h${level}>`);
       }
@@ -1206,20 +1632,80 @@ function mdToResumeHtml(md: string): string {
       expPhase = "idle";
     } else {
       closeList();
-      let cls = paragraphClass(line);
-      if (expectContactLine && !cls) {
-        cls = "contact-line";
+      const trimmed = line.trim();
+      if (expectContactLine) {
+        html.push(contactLineHtml(trimmed));
         expectContactLine = false;
-      } else if (expectContactLine) {
-        expectContactLine = false;
+        continue;
       }
-      html.push(
-        `<p${cls ? ` class="${cls}"` : ""}>${inline(line)}</p>`,
-      );
+      const sides = splitSides(trimmed);
+      let cls = paragraphClass(trimmed);
+      if (
+        sides &&
+        (cls === "entry-company" ||
+          cls === "entry-role" ||
+          cls === "entry-school" ||
+          cls === "entry-project" ||
+          cls === "entry")
+      ) {
+        pushEntryRow(cls, sides.left, sides.right);
+      } else {
+        html.push(
+          `<p${cls ? ` class="${cls}"` : ""}>${inline(trimmed)}</p>`,
+        );
+      }
     }
   }
   closeList();
   return html.join("\n");
+}
+
+const CONTACT_ICON = {
+  phone:
+    '<svg class="ci-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1.1-.2 1.2.4 2.5.6 3.8.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.6.6 3.8.1.4 0 .8-.3 1.1L6.6 10.8z"/></svg>',
+  email:
+    '<svg class="ci-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z"/></svg>',
+  linkedin:
+    '<svg class="ci-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M6.94 6.5A1.94 1.94 0 1 1 5 4.56 1.94 1.94 0 0 1 6.94 6.5zM5.25 8.75h3.38V19H5.25zm5.63 0h3.24v1.4h.05a3.55 3.55 0 0 1 3.2-1.76c3.42 0 4.05 2.25 4.05 5.18V19h-3.38v-4.66c0-1.11 0-2.54-1.55-2.54s-1.78.1-1.78 2.48V19h-3.38z"/></svg>',
+  github:
+    '<svg class="ci-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2C6.48 2 2 6.58 2 12.26c0 4.52 2.87 8.35 6.84 9.71.5.1.68-.22.68-.49 0-.24-.01-.87-.01-1.71-2.78.62-3.37-1.37-3.37-1.37-.45-1.18-1.11-1.5-1.11-1.5-.91-.64.07-.63.07-.63 1 .07 1.53 1.06 1.53 1.06.89 1.56 2.34 1.11 2.91.85.09-.66.35-1.11.63-1.37-2.22-.26-4.56-1.14-4.56-5.07 0-1.12.39-2.03 1.03-2.75-.1-.26-.45-1.31.1-2.73 0 0 .84-.27 2.75 1.05A9.2 9.2 0 0 1 12 6.84c.85 0 1.71.12 2.51.35 1.9-1.32 2.74-1.05 2.74-1.05.55 1.42.21 2.47.1 2.73.64.72 1.03 1.63 1.03 2.75 0 3.94-2.34 4.8-4.57 5.06.36.32.68.94.68 1.9 0 1.37-.01 2.47-.01 2.81 0 .27.18.6.69.49A10.03 10.03 0 0 0 22 12.26C22 6.58 17.52 2 12 2z"/></svg>',
+  location:
+    '<svg class="ci-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5z"/></svg>',
+} as const;
+
+function contactLineHtml(line: string): string {
+  const parts = line
+    .split("|")
+    .map((p) => p.trim())
+    .filter(Boolean);
+  const items: string[] = [];
+  for (const part of parts) {
+    let icon = "";
+    let body = inline(part);
+    if (/linkedin/i.test(part)) icon = CONTACT_ICON.linkedin;
+    else if (/github/i.test(part)) icon = CONTACT_ICON.github;
+    else if (/portfolio|website/i.test(part)) icon = CONTACT_ICON.location;
+    else if (/@/.test(part)) icon = CONTACT_ICON.email;
+    else if (/\d{3}/.test(part) && !/\[/.test(part)) icon = CONTACT_ICON.phone;
+    else if (!/\[/.test(part)) icon = CONTACT_ICON.location;
+    items.push(
+      `<span class="contact-item">${icon}<span class="contact-text">${body}</span></span>`,
+    );
+  }
+  return `<p class="contact-line">${items.join('<span class="contact-sep" aria-hidden="true">·</span>')}</p>`;
+}
+
+/** Convert markdown to HTML; auto-detects cover letters unless kind is set. */
+export function mdToHtml(
+  md: string,
+  opts?: { coverLetter?: boolean; kind?: DocumentKind },
+): string {
+  const asCover =
+    opts?.kind === "cover" ||
+    (opts?.kind !== "resume" &&
+      (opts?.coverLetter === true || isCoverLetter(md)));
+  if (asCover) return mdToCoverLetterHtml(md);
+  return mdToResumeHtml(md);
 }
 
 /** Wrap rendered markdown in a full, print-optimized HTML document. */
@@ -1262,60 +1748,111 @@ const DOCUMENT_BASE_CSS = `
     text-underline-offset: 1px;
     font-weight: inherit;
   }
-  strong { font-weight: 500; }
+  strong { font-weight: 700; }
 `;
 
 const RESUME_PRINT_CSS = `
   ${DOCUMENT_BASE_CSS}
   h1 {
-    font-size: 14pt;
-    font-weight: 500;
-    letter-spacing: 0.02em;
-    text-transform: uppercase;
-    margin: 0 0 1px;
+    font-size: 18pt;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    text-transform: none;
+    text-align: center;
+    margin: 0 0 4px;
     line-height: 1.15;
   }
   p.contact-line {
-    margin: 0 0 10px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 2px 0;
+    margin: 0 0 12px;
     padding-bottom: 0;
     border-bottom: none;
     font-size: 9pt;
     font-weight: 400;
-    line-height: 1.26;
+    line-height: 1.35;
+    text-align: center;
   }
-  p.contact-line a { text-decoration: underline; }
+  p.contact-line a { text-decoration: underline; text-underline-offset: 1px; }
+  .contact-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+  }
+  .contact-sep {
+    display: inline-block;
+    margin: 0 8px;
+    color: #666;
+  }
+  .ci-icon {
+    width: 11px;
+    height: 11px;
+    flex-shrink: 0;
+    display: inline-block;
+    vertical-align: -1px;
+  }
   h2 {
-    font-size: 10pt;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
+    font-size: 11pt;
+    font-weight: 700;
+    text-transform: none;
+    letter-spacing: 0;
     border-bottom: 1px solid #000000;
     padding-bottom: 2px;
-    margin: 10px 0 4px;
+    margin: 12px 0 6px;
     break-after: avoid;
     page-break-after: avoid;
   }
-  h2:first-of-type { margin-top: 14px; }
+  h2:first-of-type { margin-top: 4px; }
   h2 + p,
   h2 + ul { margin-top: 4px; }
-  h3 { font-size: 9pt; margin: 6px 0 2px; font-weight: 500; }
+  h3 { font-size: 9pt; margin: 6px 0 2px; font-weight: 700; }
   p { margin: 0; font-size: 9pt; }
+  p.entry-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    margin: 0;
+    font-size: 9pt;
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+  p.entry-row .entry-left { flex: 1 1 auto; min-width: 0; }
+  p.entry-row .entry-right {
+    flex: 0 0 auto;
+    text-align: right;
+    white-space: nowrap;
+    font-weight: 400;
+  }
   p.entry-company,
   p.entry-school,
   p.entry-project,
   p.entry {
-    margin: 6px 0 0;
+    margin: 8px 0 0;
     font-size: 9pt;
-    font-weight: 500;
+    font-weight: 700;
     break-after: avoid;
     page-break-after: avoid;
+  }
+  p.entry-row.entry-company,
+  p.entry-row.entry-school,
+  p.entry-row.entry-project {
+    margin-top: 8px;
+    font-weight: 700;
   }
   h2 + p.entry-company,
   h2 + p.entry-school,
   h2 + p.entry-project,
-  h2 + p.entry { margin-top: 4px; }
+  h2 + p.entry,
+  h2 + p.entry-row { margin-top: 4px; }
   p.entry-company + p.entry-role,
-  p.entry-school + p.entry-degree {
+  p.entry-school + p.entry-degree,
+  p.entry-row.entry-company + p.entry-row.entry-role,
+  p.entry-row.entry-school + p.entry-degree {
     margin-top: 0;
     margin-bottom: 0;
   }
@@ -1323,17 +1860,27 @@ const RESUME_PRINT_CSS = `
   p.entry-degree {
     margin: 0 0 2px;
     font-size: 9pt;
-    font-weight: 500;
-    font-style: normal;
+    font-weight: 400;
+    font-style: italic;
     break-after: avoid;
     page-break-after: avoid;
   }
+  p.entry-row.entry-role {
+    font-weight: 400;
+    font-style: italic;
+    margin: 0 0 2px;
+  }
+  p.entry-row.entry-role .entry-right { font-style: italic; }
+  p.entry-degree { font-weight: 700; font-style: italic; }
+  p.entry-grade { margin: 0 0 2px; font-weight: 400; }
+  p.skill-row { margin: 2px 0; line-height: 1.35; }
   p.entry-role strong,
-  p.entry-degree strong { font-weight: 500; }
+  p.entry-degree strong { font-weight: 700; }
   p.entry-role em,
   p.entry-degree em { font-weight: 400; font-style: italic; }
-  p.entry-project strong { font-weight: 500; text-decoration: none; }
-  p.entry-project a { font-weight: 500; text-decoration: underline; }
+  p.entry-project strong { font-weight: 700; text-decoration: none; }
+  p.entry-project a,
+  p.entry-row.entry-project a { font-weight: 400; text-decoration: underline; }
   h3 + p.entry { margin-top: 4px; }
   ul {
     margin: 0 0 4px;
@@ -1345,28 +1892,20 @@ const RESUME_PRINT_CSS = `
     font-size: 9pt;
     margin: 0 0 2px;
     padding-left: 0.25em;
-    line-height: 1.28;
+    line-height: 1.35;
   }
-  ul:not(.cols-2):not(.cols-3) li {
-    break-inside: avoid;
-    page-break-inside: avoid;
-  }
+  li { break-inside: avoid; page-break-inside: avoid; }
   p.entry-role + ul,
   p.entry-degree + ul,
   p.entry-project + ul,
-  p.entry-company + ul { margin-top: 2px; }
-  ul.cols-2 { column-count: 2; column-gap: 16px; padding-left: 1.15em; }
-  ul.cols-3 { column-count: 3; column-gap: 12px; padding-left: 1.15em; }
-  ul.cols-2 li, ul.cols-3 li {
-    break-inside: auto;
-    page-break-inside: auto;
-    padding-left: 0.35em;
-  }
-  p.entry-project, p.entry-company, p.entry-role, p.entry-school, p.entry-degree, p.entry { text-decoration: none; }
+  p.entry-company + ul,
+  p.entry-row + ul { margin-top: 2px; }
+  p.entry-project, p.entry-company, p.entry-role, p.entry-school, p.entry-degree, p.entry, p.entry-row { text-decoration: none; }
   p.entry-company + ul,
   p.entry-role + ul,
   p.entry-project + ul,
-  p.entry-degree + ul {
+  p.entry-degree + ul,
+  p.entry-row + ul {
     break-inside: auto;
     page-break-inside: auto;
   }

@@ -280,12 +280,13 @@ function stripStoreLinks(line: string): string {
 
 function stripHeaderMarkdown(line: string): string {
   return line
-    .replace(/^\*\*|\*\*$/g, "")
     .replace(/\*\*\[(.+?)\]\(.+?\)\*\*/g, "$1")
     .replace(/\[(.+?)\]\(.+?\)/g, "$1")
+    .replace(/\*\*/g, "")
     .replace(/\s*\|\s*App Store\s*(\|\s*Play Store)?/gi, "")
     .replace(/\(\s*App Store\s*(\|\s*Play Store)?\s*\)/gi, "")
     .replace(/\s*—\s*\*?\(?[^)]*\)?\*?\s*$/g, "")
+    .replace(/^\*+|\*+$/g, "")
     .trim();
 }
 
@@ -302,24 +303,19 @@ function extractHeaderDates(text: string): { name: string; dates: string } {
   return { name: t, dates: "" };
 }
 
-function unlinkProjectHeader(line: string): string {
-  const { name, dates } = extractHeaderDates(stripHeaderMarkdown(line));
-  let header = `**${name}**`;
-  if (dates) header += ` — *(${dates})*`;
-  return header;
-}
-
 /**
- * Strip ALL links from the PROJECTS section — web, GitHub, and App/Play Store —
- * leaving clean `**Title** — *(dates)*` headers only.
+ * Normalize PROJECTS headers to Neha-style split rows:
+ *   **Project Name** | [Github Link](url)
+ * Matches profile projects by name and attaches the best available URL.
  */
 export function injectProjectLinks(
   md: string,
-  _projects: Project[],
-  _opts?: { profileGithub?: string },
+  projects: Project[],
+  opts?: { profileGithub?: string },
 ): string {
   const lines = md.split("\n");
   let inProjects = false;
+  const merged = mergeProjectLinks(projects);
 
   return lines
     .map((line) => {
@@ -330,10 +326,39 @@ export function injectProjectLinks(
       }
       if (/^##\s+/.test(trimmed) && inProjects) inProjects = false;
       if (!inProjects) return line;
-      if (/^\s*[-*]/.test(trimmed)) return line;
-      if (!/^\*\*/.test(trimmed)) return line;
+      if (/^\s*[-*]\s/.test(trimmed)) return line;
+      if (!trimmed || /^##/.test(trimmed)) return line;
 
-      return unlinkProjectHeader(stripStoreLinks(line));
+      const cleaned = stripStoreLinks(line);
+      const { name } = extractHeaderDates(stripHeaderMarkdown(cleaned));
+      if (!name) return line;
+
+      // Prefer URL already on the line, else match profile project.
+      const inlineUrl = cleaned.match(/\[([^\]]+)\]\(([^)]+)\)/)?.[2] ?? "";
+      const matched = merged.find((p) => {
+        const n = p.name.toLowerCase();
+        const target = name.toLowerCase();
+        if (n === target || target.includes(n) || n.includes(target)) return true;
+        const aliases = PROJECT_ALIASES[p.name] ?? [];
+        return aliases.some(
+          (a) => target.includes(a) || a.includes(target),
+        );
+      });
+      const primary = matched
+        ? getPrimaryProjectWebLink(matched, opts)
+        : "";
+      const url =
+        inlineUrl && !isGitHubProfileUrl(inlineUrl, opts?.profileGithub)
+          ? inlineUrl
+          : primary && !isGitHubProfileUrl(primary, opts?.profileGithub)
+            ? primary
+            : "";
+
+      if (url) {
+        const label = isGitHubUrl(url) ? "Github Link" : "Link";
+        return `**${name}** | [${label}](${url})`;
+      }
+      return `**${name}**`;
     })
     .join("\n");
 }
