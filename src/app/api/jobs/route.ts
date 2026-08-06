@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { isAuthUser, requireAuthUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import type { TargetRole } from "@/lib/types";
 import { safeJson } from "@/lib/util";
 
 export const dynamic = "force-dynamic";
@@ -12,6 +13,20 @@ function truthy(v: string | null): boolean {
 export async function GET(req: Request) {
   const auth = await requireAuthUser();
   if (!isAuthUser(auth)) return auth;
+
+  const profile = await prisma.profile.findUnique({
+    where: { userId: auth.id },
+    select: { targetRoles: true },
+  });
+  const targetRoles = safeJson<TargetRole[]>(profile?.targetRoles, []).filter(
+    (r) => r.title?.trim(),
+  );
+  if (targetRoles.length === 0) {
+    return NextResponse.json({
+      jobs: [],
+      requiresTargetRoles: true,
+    });
+  }
 
   const { searchParams } = new URL(req.url);
   const status = searchParams.get("status") ?? undefined;

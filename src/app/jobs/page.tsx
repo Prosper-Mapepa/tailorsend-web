@@ -282,6 +282,7 @@ export default function JobsPage() {
   const [boardsExpanded, setBoardsExpanded] = useState(false);
   const router = useRouter();
   const [targetRoles, setTargetRoles] = useState<string[]>([]);
+  const [profileLoaded, setProfileLoaded] = useState(false);
   const [jobBoards, setJobBoards] = useState<
     { input: string; label: string }[]
   >([]);
@@ -303,10 +304,18 @@ export default function JobsPage() {
           );
         },
       )
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setProfileLoaded(true));
   }, []);
 
   const loadJobs = useCallback(async () => {
+    if (!profileLoaded) return;
+    if (targetRoles.length === 0) {
+      setJobs([]);
+      setLoading(false);
+      setPage(1);
+      return;
+    }
     setLoading(true);
     const params = new URLSearchParams({
       minScore: String(minScore),
@@ -330,7 +339,15 @@ export default function JobsPage() {
     setJobs(data.jobs ?? []);
     setLoading(false);
     setPage(1);
-  }, [minScore, sort, sponsorshipFriendly, f1Filters, remoteOnly]);
+  }, [
+    profileLoaded,
+    targetRoles.length,
+    minScore,
+    sort,
+    sponsorshipFriendly,
+    f1Filters,
+    remoteOnly,
+  ]);
 
   useEffect(() => {
     loadJobs();
@@ -898,16 +915,28 @@ export default function JobsPage() {
         </div>
       )}
 
-      {loading ? (
+      {!profileLoaded || loading ? (
         <PageLoader label="Loading jobs…" />
+      ) : targetRoles.length === 0 ? (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50/60 px-6 py-12 text-center">
+          <p className="text-base font-semibold text-slate-900">
+            Add target roles to see jobs
+          </p>
+          <p className="mx-auto mt-2 max-w-md text-sm text-slate-600">
+            Job results stay hidden until you set at least one target role on
+            your profile. Scanning is disabled until then.
+          </p>
+          <Link
+            href="/profile#roles"
+            className="mt-4 inline-flex rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700"
+          >
+            Set target roles
+          </Link>
+        </div>
       ) : jobs.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-slate-200 bg-white px-6 py-12 text-center">
           <p className="text-slate-500">
-            No jobs yet. Configure your{" "}
-            <Link href="/profile" className="text-emerald-700 underline">
-              target roles
-            </Link>{" "}
-            and run a scan.
+            No jobs yet. Run a scan to find roles that match your targets.
           </p>
         </div>
       ) : (
