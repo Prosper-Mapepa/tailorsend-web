@@ -73,6 +73,14 @@ export async function runSearch(
     ? await prisma.profile.findUnique({ where: { userId: opts.userId } })
     : null;
   const targetRoles = safeJson<TargetRole[]>(profile?.targetRoles, []);
+  if (
+    opts.userId &&
+    !targetRoles.some((r) => r.title?.trim())
+  ) {
+    throw new Error(
+      "Add at least one target role on your profile before scanning.",
+    );
+  }
   const skills = safeJson<string[]>(profile?.skills, []);
   const workExperience = safeJson<WorkExperience[]>(
     profile?.workExperience,

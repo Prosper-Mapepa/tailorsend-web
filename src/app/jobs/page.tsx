@@ -642,7 +642,7 @@ export default function JobsPage() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === "Enter") void runSearch();
+                if (e.key === "Enter" && targetRoles.length > 0) void runSearch();
               }}
             />
             <input
@@ -651,7 +651,7 @@ export default function JobsPage() {
               value={location}
               onChange={(e) => setLocation(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === "Enter") void runSearch();
+                if (e.key === "Enter" && targetRoles.length > 0) void runSearch();
               }}
             />
           </div>
