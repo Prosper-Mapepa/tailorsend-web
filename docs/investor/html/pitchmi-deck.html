@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TailorSend — PitchMI AI &amp; Software Deck</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    .pitchmi-badge {
+      display: inline-block;
+      margin: 0 0 1rem;
+      padding: 0.35rem 0.85rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent);
+      background: var(--accent-glow);
+      border: 1px solid var(--accent);
+      border-radius: 999px;
+    }
+    .slide .criteria-row {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 0.6rem;
+      margin-top: 1.5rem;
+    }
+    .slide .criteria-row .stat-card {
+      text-align: center;
+      padding: 0.85rem 0.5rem;
+    }
+    .slide .criteria-row .stat-card .label {
+      font-size: 0.7rem;
+    }
+    .slide .criteria-row .stat-card .sub {
+      font-size: 0.72rem;
+      margin-top: 0.35rem;
+    }
+    .slide .use-of-funds.funds-4 {
+      grid-template-columns: repeat(4, 1fr);
+    }
+    .slide .judge-hint {
+      margin-top: 1.25rem;
+      padding: 0.75rem 1rem;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      background: rgba(255, 255, 255, 0.04);
+      border-left: 3px solid var(--accent);
+      border-radius: 0 8px 8px 0;
+    }
+    @media (max-width: 768px) {
+      .slide .criteria-row { grid-template-columns: repeat(2, 1fr); }
+      .slide .use-of-funds.funds-4 { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body class="deck-body">
+  <header class="site-header no-print">
+    <a class="site-logo" href="index.html"><img src="/assets/logo.jpg" alt="" width="28" height="28" style="border-radius:6px;vertical-align:middle;margin-right:0.4rem" /> TailorSend</a>
+    <nav class="site-nav">
+      <a href="index.html">Home</a>
+      <a href="pitchmi-deck.html" class="active">PitchMI</a>
+      <a href="pitch-deck.html">SBDC deck</a>
+      <a href="business-plan.html">Business plan</a>
+    </nav>
+    <div class="download-bar no-print">
+      <button type="button" class="btn-download" id="dl-self">↓ Download HTML</button>
+    </div>
+  </header>
+
+  <div class="slides" id="slides">
+    <!-- 1 Title -->
+    <section class="slide slide-title active" data-slide="1">
+      <span class="slide-num">1 / 12</span>
+      <div class="slide-inner">
+        <span class="pitchmi-badge">PitchMI 2026–27 · AI &amp; Software</span>
+        <p class="eyebrow">Semifinal · Sept 22, 2026 · Kalamazoo Civic Theatre</p>
+        <h1>TailorSend</h1>
+        <p class="subtitle">Stop applying blind. Start getting interviews.</p>
+        <p style="margin-top: 0.75rem; color: var(--text-muted); font-size: 0.95rem;">
+          Search · Match · Tailor · Autofill · Outreach · Track
+        </p>
+        <p class="domain">tailorsend.cc</p>
+        <span class="ask">$250K prize ask · Michigan HQ · Live product</span>
+        <p style="margin-top: 2rem; color: var(--text-muted);">
+          Prosper Mapepa, Founder · <a href="https://mapepallc.netlify.app/">Mapepa Innovation LLC</a><br />
+          mapepapro@gmail.com · (989) 332-8050
+        </p>
+      </div>
+    </section>
+
+    <!-- 2 Problem -->
+    <section class="slide" data-slide="2">
+      <span class="slide-num">2 / 12</span>
+      <div class="slide-inner">
+        <h2>Campus recruiting is a volume game students lose</h2>
+        <ul>
+          <li>Students apply to <strong>50–200+ roles</strong> per search cycle</li>
+          <li>Each quality application takes <strong>30–60 minutes</strong></li>
+          <li><strong>98% of Fortune 500</strong> use ATS — generic resumes get filtered</li>
+          <li>Tools are <strong>fragmented</strong>: boards, ChatGPT, builders, trackers</li>
+          <li><strong>Auto-apply bots</strong> violate terms and submit without review</li>
+          <li>International students need <strong>sponsorship/visa signals</strong> most tools ignore</li>
+        </ul>
+        <blockquote>"I spent more time customizing applications than interviewing."</blockquote>
+      </div>
+    </section>
+
+    <!-- 3 Solution -->
+    <section class="slide" data-slide="3">
+      <span class="slide-num">3 / 12</span>
+      <div class="slide-inner">
+        <h2>One workflow. You stay in control.</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Step</th><th>What TailorSend does</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>Search</strong></td><td>Multi-source jobs + match scores + visa filters</td></tr>
+              <tr><td><strong>Tailor</strong></td><td>Honest AI resume + cover letter, ATS before/after</td></tr>
+              <tr><td><strong>Edge</strong></td><td>Company research + build ideas you can incorporate</td></tr>
+              <tr><td><strong>Autofill</strong></td><td>Browser fills forms — <strong>you</strong> click Submit</td></tr>
+              <tr><td><strong>Outreach</strong></td><td>LinkedIn note + recruiter email drafts</td></tr>
+              <tr><td><strong>Track</strong></td><td>Pipeline from tailored → submitted → offer</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="principle">Design principle: Auto-fill, never auto-submit.</p>
+      </div>
+    </section>
+
+    <!-- 4 Market -->
+    <section class="slide" data-slide="4">
+      <span class="slide-num">4 / 12</span>
+      <div class="slide-inner">
+        <h2>Large market. Real pain. Timing is now.</h2>
+        <div class="card-grid">
+          <div class="stat-card">
+            <div class="label">Beachhead</div>
+            <div class="value" style="font-size: 1.15rem;">Michigan</div>
+            <div class="sub">Campus recruiting · CMU, U-M, MSU, Wayne State</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Buyers</div>
+            <div class="value" style="font-size: 1.15rem;">High intent</div>
+            <div class="sub">Seniors, grads, F-1 talent, career switchers</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Why now</div>
+            <div class="value" style="font-size: 1.15rem;">LLMs</div>
+            <div class="sub">Per-job tailoring finally cheap at consumer prices</div>
+          </div>
+        </div>
+        <ul>
+          <li><strong>Underserved wedge:</strong> early-career tools vs. employer ATS spend</li>
+          <li><strong>Expansion:</strong> bootcamps, career centers, then national student SaaS</li>
+          <li><strong>Year 1 goal:</strong> ~300 registered · 24 paying · prove campus GTM</li>
+        </ul>
+        <p class="judge-hint">PitchMI criterion — Market Potential: large opportunity, real pain, time to solve is now.</p>
+      </div>
+    </section>
+
+    <!-- 5 Product / Tech -->
+    <section class="slide" data-slide="5">
+      <span class="slide-num">5 / 12</span>
+      <div class="slide-inner">
+        <h2>Technical differentiation that compounds</h2>
+        <ul>
+          <li><strong>End-to-end system</strong> — not a chatbot bolted onto a job list</li>
+          <li><strong>Match + visa engine</strong> — rank by fit, targeting, and sponsorship signals</li>
+          <li><strong>Honest AI docs</strong> — ATS lift without inventing experience</li>
+          <li><strong>Human-in-the-loop autofill</strong> — trust and ToS-safe vs. auto-apply bots</li>
+          <li><strong>Data flywheel</strong> — applications, outcomes, company signals improve matching</li>
+        </ul>
+        <div class="card-grid" style="margin-top: 1.25rem;">
+          <div class="stat-card">
+            <div class="label">Stack</div>
+            <div class="value" style="font-size: 1rem;">Next.js · AI · Postgres</div>
+            <div class="sub">Playwright · Stripe · Railway</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Moat path</div>
+            <div class="value" style="font-size: 1rem;">Workflow + data</div>
+            <div class="sub">Harder to copy than a wrapper prompt</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Status</div>
+            <div class="value" style="font-size: 1rem;">Live</div>
+            <div class="sub">tailorsend.cc in production</div>
+          </div>
+        </div>
+        <p class="judge-hint">PitchMI criterion — Product or Technology: differentiation + ability to deliver.</p>
+      </div>
+    </section>
+
+    <!-- 6 Traction -->
+    <section class="slide" data-slide="6">
+      <span class="slide-num">6 / 12</span>
+      <div class="slide-inner">
+        <h2>Built. Live. Validating.</h2>
+        <h3>Shipped today</h3>
+        <ul>
+          <li>✅ Multi-source search + match + visa-aware ranking</li>
+          <li>✅ AI tailor, ATS scores, company edge, PDF export</li>
+          <li>✅ Autofill + form backup + recruiter outreach</li>
+          <li>✅ Application tracker + Stripe billing</li>
+        </ul>
+        <h3>Near-term proof points</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Signal</th><th>Target</th></tr></thead>
+            <tbody>
+              <tr><td>Registered users (Y1)</td><td>~300</td></tr>
+              <tr><td>Paying users (Y1)</td><td>24</td></tr>
+              <tr><td>MRR (month 12)</td><td>~$336</td></tr>
+              <tr><td>Campus partnerships</td><td>1–2 Michigan schools</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="judge-hint">Update with live user / conversion numbers before Sept 22. Judges want evidence people want this.</p>
+      </div>
+    </section>
+
+    <!-- 7 Business model -->
+    <section class="slide" data-slide="7">
+      <span class="slide-num">7 / 12</span>
+      <div class="slide-inner">
+        <h2>Clear plan to acquire and monetize</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Plan</th><th>Price</th><th>Kits</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Free</td><td>$0</td><td>2 tailor + 1 autofill/mo (students: 4+2)</td></tr>
+              <tr><td><strong>Campus</strong></td><td><strong>$5</strong></td><td>8 kits · one-time</td></tr>
+              <tr><td><strong>Student Monthly</strong></td><td><strong>$9.99/mo</strong></td><td>25 kits/mo</td></tr>
+              <tr><td><strong>Student Yearly</strong></td><td><strong>$89.99/yr</strong></td><td>25 kits/mo · best value</td></tr>
+              <tr><td><strong>Sprint</strong></td><td><strong>$29.99</strong></td><td>50 kits · one-time</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="card-grid" style="margin-top: 1.25rem;">
+          <div class="stat-card">
+            <div class="label">COGS / kit</div>
+            <div class="value">~$0.18</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Blended ARPU</div>
+            <div class="value">~$12/mo</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Gross margin</div>
+            <div class="value">~78%</div>
+          </div>
+        </div>
+        <p class="judge-hint">PitchMI criterion — Business Model: clear plan to reach and acquire customers.</p>
+      </div>
+    </section>
+
+    <!-- 8 Team -->
+    <section class="slide" data-slide="8">
+      <span class="slide-num">8 / 12</span>
+      <div class="slide-inner">
+        <h2>Founder who lived the pain — and shipped</h2>
+        <ul>
+          <li><strong>Prosper Mapepa</strong> — Founder, Mapepa Innovation LLC (Michigan)</li>
+          <li><strong>Background:</strong> MBA candidate (Cybersecurity), Central Michigan University · 7+ years software engineering, full-stack/mobile, application security</li>
+          <li><strong>Why us:</strong> Built TailorSend end-to-end — search, AI docs, matching, autofill, billing — in production</li>
+          <li><strong>Domain edge:</strong> International student job-search pain is personal, not theoretical</li>
+        </ul>
+        <p class="principle">PitchMI criterion — Founding Team: skills, experience, and drive to execute and scale.</p>
+      </div>
+    </section>
+
+    <!-- 9 Competition -->
+    <section class="slide" data-slide="9">
+      <span class="slide-num">9 / 12</span>
+      <div class="slide-inner">
+        <h2>We own the full loop — with trust</h2>
+        <div class="table-wrap">
+          <table class="competition-table">
+            <thead>
+              <tr>
+                <th></th>
+                <th>Jobscan</th>
+                <th>Teal</th>
+                <th>Bots</th>
+                <th>ChatGPT</th>
+                <th>TailorSend</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Search + match</td>
+                <td class="no">✗</td>
+                <td class="no">Partial</td>
+                <td class="no">✗</td>
+                <td class="no">✗</td>
+                <td class="yes">✓</td>
+              </tr>
+              <tr>
+                <td>Visa filters</td>
+                <td class="no">✗</td>
+                <td class="no">✗</td>
+                <td class="no">✗</td>
+                <td class="no">✗</td>
+                <td class="yes">✓</td>
+              </tr>
+              <tr>
+                <td>AI tailor + ATS</td>
+                <td class="yes">✓</td>
+                <td class="no">Partial</td>
+                <td class="no">✗</td>
+                <td class="no">Partial</td>
+                <td class="yes">✓</td>
+              </tr>
+              <tr>
+                <td>Autofill (review)</td>
+                <td class="no">✗</td>
+                <td class="no">✗</td>
+                <td class="no">Risky</td>
+                <td class="no">✗</td>
+                <td class="yes">✓</td>
+              </tr>
+              <tr>
+                <td>No auto-submit</td>
+                <td>—</td>
+                <td>—</td>
+                <td class="no">✗</td>
+                <td>—</td>
+                <td class="yes">✓</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="principle">Wedge: early-career + visa-aware + end-to-end apply — not another writing chatbot</p>
+      </div>
+    </section>
+
+    <!-- 10 Ask -->
+    <section class="slide" data-slide="10">
+      <span class="slide-num">10 / 12</span>
+      <div class="slide-inner">
+        <h2>The ask: $250,000 PitchMI prize</h2>
+        <p class="subtitle">AI &amp; Software semifinal · Path to $1M championship</p>
+        <div class="use-of-funds funds-4">
+          <div class="fund-bar">
+            <div class="pct">$100K</div>
+            <div class="bar"><div class="bar-fill" style="height: 100%;"></div></div>
+            <div>Product &amp; AI<br /><span style="font-size:0.75rem;color:var(--text-muted)">40%</span></div>
+          </div>
+          <div class="fund-bar">
+            <div class="pct">$75K</div>
+            <div class="bar"><div class="bar-fill" style="height: 75%;"></div></div>
+            <div>Growth &amp; campus<br /><span style="font-size:0.75rem;color:var(--text-muted)">30%</span></div>
+          </div>
+          <div class="fund-bar">
+            <div class="pct">$50K</div>
+            <div class="bar"><div class="bar-fill" style="height: 50%;"></div></div>
+            <div>Talent<br /><span style="font-size:0.75rem;color:var(--text-muted)">20%</span></div>
+          </div>
+          <div class="fund-bar">
+            <div class="pct">$25K</div>
+            <div class="bar"><div class="bar-fill" style="height: 25%;"></div></div>
+            <div>Ops &amp; runway<br /><span style="font-size:0.75rem;color:var(--text-muted)">10%</span></div>
+          </div>
+        </div>
+        <ul style="margin-top: 1.25rem; font-size: 1rem;">
+          <li><strong>Product:</strong> matching, visa data, reliability, apply UX</li>
+          <li><strong>Growth:</strong> campus GTM, content, partnerships across Michigan</li>
+          <li><strong>Talent:</strong> first eng / growth hire or contractors</li>
+          <li><strong>Ops:</strong> infra, legal, contingency</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- 11 Roadmap -->
+    <section class="slide" data-slide="11">
+      <span class="slide-num">11 / 12</span>
+      <div class="slide-inner">
+        <h2>From Michigan beachhead to category lead</h2>
+        <h3>0–6 months</h3>
+        <ul>
+          <li>Nail activation → paid conversion · interview-outcome tracking</li>
+          <li>3–5 campus / org partners · ambassadors at CMU, U-M, MSU</li>
+        </ul>
+        <h3>6–12 months</h3>
+        <ul>
+          <li>Scale what converts · deepen visa/company data moat · first hire</li>
+        </ul>
+        <h3>12–18 months</h3>
+        <ul>
+          <li>Career-center / B2B pilots · expand beyond early-career wedge</li>
+          <li><strong>April 2027:</strong> PitchMI Championship for additional $1M</li>
+        </ul>
+        <div class="criteria-row">
+          <div class="stat-card"><div class="label">Team</div><div class="sub">Ship + domain</div></div>
+          <div class="stat-card"><div class="label">Market</div><div class="sub">Campus + F-1</div></div>
+          <div class="stat-card"><div class="label">Product</div><div class="sub">Full loop</div></div>
+          <div class="stat-card"><div class="label">Traction</div><div class="sub">Live SaaS</div></div>
+          <div class="stat-card"><div class="label">Model</div><div class="sub">Student kits</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 12 Close -->
+    <section class="slide" data-slide="12">
+      <span class="slide-num">12 / 12</span>
+      <div class="slide-inner">
+        <span class="pitchmi-badge">AI &amp; Software · Kalamazoo · Sept 22, 2026</span>
+        <h2>Help us build the unfair advantage every job seeker deserves</h2>
+        <p class="subtitle">TailorSend turns chaotic job search into a system.</p>
+        <ul>
+          <li>Live product at <strong>tailorsend.cc</strong></li>
+          <li>Michigan-built for Michigan talent — and the nation after</li>
+          <li>Asking for the <strong>$250K</strong> semifinal prize to scale what already ships</li>
+        </ul>
+        <p style="margin-top: 1.75rem;">
+          Prosper Mapepa · <a href="mailto:mapepapro@gmail.com">mapepapro@gmail.com</a> · (989) 332-8050<br />
+          <a href="https://tailorsend.cc">tailorsend.cc</a> · <a href="https://mapepallc.netlify.app/">mapepallc.netlify.app</a><br />
+          <span style="font-size: 0.8rem; color: var(--text-muted);">© 2026 Mapepa Innovation LLC · <a href="https://msufoundation.org/pitchmi/">PitchMI</a></span>
+        </p>
+        <p class="judge-hint">Q&amp;A (5 min): traction numbers, unit economics, eligibility, competitive moat, use of funds.</p>
+      </div>
+    </section>
+  </div>
+
+  <div class="deck-controls no-print">
+    <button type="button" id="prev" aria-label="Previous slide">←</button>
+    <span id="counter">1 / 12</span>
+    <button type="button" id="next" aria-label="Next slide">→</button>
+  </div>
+
+  <script>
+    const slides = [...document.querySelectorAll(".slide")];
+    let current = 0;
+
+    function show(i) {
+      current = Math.max(0, Math.min(i, slides.length - 1));
+      slides.forEach((s, j) => s.classList.toggle("active", j === current));
+      document.getElementById("counter").textContent = `${current + 1} / ${slides.length}`;
+      history.replaceState(null, "", "#" + (current + 1));
+    }
+
+    document.getElementById("prev").onclick = () => show(current - 1);
+    document.getElementById("next").onclick = () => show(current + 1);
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowRight" || e.key === " " || e.key === "PageDown") { e.preventDefault(); show(current + 1); }
+      if (e.key === "ArrowLeft" || e.key === "PageUp") { e.preventDefault(); show(current - 1); }
+      if (e.key === "Home") { e.preventDefault(); show(0); }
+      if (e.key === "End") { e.preventDefault(); show(slides.length - 1); }
+    });
+
+    const hash = parseInt(location.hash.replace("#", ""), 10);
+    show(Number.isFinite(hash) && hash >= 1 ? hash - 1 : 0);
+  </script>
+  <script src="download.js"></script>
+  <script>
+    (function () {
+      const FILE = "TailorSend-PitchMI-Deck.html";
+      const self = document.getElementById("dl-self");
+      if (self) self.addEventListener("click", () => window.TailorSendDownload.download(FILE));
+      if (new URLSearchParams(location.search).get("download") === "1") {
+        window.addEventListener("load", () => setTimeout(() => window.TailorSendDownload.download(FILE), 400));
+      }
+    })();
+  </script>
+</body>
+</html>

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Roboto } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Nav } from "@/components/Nav";
 import { OnboardingGate } from "@/components/OnboardingGate";
@@ -14,14 +14,6 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
-});
-
-/** Matches tailored-resume PDF typography (Roboto 9/11/14 pt, black). */
-const resumeRoboto = Roboto({
-  weight: ["400", "500"],
-  style: ["normal", "italic"],
-  subsets: ["latin"],
-  variable: "--font-resume",
 });
 
 export const metadata: Metadata = {
@@ -42,8 +34,20 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} ${resumeRoboto.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin="anonymous"
+        />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Carlito:ital,wght@0,400;0,700;1,400;1,700&display=swap"
+          rel="stylesheet"
+        />
+      </head>
       <body className="app-shell min-h-full flex flex-col font-sans">
         <AuthProvider>
           <Nav />

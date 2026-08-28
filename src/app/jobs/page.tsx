@@ -21,6 +21,7 @@ import {
   VisaScoreChip,
 } from "@/components/VisaBadges";
 import { CompanyLogo } from "@/components/CompanyLogo";
+import { FormatResumePanel } from "@/components/FormatResumePanel";
 import { useTailorProgress, TAILOR_PROGRESS_STEPS } from "@/lib/tailor-progress";
 
 interface JobRow {
@@ -280,6 +281,7 @@ export default function JobsPage() {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [rolesExpanded, setRolesExpanded] = useState(false);
   const [boardsExpanded, setBoardsExpanded] = useState(false);
+  const [resumeOpen, setResumeOpen] = useState(false);
   const router = useRouter();
   const [targetRoles, setTargetRoles] = useState<string[]>([]);
   const [profileLoaded, setProfileLoaded] = useState(false);
@@ -834,6 +836,32 @@ export default function JobsPage() {
           <p className="mt-3 rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
             {message}
           </p>
+        )}
+      </div>
+
+      <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm sm:p-5">
+        <button
+          type="button"
+          onClick={() => setResumeOpen((o) => !o)}
+          className="flex w-full items-center justify-between gap-3 text-left"
+          aria-expanded={resumeOpen}
+        >
+          <div className="min-w-0">
+            <h2 className="text-base font-semibold text-slate-950">
+              Resume format
+            </h2>
+            <p className="mt-0.5 text-sm text-slate-500">
+              Same ATS layout as when you tailor an application — preview, edit, copy, and download PDF.
+            </p>
+          </div>
+          <span className="shrink-0 text-sm font-medium text-emerald-700">
+            {resumeOpen ? "Hide" : "Show"}
+          </span>
+        </button>
+        {resumeOpen && (
+          <div className="mt-4 border-t border-slate-100 pt-4">
+            <FormatResumePanel />
+          </div>
         )}
       </div>
 

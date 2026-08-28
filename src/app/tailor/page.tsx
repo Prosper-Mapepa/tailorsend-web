@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
+import { FormatResumePanel } from "@/components/FormatResumePanel";
 import { Button, UploadZone, inputClass, labelClass } from "@/components/ui";
 import {
   TailorResultWorkflow,
@@ -9,16 +10,15 @@ import {
 import { jobLinkAutofillNotice } from "@/lib/apply/detect";
 import { apiFetch } from "@/lib/auth-client";
 import { parseUsageError } from "@/lib/billing/format";
-import { mdToHtml, prepareResumeMarkdown, type ResumeContact } from "@/lib/markdown";
 import { useTailorProgress } from "@/lib/tailor-progress";
-import type { Project } from "@/lib/types";
 
 type InputMode = "url" | "screenshots" | "text" | "format";
 
-const TAILOR_TABS: { id: Exclude<InputMode, "format">; label: string }[] = [
+const TAILOR_TABS: { id: InputMode; label: string }[] = [
   { id: "url", label: "Job link" },
   { id: "screenshots", label: "Screenshots" },
   { id: "text", label: "Paste text" },
+  { id: "format", label: "Format resume" },
 ];
 
 const field = inputClass;
@@ -38,231 +38,6 @@ function AutofillLinkStatus({ url }: { url: string }) {
     >
       <span className="font-semibold">{notice.title}.</span> {notice.detail}
     </p>
-  );
-}
-
-function download(filename: string, text: string, type = "text/markdown") {
-  const blob = new Blob([text], { type: `${type};charset=utf-8` });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
-}
-
-/** Render Markdown to a clean PDF server-side (no browser header/footer). */
-async function downloadPdf(
-  filename: string,
-  title: string,
-  markdown: string,
-  kind: "resume" | "cover" = "resume",
-) {
-  const res = await apiFetch("/api/tailor/pdf", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ markdown, title, filename, kind }),
-  });
-  if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
-    throw new Error(data.error ?? "PDF generation failed.");
-  }
-  const blob = await res.blob();
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
-}
-
-
-function resumeSlug(markdown: string): string {
-  const first = markdown.split("\n").find((l) => l.trim()) ?? "resume";
-  return first
-    .replace(/^#+\s*/, "")
-    .replace(/\*\*/g, "")
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "") || "resume";
-}
-
-function FormatResumeTab() {
-  const [fileName, setFileName] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [markdown, setMarkdown] = useState("");
-  const [editing, setEditing] = useState(false);
-  const [pdfBusy, setPdfBusy] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const [resumeContext, setResumeContext] = useState<{
-    projects: Project[];
-    contact: ResumeContact;
-  } | null>(null);
-
-  useEffect(() => {
-    apiFetch("/api/profile")
-      .then((r) => r.json())
-      .then((data) => {
-        if (!data?.email) return;
-        setResumeContext({
-          projects: data.projects ?? [],
-          contact: {
-            fullName: data.fullName,
-            email: data.email,
-            phone: data.phone,
-            location: data.location,
-            linkedin: data.linkedin,
-            github: data.github,
-            website: data.website,
-          },
-        });
-      })
-      .catch(() => {});
-  }, []);
-
-  async function formatFile(file: File) {
-    setLoading(true);
-    setError(null);
-    setMarkdown("");
-    setFileName(file.name);
-    try {
-      const fd = new FormData();
-      fd.append("file", file);
-      const res = await apiFetch("/api/resume/format", { method: "POST", body: fd });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Formatting failed.");
-      setMarkdown(data.markdown ?? "");
-      setEditing(false);
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function copyMarkdown() {
-    await navigator.clipboard.writeText(markdown);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  }
-
-  const slug = resumeSlug(markdown);
-  const displayMd = markdown
-    ? prepareResumeMarkdown(
-        markdown,
-        resumeContext?.projects ?? [],
-        resumeContext?.contact,
-      )
-    : "";
-
-  return (
-    <div className="space-y-5">
-      <UploadZone
-        accept=".pdf,.docx,.txt,.md"
-        loading={loading}
-        label={
-          loading
-            ? "Formatting your resume…"
-            : "Drop your resume here or click to browse"
-        }
-        hint="PDF, DOCX, TXT, or Markdown"
-        onFile={formatFile}
-      />
-      {fileName && !loading && (
-        <p className="text-xs text-slate-500">
-          Last file: <span className="font-medium text-slate-700">{fileName}</span>
-        </p>
-      )}
-      {error && (
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
-      )}
-
-      {markdown && (
-        <div className="space-y-4 border-t border-slate-100 pt-5">
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="inline-flex overflow-hidden rounded-lg border border-slate-200">
-              <button
-                type="button"
-                onClick={() => setEditing(false)}
-                className={`px-3 py-1.5 text-sm font-medium transition ${
-                  !editing
-                    ? "bg-emerald-600 text-white"
-                    : "bg-white text-slate-600 hover:bg-slate-50"
-                }`}
-              >
-                Preview
-              </button>
-              <button
-                type="button"
-                onClick={() => setEditing(true)}
-                className={`px-3 py-1.5 text-sm font-medium transition ${
-                  editing
-                    ? "bg-emerald-600 text-white"
-                    : "bg-white text-slate-600 hover:bg-slate-50"
-                }`}
-              >
-                Edit
-              </button>
-            </div>
-            <Button variant="secondary" size="sm" onClick={copyMarkdown}>
-              {copied ? "Copied ✓" : "Copy"}
-            </Button>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => download(`${slug}.md`, displayMd)}
-            >
-              Download .md
-            </Button>
-            <Button
-              size="sm"
-              disabled={pdfBusy}
-              onClick={async () => {
-                setPdfBusy(true);
-                try {
-                  await downloadPdf(`${slug}.pdf`, "Formatted resume", displayMd);
-                } catch (e) {
-                  setError((e as Error).message);
-                } finally {
-                  setPdfBusy(false);
-                }
-              }}
-            >
-              {pdfBusy ? "Generating PDF…" : "Download PDF"}
-            </Button>
-          </div>
-
-          {editing ? (
-            <div>
-              <textarea
-                value={markdown}
-                onChange={(e) => setMarkdown(e.target.value)}
-                spellCheck
-                className="h-[420px] w-full resize-y rounded-lg border border-slate-200 bg-white p-4 font-mono text-sm leading-relaxed text-slate-800 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-              />
-              <p className="mt-1 text-xs text-slate-400">
-                Markdown supported. Edits apply to Copy, PDF, and .md downloads.
-              </p>
-            </div>
-          ) : (
-            <div className="rounded-lg border border-slate-200 bg-white p-6">
-              <div
-                className="doc-preview"
-                dangerouslySetInnerHTML={{
-                  __html: mdToHtml(displayMd, { kind: "resume" }),
-                }}
-              />
-            </div>
-          )}
-        </div>
-      )}
-    </div>
   );
 }
 
@@ -374,42 +149,37 @@ export default function TailorPage() {
         </header>
 
         <div className="w-full min-w-0">
-              {!isFormat ? (
                 <div className="space-y-4 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div
-                      role="tablist"
-                      aria-label="Input method"
-                      className="inline-flex rounded-xl bg-emerald-50/90 p-1 ring-1 ring-emerald-100"
-                    >
-                      {TAILOR_TABS.map((tab) => {
-                        const active = mode === tab.id;
-                        return (
-                          <button
-                            key={tab.id}
-                            type="button"
-                            role="tab"
-                            aria-selected={active}
-                            onClick={() => setMode(tab.id)}
-                            className={`rounded-lg px-3.5 py-2 text-sm font-medium transition ${
-                              active
-                                ? "bg-emerald-600 text-white shadow-sm"
-                                : "text-emerald-900/65 hover:text-emerald-950"
-                            }`}
-                          >
-                            {tab.label}
-                          </button>
-                        );
-                      })}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setMode("format")}
-                      className="text-sm font-medium text-emerald-800/80 transition hover:text-emerald-950"
-                    >
-                      Format resume →
-                    </button>
+                  <div
+                    role="tablist"
+                    aria-label="Input method"
+                    className="inline-flex flex-wrap rounded-xl bg-emerald-50/90 p-1 ring-1 ring-emerald-100"
+                  >
+                    {TAILOR_TABS.map((tab) => {
+                      const active = mode === tab.id;
+                      return (
+                        <button
+                          key={tab.id}
+                          type="button"
+                          role="tab"
+                          aria-selected={active}
+                          onClick={() => setMode(tab.id)}
+                          className={`rounded-lg px-3.5 py-2 text-sm font-medium transition ${
+                            active
+                              ? "bg-emerald-600 text-white shadow-sm"
+                              : "text-emerald-900/65 hover:text-emerald-950"
+                          }`}
+                        >
+                          {tab.label}
+                        </button>
+                      );
+                    })}
                   </div>
+
+                  {isFormat ? (
+                    <FormatResumePanel />
+                  ) : (
+                    <>
 
                   {mode === "url" ? (
                     <div
@@ -579,20 +349,9 @@ export default function TailorPage() {
                     </p>
                   )}
                   {error && <p className="text-sm text-red-700">{error}</p>}
+                    </>
+                  )}
                 </div>
-              ) : (
-                <div className="space-y-4 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-                  <button
-                    type="button"
-                    onClick={() => setMode("url")}
-                    className="text-sm font-medium text-emerald-800 transition hover:text-emerald-950"
-                  >
-                    ← Back to tailor
-                  </button>
-                  <FormatResumeTab />
-                  {error && <p className="text-sm text-red-700">{error}</p>}
-                </div>
-              )}
             </div>
       </section>
 

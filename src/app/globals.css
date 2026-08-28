@@ -9,6 +9,7 @@
   --primary: #059669;
   --primary-hover: #047857;
   --ring: rgba(5, 150, 105, 0.35);
+  --font-resume: Calibri, Carlito, "Segoe UI", sans-serif;
 }
 
 @theme inline {
@@ -61,10 +62,11 @@ body {
 /* On-page rendered preview of tailored resume / cover letter (mirrors the PDF). */
 .doc-preview {
   color: #000000;
-  font-family: var(--font-resume), Roboto, "Helvetica Neue", Helvetica, Arial, sans-serif;
-  font-size: 9pt;
+  font-family: var(--font-resume);
+  font-size: 11pt;
   line-height: 1.35;
-  max-width: 8.5in;
+  width: 100%;
+  max-width: 100%;
   overflow: visible;
   -webkit-font-smoothing: auto;
   -moz-osx-font-smoothing: auto;
@@ -75,16 +77,30 @@ body {
   color: #000000;
 }
 .doc-preview h1 {
-  font-size: 18pt;
+  font-size: 20pt;
   font-weight: 700;
-  letter-spacing: 0.01em;
-  text-transform: none;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   text-align: center;
-  margin: 0 0 4px;
+  margin: 0 0 2px;
   line-height: 1.15;
 }
+.doc-preview p.headline {
+  text-align: center;
+  font-size: 12pt;
+  font-weight: 700;
+  font-family: Carlito, Calibri, "Segoe UI", sans-serif;
+  color: #000000;
+  margin: 0 0 6px;
+  letter-spacing: 0.01em;
+}
+.doc-preview p.headline,
+.doc-preview p.headline * {
+  color: #000000;
+}
 .doc-preview p.contact-line,
-.doc-preview h1 + p {
+.doc-preview h1 + p.contact-line,
+.doc-preview p.headline + p.contact-line {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -93,13 +109,14 @@ body {
   margin: 0 0 12px;
   padding-bottom: 0;
   border-bottom: none;
-  font-size: 9pt;
+  font-size: 10.5pt;
   font-weight: 400;
   line-height: 1.35;
   text-align: center;
 }
 .doc-preview p.contact-line a,
-.doc-preview h1 + p a {
+.doc-preview h1 + p.contact-line a,
+.doc-preview p.headline + p.contact-line a {
   text-decoration: underline;
   text-underline-offset: 1px;
 }
@@ -112,23 +129,29 @@ body {
 .doc-preview .contact-sep {
   display: inline-block;
   margin: 0 8px;
-  color: #666;
+  color: #000000;
 }
 .doc-preview .ci-icon {
-  width: 11px;
-  height: 11px;
+  width: 13px;
+  height: 13px;
   flex-shrink: 0;
   display: inline-block;
   vertical-align: -1px;
 }
 .doc-preview h2 {
-  font-size: 11pt;
+  font-size: 12pt;
   font-weight: 700;
-  text-transform: none;
-  letter-spacing: 0;
-  border-bottom: 1px solid #000000;
+  font-family: Carlito, Calibri, "Segoe UI", sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #000000;
+  border-bottom: 1.25px solid #000000;
   padding-bottom: 2px;
   margin: 12px 0 6px;
+}
+.doc-preview h2,
+.doc-preview h2 * {
+  color: #000000;
 }
 .doc-preview h2:first-of-type {
   margin-top: 4px;
@@ -138,13 +161,13 @@ body {
   margin-top: 4px;
 }
 .doc-preview h3 {
-  font-size: 9pt;
+  font-size: 11pt;
   font-weight: 700;
   margin: 6px 0 2px;
 }
 .doc-preview p {
   margin: 0;
-  font-size: 9pt;
+  font-size: 11pt;
 }
 .doc-preview p.entry-row {
   display: flex;
@@ -152,7 +175,7 @@ body {
   align-items: baseline;
   gap: 12px;
   margin: 0;
-  font-size: 9pt;
+  font-size: 11pt;
 }
 .doc-preview p.entry-row .entry-left {
   flex: 1 1 auto;
@@ -242,7 +265,7 @@ body {
 .doc-preview li {
   margin: 0 0 2px;
   padding-left: 0.25em;
-  font-size: 9pt;
+  font-size: 11pt;
   line-height: 1.35;
 }
 .doc-preview p.entry-role + ul,
@@ -255,9 +278,11 @@ body {
 .doc-preview a {
   text-decoration: underline;
   text-underline-offset: 2px;
+  color: #000000;
 }
 .doc-preview strong {
   font-weight: 700;
+  font-family: Carlito, Calibri, "Segoe UI", sans-serif;
 }
 
 /* Cover letter preview */

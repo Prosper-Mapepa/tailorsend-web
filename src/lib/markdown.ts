@@ -21,6 +21,7 @@ const SECTION_TITLES = new Set([
   "TECHNICAL SKILLS",
   "KEY SKILLS",
   "SKILLS AND CERTIFICATIONS",
+  "CORE SECURITY COMPETENCIES",
   "EXPERIENCE",
   "WORK EXPERIENCE",
   "PROFESSIONAL EXPERIENCE",
@@ -31,13 +32,52 @@ const SECTION_TITLES = new Set([
   "SELECTED PROJECTS",
   "SELECTED INITIATIVES",
   "INITIATIVES",
+  "SECURITY ENGINEERING PROJECTS",
   "EDUCATION",
   "CERTIFICATIONS",
   "AWARDS",
   "ACHIEVEMENTS",
   "PUBLICATIONS",
   "VOLUNTEERING",
+  "LEADERSHIP",
+  "LEADERSHIP & AFFILIATIONS",
+  "AFFILIATIONS",
 ]);
+
+function isExperienceTitle(title: string): boolean {
+  return /^(WORK EXPERIENCE|EXPERIENCE|PROFESSIONAL EXPERIENCE|EMPLOYMENT|EMPLOYMENT HISTORY)(\s*\([^)]*\))?$/i.test(
+    title.trim(),
+  );
+}
+
+function isSkillsTitle(title: string): boolean {
+  return /^(CORE SKILLS|SKILLS|TECHNICAL SKILLS|KEY SKILLS|SKILLS AND CERTIFICATIONS|CORE SECURITY COMPETENCIES)$/i.test(
+    title.trim(),
+  );
+}
+
+function isProjectsTitle(title: string): boolean {
+  return /^(PROJECTS|PROJECT EXPERIENCE|SELECTED PROJECTS|SELECTED INITIATIVES|INITIATIVES|SECURITY ENGINEERING PROJECTS)$/i.test(
+    title.trim(),
+  );
+}
+
+function isLeadershipTitle(title: string): boolean {
+  return /^(LEADERSHIP|LEADERSHIP\s*&\s*AFFILIATIONS|AFFILIATIONS)$/i.test(
+    title.trim(),
+  );
+}
+
+function isKnownSectionTitle(title: string): boolean {
+  const t = title.toUpperCase().trim();
+  if (SECTION_TITLES.has(t)) return true;
+  return (
+    isExperienceTitle(t) ||
+    isSkillsTitle(t) ||
+    isProjectsTitle(t) ||
+    isLeadershipTitle(t)
+  );
+}
 
 function headingText(line: string): string {
   return line
@@ -60,7 +100,7 @@ export function normalizeResumeSections(md: string): string {
       const line = raw.trim();
       if (!line || /^[-*]\s+/.test(line)) return raw;
       const title = headingText(line);
-      if (SECTION_TITLES.has(title.toUpperCase()) && title.length <= 40) {
+      if (isKnownSectionTitle(title) && title.length <= 60) {
         return `## ${title}`;
       }
       return raw;
@@ -106,8 +146,9 @@ function looksLikePersonName(line: string): boolean {
 }
 
 /**
- * Canonical section order (Neha-style):
- * Summary → Work Experience → Projects → Skills → Education → Achievements → rest.
+ * Canonical section order:
+ * Professional Summary → Technical Skills → Professional Experience →
+ * Projects → Leadership & Affiliations → Education → rest.
  */
 export function reorderResumeSections(md: string): string {
   const lines = md.replace(/\r/g, "").split("\n");
@@ -137,26 +178,13 @@ export function reorderResumeSections(md: string): string {
   const rankOf = (title: string): number => {
     const t = title.toUpperCase();
     if (/^(PROFESSIONAL SUMMARY|SUMMARY|OBJECTIVE|PROFILE)$/.test(t)) return 0;
-    if (
-      /^(WORK EXPERIENCE|EXPERIENCE|PROFESSIONAL EXPERIENCE|EMPLOYMENT|EMPLOYMENT HISTORY)$/.test(
-        t,
-      )
-    ) {
-      return 1;
-    }
-    if (/^(PROJECTS|PROJECT EXPERIENCE|SELECTED PROJECTS|SELECTED INITIATIVES|INITIATIVES)$/.test(t)) {
-      return 2;
-    }
-    if (
-      /^(CORE SKILLS|SKILLS|TECHNICAL SKILLS|KEY SKILLS|SKILLS AND CERTIFICATIONS)$/.test(
-        t,
-      )
-    ) {
-      return 3;
-    }
-    if (/^EDUCATION$/.test(t)) return 4;
-    if (/^(ACHIEVEMENTS|AWARDS|CERTIFICATIONS|PUBLICATIONS|VOLUNTEERING)$/.test(t)) {
-      return 5;
+    if (isSkillsTitle(t)) return 1;
+    if (isExperienceTitle(t)) return 2;
+    if (isProjectsTitle(t)) return 3;
+    if (isLeadershipTitle(t) || /^VOLUNTEERING$/i.test(t)) return 4;
+    if (/^EDUCATION$/.test(t)) return 5;
+    if (/^(ACHIEVEMENTS|AWARDS|CERTIFICATIONS|PUBLICATIONS)$/.test(t)) {
+      return 6;
     }
     return 40;
   };
@@ -182,6 +210,116 @@ export function reorderResumeSections(md: string): string {
   return [...head, ...body].join("\n").replace(/\n{3,}/g, "\n\n");
 }
 
+const MONTH_INDEX: Record<string, number> = {
+  jan: 0,
+  feb: 1,
+  mar: 2,
+  apr: 3,
+  may: 4,
+  jun: 5,
+  jul: 6,
+  aug: 7,
+  sep: 8,
+  oct: 9,
+  nov: 10,
+  dec: 11,
+};
+
+function parseResumeDate(token: string): Date | null {
+  const t = token.trim();
+  if (/^present$/i.test(t)) return new Date();
+  const my = t.match(
+    /^(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?\s+(\d{4})$/i,
+  );
+  if (my) {
+    const mon = MONTH_INDEX[my[1].slice(0, 3).toLowerCase()];
+    if (mon == null) return null;
+    return new Date(Number(my[2]), mon, 1);
+  }
+  if (/^(19|20)\d{2}$/.test(t)) return new Date(Number(t), 0, 1);
+  return null;
+}
+
+function computeCareerYears(md: string): number | null {
+  const lines = md.replace(/\r/g, "").split("\n");
+  let inExp = false;
+  const chunks: string[] = [];
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (/^##\s+/.test(trimmed)) {
+      inExp = isExperienceTitle(trimmed.replace(/^##\s+/, "").trim());
+      continue;
+    }
+    if (inExp) chunks.push(line);
+  }
+  const text = chunks.join("\n") || md;
+  const rangeRe =
+    /(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?\s+\d{4}\s*[–—-]\s*(?:Present|(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?\s+\d{4}|\d{4})/gi;
+  let earliest: Date | null = null;
+  let latest: Date | null = null;
+  const now = new Date();
+  for (const match of text.matchAll(rangeRe)) {
+    const parts = match[0].split(/[–—-]/).map((p) => p.trim());
+    if (parts.length < 2) continue;
+    const start = parseResumeDate(parts[0]);
+    const end = /present/i.test(parts[1]) ? now : parseResumeDate(parts[1]);
+    if (start && (!earliest || start < earliest)) earliest = start;
+    if (end && (!latest || end > latest)) latest = end;
+  }
+  if (!earliest) {
+    const fromSummary = md.match(/(\d+)\+\s*years?/i);
+    return fromSummary ? Number(fromSummary[1]) : null;
+  }
+  const end = latest && latest > now ? latest : latest ?? now;
+  const months =
+    (end.getFullYear() - earliest.getFullYear()) * 12 +
+    (end.getMonth() - earliest.getMonth());
+  const years = Math.floor(Math.max(months, 0) / 12);
+  return years >= 1 ? years : 1;
+}
+
+function experienceYearsSuffix(md: string): string {
+  const years = computeCareerYears(md);
+  return years != null ? `${years}+ YEARS` : "";
+}
+
+/** Map model/source headings onto the default Tailor section titles. */
+export function canonicalizeResumeHeadings(md: string): string {
+  const years = experienceYearsSuffix(md);
+  return md
+    .replace(/\r/g, "")
+    .split("\n")
+    .map((raw) => {
+      if (!/^##\s+/.test(raw.trim())) return raw;
+      const title = raw
+        .trim()
+        .replace(/^##\s+/, "")
+        .replace(/[:#*]+$/, "")
+        .trim();
+      const t = title.toUpperCase().replace(/\s*\([^)]*\)\s*$/, "").trim();
+      if (/^(PROFESSIONAL SUMMARY|SUMMARY|OBJECTIVE|PROFILE)$/.test(t)) {
+        return "## PROFESSIONAL SUMMARY";
+      }
+      if (isSkillsTitle(t) || isSkillsTitle(title)) {
+        return "## TECHNICAL SKILLS";
+      }
+      if (isExperienceTitle(title) || isExperienceTitle(t)) {
+        return years
+          ? `## PROFESSIONAL EXPERIENCE (${years})`
+          : "## PROFESSIONAL EXPERIENCE";
+      }
+      if (isProjectsTitle(t) || isProjectsTitle(title)) {
+        return "## PROJECTS";
+      }
+      if (isLeadershipTitle(t) || isLeadershipTitle(title)) {
+        return "## LEADERSHIP & AFFILIATIONS";
+      }
+      if (/^EDUCATION$/i.test(t)) return "## EDUCATION";
+      return raw;
+    })
+    .join("\n");
+}
+
 /**
  * Full resume normalization: repair section headings AND ensure the first line
  * (the candidate name) is an H1. Apply ONLY to resumes, never cover letters.
@@ -203,17 +341,23 @@ export function normalizeResumeMarkdown(md: string): string {
   }
   // Drop any leftover fence lines so they never become H1 or body text.
   const cleaned = lines.filter((l) => !/^\s*#?\s*```/.test(l.trim()));
-  return toSplitEntryLayout(
-    normalizeResumeEntries(
-      normalizeProjectHeaders(
-        normalizeEducationEntries(
-          reorderExperienceEntries(
-            mergeOrphanRoleDates(
-              normalizeProjectParagraphs(
-                consolidateProjectSections(
-                  normalizeSkillsLists(
-                    reorderResumeSections(
-                      collapseExcessBlankLines(cleaned.join("\n")),
+  return normalizeResumeHeader(
+    toSplitEntryLayout(
+      normalizeResumeEntries(
+        normalizeProjectHeaders(
+          normalizeEducationEntries(
+            reorderExperienceEntries(
+              mergeOrphanRoleDates(
+                normalizeProjectParagraphs(
+                  consolidateProjectSections(
+                    normalizeLeadershipEntries(
+                      normalizeSkillsLists(
+                        reorderResumeSections(
+                          canonicalizeResumeHeadings(
+                            collapseExcessBlankLines(cleaned.join("\n")),
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -304,8 +448,74 @@ function looksLikeContactLine(t: string): boolean {
     /\(?\d{3}\)?[-.\s]?\d{3}/.test(s) ||
     /linkedin|github|portfolio/i.test(s) ||
     /\|/.test(s) ||
+    /•/.test(s) ||
     /\[.+?\]\(.+?\)/.test(s)
   );
+}
+
+function looksLikeHeadline(t: string): boolean {
+  const s = stripMd(t);
+  if (!s || /^##\s/.test(t.trim()) || /^[-*]\s/.test(t.trim())) return false;
+  if (looksLikeContactLine(s)) return false;
+  if (s.length > 70 || /[.!?]$/.test(s)) return false;
+  const words = s.split(/\s+/);
+  if (words.length < 2 || words.length > 10) return false;
+  return looksLikeJobTitle(s);
+}
+
+/** Name, then centered job title, then a single contact line. */
+export function normalizeResumeHeader(md: string): string {
+  const lines = md.replace(/\r/g, "").split("\n");
+  const nameIdx = lines.findIndex(
+    (l) => /^#\s/.test(l.trim()) && !/^##\s/.test(l.trim()),
+  );
+  if (nameIdx < 0) return md;
+
+  let sectionStart = lines.findIndex(
+    (l, i) => i > nameIdx && /^##\s/.test(l.trim()),
+  );
+  if (sectionStart < 0) sectionStart = lines.length;
+
+  const preamble = lines.slice(nameIdx + 1, sectionStart);
+  const headlines: string[] = [];
+  const contactParts: string[] = [];
+
+  for (const raw of preamble) {
+    const t = raw.trim();
+    if (!t) continue;
+    if (looksLikeContactLine(t)) {
+      for (const piece of t.split(/\s*[|•]\s*/)) {
+        const part = piece.trim();
+        if (part) contactParts.push(part);
+      }
+      continue;
+    }
+    if (looksLikeHeadline(t) && headlines.length === 0) {
+      headlines.push(stripMd(t));
+    }
+  }
+
+  const seen = new Set<string>();
+  const contact = contactParts.filter((p) => {
+    const key = p.toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
+  const rebuilt = [
+    lines[nameIdx],
+    ...headlines.slice(0, 1),
+    contact.length ? contact.join(" | ") : "",
+  ].filter((l, i) => i === 0 || l);
+
+  const rest = lines.slice(sectionStart);
+  const out = [...lines.slice(0, nameIdx), ...rebuilt];
+  if (rest.length) {
+    if (out[out.length - 1]?.trim()) out.push("");
+    out.push(...rest);
+  }
+  return out.join("\n").replace(/\n{3,}/g, "\n\n");
 }
 
 /** Turn plain LinkedIn / GitHub / Portfolio labels into markdown links from profile. */
@@ -314,16 +524,17 @@ export function injectContactLinks(md: string, contact: ResumeContact): string {
   const nameIdx = lines.findIndex((l) => /^#\s/.test(l.trim()));
   if (nameIdx < 0) return md;
 
-  // Collect every consecutive contact-ish line under the name (model often
-  // emits email/phone on one line and LinkedIn/Portfolio on the next).
+  // Collect contact lines under the name, skipping a job-title headline.
   const contactIndices: number[] = [];
+  let headlineIdx = -1;
   for (let i = nameIdx + 1; i < lines.length; i++) {
     const t = lines[i].trim();
-    if (!t) {
-      if (contactIndices.length) continue;
+    if (!t) continue;
+    if (/^##\s/.test(t)) break;
+    if (looksLikeHeadline(t)) {
+      if (headlineIdx < 0) headlineIdx = i;
       continue;
     }
-    if (/^##\s/.test(t)) break;
     if (!looksLikeContactLine(t)) break;
     contactIndices.push(i);
   }
@@ -341,19 +552,18 @@ export function injectContactLinks(md: string, contact: ResumeContact): string {
   }
 
   const email =
-    contact.email?.trim() ||
     enriched.find((s) => /@/.test(s) && !/\[/.test(s)) ||
     existing.match(/[\w.+-]+@[\w.-]+\.\w+/)?.[0] ||
+    contact.email?.trim() ||
     "";
   const phone =
-    contact.phone?.trim() ||
     enriched.find(
       (s) => /\d{3}/.test(s) && !/\[/.test(s) && !/@/.test(s),
     ) ||
     existing.match(/\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/)?.[0] ||
+    contact.phone?.trim() ||
     "";
   const location =
-    contact.location?.trim() ||
     enriched.find(
       (s) =>
         !/\[/.test(s) &&
@@ -361,6 +571,7 @@ export function injectContactLinks(md: string, contact: ResumeContact): string {
         !/\d{3}[-.\s]?\d{3}/.test(s) &&
         s.length > 2,
     ) ||
+    contact.location?.trim() ||
     "";
 
   const linkParts = enriched.filter((s) =>
@@ -385,7 +596,7 @@ export function injectContactLinks(md: string, contact: ResumeContact): string {
 
   // Dedupe identical segments (case-insensitive) while preserving order.
   const seen = new Set<string>();
-  const parts = [email, phone, location, ...linkParts].filter((p) => {
+  const parts = [phone, email, ...linkParts, location].filter((p) => {
     if (!p) return false;
     const key = p.toLowerCase();
     if (seen.has(key)) return false;
@@ -401,10 +612,11 @@ export function injectContactLinks(md: string, contact: ResumeContact): string {
       lines.splice(contactIndices[i], 1);
     }
   } else {
-    lines.splice(nameIdx + 1, 0, newLine);
+    const insertAt = headlineIdx >= 0 ? headlineIdx + 1 : nameIdx + 1;
+    lines.splice(insertAt, 0, newLine);
   }
 
-  return lines.join("\n");
+  return normalizeResumeHeader(lines.join("\n"));
 }
 
 /** Normalize + inject verified contact and project links (PDF, preview, API). */
@@ -436,18 +648,20 @@ export function prepareResumeMarkdown(
     profileGithub: contact?.github,
   });
   if (contact) out = injectContactLinks(out, contact);
+  else out = normalizeResumeHeader(out);
   return out;
 }
 
 const EXP_SECTIONS =
-  /^(WORK EXPERIENCE|EXPERIENCE|PROFESSIONAL EXPERIENCE|EMPLOYMENT|EMPLOYMENT HISTORY)$/i;
+  /^(WORK EXPERIENCE|EXPERIENCE|PROFESSIONAL EXPERIENCE|EMPLOYMENT|EMPLOYMENT HISTORY)(\s*\([^)]*\))?$/i;
 
 const EDUCATION_SECTIONS = /^EDUCATION$/i;
 
-const PROJECT_SECTIONS = /^PROJECTS/i;
+const PROJECT_SECTIONS =
+  /^(PROJECTS|PROJECT EXPERIENCE|SELECTED PROJECTS|SELECTED INITIATIVES|INITIATIVES|SECURITY ENGINEERING PROJECTS)$/i;
 
 const SKILLS_SECTIONS =
-  /^(CORE SKILLS|SKILLS|TECHNICAL SKILLS|KEY SKILLS|SKILLS AND CERTIFICATIONS)$/i;
+  /^(CORE SKILLS|SKILLS|TECHNICAL SKILLS|KEY SKILLS|SKILLS AND CERTIFICATIONS|CORE SECURITY COMPETENCIES)$/i;
 
 const DEGREE_KEYWORDS =
   /\b(MBA|M\.?S\.?|B\.?S\.?|B\.?A\.?|M\.?A\.?|Ph\.?D\.?|Bachelor|Master|Doctor|Associate)\b/i;
@@ -658,6 +872,31 @@ function looksLikeJobTitle(line: string): boolean {
   );
 }
 
+/** Bold the role/org lead-in on leadership bullets. */
+function normalizeLeadershipEntries(md: string): string {
+  const lines = md.replace(/\r/g, "").split("\n");
+  let inLeadership = false;
+  return lines
+    .map((raw) => {
+      const trimmed = raw.trim();
+      if (/^##\s+/.test(trimmed)) {
+        inLeadership = isLeadershipTitle(
+          trimmed.replace(/^##\s+/, "").trim(),
+        );
+        return raw;
+      }
+      if (!inLeadership || !/^[-*]\s+/.test(trimmed)) return raw;
+      const item = trimmed.replace(/^[-*]\s+/, "");
+      if (/^\*\*/.test(item)) return raw;
+      const m = item.match(/^(.+?)\s+[—–-]\s+(.+)$/);
+      if (!m) return raw;
+      const lead = m[1].trim();
+      if (!lead || lead.length > 90) return raw;
+      return `- **${lead}** — ${m[2].trim()}`;
+    })
+    .join("\n");
+}
+
 /** Move company lines that appear after bullets to directly above the role. */
 function reorderExperienceEntries(md: string): string {
   const lines = md.replace(/\r/g, "").split("\n");
@@ -761,6 +1000,10 @@ const SKILL_ACRONYMS: Record<string, string> = {
   owasp: "OWASP",
   "c++": "C++",
   "c#": "C#",
+  javascript: "JavaScript",
+  typescript: "TypeScript",
+  sonarqube: "SonarQube",
+  github: "GitHub",
   aws: "AWS",
   gcp: "GCP",
   iam: "IAM",
@@ -974,6 +1217,7 @@ function normalizeSkillsLists(md: string): string {
 
   const parseSkillItems = (body: string): string[] =>
     body
+      .replace(/^\*+\s*/, "")
       .split(/,\s*/)
       .map((p) =>
         titleCaseSkill(
@@ -997,11 +1241,9 @@ function normalizeSkillsLists(md: string): string {
       flushCategories();
       const title = trimmed.replace(/^##\s+/, "").trim();
       inSkills = SKILLS_SECTIONS.test(title);
-      if (
-        inSkills &&
-        /^(CORE SKILLS|SKILLS|TECHNICAL SKILLS|KEY SKILLS)$/i.test(title)
-      ) {
-        out.push("## Skills and Certifications");
+      if (out.length && out[out.length - 1].trim() !== "") out.push("");
+      if (inSkills) {
+        out.push("## TECHNICAL SKILLS");
       } else {
         out.push(raw);
       }
@@ -1089,12 +1331,10 @@ function boldCompanyLine(line: string): string {
 }
 
 /**
- * Convert legacy stacked headers into Neha-style split rows:
- *   **Company** | dates
- *   *Title* | Location
- *   **Project** | [Github Link](url)
- *   **School** | dates
- *   ***Degree***
+ * Convert stacked/legacy headers into the default Tailor layout:
+ *   **Title | Company** | dates | Location
+ *   **Project** | dates (or link)
+ *   **Degree** | dates | School
  */
 export function toSplitEntryLayout(md: string): string {
   const lines = md.replace(/\r/g, "").split("\n");
@@ -1102,12 +1342,78 @@ export function toSplitEntryLayout(md: string): string {
   const out: string[] = [];
   let i = 0;
 
-  const alreadySplit = (line: string) =>
-    /\|/.test(line) && !isLegacyCompanyDash(line);
+  const splitPipe = (
+    line: string,
+  ): { left: string; right: string } | null => {
+    let depth = 0;
+    for (let idx = 0; idx < line.length - 2; idx++) {
+      const ch = line[idx];
+      if (ch === "[") depth++;
+      else if (ch === "]") depth = Math.max(0, depth - 1);
+      else if (depth === 0 && line.slice(idx, idx + 3) === " | ") {
+        return {
+          left: line.slice(0, idx).trim(),
+          right: line.slice(idx + 3).trim(),
+        };
+      }
+    }
+    return null;
+  };
 
-  const isLegacyCompanyDash = (line: string) => {
-    const plain = stripMd(line);
-    return /^(.+?)\s+[—–-]\s+(.+)$/.test(plain) && !DATE_RANGE.test(plain);
+  const looksLikeDates = (s: string): boolean =>
+    DATE_RANGE.test(s) ||
+    /\b(19|20)\d{2}\b/.test(s) ||
+    /present/i.test(s);
+
+  const formatExperienceHeader = (
+    title: string,
+    company: string,
+    dates: string,
+    location: string,
+  ): string => {
+    const left = [title && `**${title}**`, company && `**${company}**`]
+      .filter(Boolean)
+      .join(" | ");
+    const right = [dates, location].filter(Boolean).join(" | ");
+    if (!left) return "";
+    return right ? `${left} | ${right}` : left;
+  };
+
+  const pipeParts = (line: string): string[] => {
+    const parts: string[] = [];
+    let depth = 0;
+    let start = 0;
+    for (let idx = 0; idx < line.length; idx++) {
+      const ch = line[idx];
+      if (ch === "[") depth++;
+      else if (ch === "]") depth = Math.max(0, depth - 1);
+      else if (depth === 0 && line.slice(idx, idx + 3) === " | ") {
+        parts.push(line.slice(start, idx).trim());
+        start = idx + 3;
+        idx += 2;
+      }
+    }
+    parts.push(line.slice(start).trim());
+    return parts.filter(Boolean);
+  };
+
+  const isTitleCompanyLine = (line: string): boolean => {
+    const parts = pipeParts(line);
+    if (parts.length >= 3 && looksLikeJobTitle(stripMd(parts[0]))) return true;
+    const sides = splitPipe(stripMd(line));
+    if (!sides) return false;
+    return (
+      sides.left.includes("|") &&
+      looksLikeJobTitle(sides.left.split("|")[0] ?? "")
+    );
+  };
+
+  const isNehaCompanyRow = (line: string): boolean => {
+    const sides = splitPipe(line);
+    if (!sides) return false;
+    const left = stripMd(sides.left);
+    if (left.includes("|")) return false;
+    return looksLikeDates(stripMd(sides.right)) && !looksLikeJobTitle(left);
   };
 
   while (i < lines.length) {
@@ -1127,9 +1433,32 @@ export function toSplitEntryLayout(md: string): string {
       continue;
     }
 
-    // Experience: company + role → split rows
-    if (EXP_SECTIONS.test(section) && !alreadySplit(trimmed)) {
+    if (EXP_SECTIONS.test(section)) {
       const next = lines[i + 1]?.trim() ?? "";
+      if (isTitleCompanyLine(trimmed)) {
+        out.push(raw);
+        i++;
+        continue;
+      }
+
+      if (
+        isNehaCompanyRow(trimmed) &&
+        next &&
+        !/^[-*]\s/.test(next) &&
+        !/^##/.test(next)
+      ) {
+        const companySides = splitPipe(trimmed)!;
+        const roleSides = splitPipe(next);
+        const company = stripMd(companySides.left);
+        const dates = stripMd(companySides.right);
+        const title = stripMd(roleSides?.left ?? next).replace(/^\*+|\*+$/g, "");
+        const location = stripMd(roleSides?.right ?? "");
+        const header = formatExperienceHeader(title, company, dates, location);
+        if (header) out.push(header);
+        i += 2;
+        continue;
+      }
+
       const companyLike =
         isCompanyLine(trimmed) ||
         (/^\*\*/.test(trimmed) &&
@@ -1148,52 +1477,49 @@ export function toSplitEntryLayout(md: string): string {
       if (companyLike && roleLike) {
         const { company, location } = parseCompanyLocation(trimmed);
         const { title, dates } = parseRoleDates(next);
-        out.push(`**${company}** | ${dates || ""}`.replace(/\s+\|\s*$/, ""));
-        if (location) {
-          out.push(`*${title}* | ${location}`);
-        } else {
-          out.push(`*${title}*`);
-        }
+        const header = formatExperienceHeader(title, company, dates, location);
+        if (header) out.push(header);
         i += 2;
         continue;
       }
 
-      // Single role line with embedded dates (no company above)
       if (isRoleLine(trimmed) || DATE_IN_PARENS.test(stripMd(trimmed))) {
         const { title, dates } = parseRoleDates(trimmed);
-        out.push(
-          dates ? `*${title}* | ${dates}` : `*${title}*`,
-        );
+        out.push(dates ? `**${title}** | ${dates}` : `**${title}**`);
         i++;
         continue;
       }
     }
 
-    // Education: school + degree
-    if (EDUCATION_SECTIONS.test(section) && !alreadySplit(trimmed)) {
+    if (EDUCATION_SECTIONS.test(section)) {
       const next = lines[i + 1]?.trim() ?? "";
+      const sides = splitPipe(trimmed);
+      const leftPlain = stripMd(sides?.left ?? trimmed);
+      if (DEGREE_KEYWORDS.test(leftPlain) && sides) {
+        out.push(raw);
+        i++;
+        continue;
+      }
       if (
-        (isEducationSchoolLine(trimmed) || /^\*\*/.test(trimmed)) &&
         next &&
-        (isEducationDegreeLine(next) || /^\*\*/.test(next))
+        (isEducationDegreeLine(next) || /^\*\*\*/.test(next) || /^\*\*/.test(next)) &&
+        (isEducationSchoolLine(trimmed) || /^\*\*/.test(trimmed))
       ) {
         const schoolPlain = stripMd(trimmed);
         const schoolMatch = schoolPlain.match(/^(.+?)\s+[—–-]\s+(.+)$/);
-        const school = schoolMatch ? schoolMatch[1].trim() : schoolPlain;
+        const schoolFromPipe = sides ? stripMd(sides.left) : "";
+        const school = schoolFromPipe || (schoolMatch ? schoolMatch[1].trim() : schoolPlain);
         const locFromSchool = schoolMatch ? schoolMatch[2].trim() : "";
         const { title: degree, dates } = parseRoleDates(next);
-        const right = dates || locFromSchool;
-        out.push(
-          right ? `**${school}** | ${right}` : `**${school}**`,
-        );
-        out.push(`***${degree.replace(/\*/g, "").trim()}***`);
+        const datePart = dates || (sides && looksLikeDates(stripMd(sides.right)) ? stripMd(sides.right) : locFromSchool);
+        const right = [datePart, school].filter(Boolean).join(" | ");
+        const deg = degree.replace(/\*/g, "").trim();
+        out.push(right ? `**${deg}** | ${right}` : `**${deg}**`);
         i += 2;
-        // Optional Grade line stays as-is (next iteration)
         continue;
       }
     }
 
-    // Projects: collapse link soup into Name | Github Link
     if (PROJECT_SECTIONS.test(section) && !/^[-*]/.test(trimmed)) {
       out.push(toProjectSplitLine(trimmed));
       i++;
@@ -1231,6 +1557,11 @@ function parseRoleDates(line: string): { title: string; dates: string } {
   }
   // **Title** (dates)
   m = trimmed.match(/^\*\*(.+?)\*\*\s*\(([^)]+)\)\s*$/);
+  if (m) {
+    return { title: m[1].trim(), dates: m[2].trim() };
+  }
+  // **Title** | dates (already partial)
+  m = trimmed.match(/^\*\*(.+?)\*\*\s*\|\s*(.+)$/);
   if (m) {
     return { title: m[1].trim(), dates: m[2].trim() };
   }
@@ -1424,7 +1755,7 @@ export function isCoverLetter(md: string): boolean {
   const t = md.toLowerCase();
   return (
     /dear\s+/.test(t) &&
-    !/^##\s+(work experience|projects|core skills|experience)/m.test(md)
+    !/^##\s+(work experience|projects|core skills|experience|professional summary|technical skills|professional experience)/m.test(md)
   );
 }
 
@@ -1519,6 +1850,7 @@ function mdToResumeHtml(md: string): string {
   let section = "";
   /** First body line after H1 is the contact bar. */
   let expectContactLine = false;
+  let expectHeadlineOrContact = false;
   /** In experience: idle → after company line, expecting job title. */
   let expPhase: "idle" | "after-company" = "idle";
 
@@ -1544,20 +1876,41 @@ function mdToResumeHtml(md: string): string {
   const splitSides = (
     line: string,
   ): { left: string; right: string } | null => {
-    // Split on " | " outside of markdown links [...](...) 
+    const parts: string[] = [];
     let depth = 0;
-    for (let i = 0; i < line.length - 2; i++) {
+    let start = 0;
+    for (let i = 0; i < line.length; i++) {
       const ch = line[i];
       if (ch === "[") depth++;
       else if (ch === "]") depth = Math.max(0, depth - 1);
       else if (depth === 0 && line.slice(i, i + 3) === " | ") {
-        return {
-          left: line.slice(0, i).trim(),
-          right: line.slice(i + 3).trim(),
-        };
+        parts.push(line.slice(start, i).trim());
+        start = i + 3;
+        i += 2;
       }
     }
-    return null;
+    parts.push(line.slice(start).trim());
+    if (parts.length < 2) return null;
+
+    const looksRight = (s: string) =>
+      DATE_RANGE.test(stripMd(s)) ||
+      /\b(19|20)\d{2}\b/.test(s) ||
+      /present/i.test(s) ||
+      LOCATION_TAIL.test(stripMd(s));
+
+    if (parts.length >= 4) {
+      return {
+        left: `${parts[0]} | ${parts[1]}`,
+        right: parts.slice(2).join(" | "),
+      };
+    }
+    if (parts.length === 3) {
+      if (looksRight(parts[1])) {
+        return { left: parts[0], right: `${parts[1]} | ${parts[2]}` };
+      }
+      return { left: `${parts[0]} | ${parts[1]}`, right: parts[2] };
+    }
+    return { left: parts[0], right: parts[1] };
   };
 
   const paragraphClass = (line: string): string => {
@@ -1578,9 +1931,7 @@ function mdToResumeHtml(md: string): string {
 
     if (inEducation) {
       if (/^grade\s*:/i.test(plain)) return "entry-grade";
-      if (/^\*\*\*/.test(trimmed) || (isBold && DEGREE_KEYWORDS.test(plain))) {
-        return "entry-degree";
-      }
+      if (/^\*\*\*/.test(trimmed)) return "entry-degree";
       if (isBold) return "entry-school";
     }
 
@@ -1615,12 +1966,14 @@ function mdToResumeHtml(md: string): string {
       const heading = line.replace(/^#+\s+/, "");
       if (level === 3 && EXP_SECTIONS.test(section)) {
         expectContactLine = false;
+        expectHeadlineOrContact = false;
         expPhase = "after-company";
         html.push(`<p class="entry-company">${inline(heading)}</p>`);
       } else {
         expPhase = "idle";
         section = heading.trim();
-        expectContactLine = level === 1;
+        expectHeadlineOrContact = level === 1;
+        expectContactLine = false;
         html.push(`<h${level}>${inline(heading)}</h${level}>`);
       }
     } else if (/^[-*]\s+/.test(line)) {
@@ -1633,6 +1986,16 @@ function mdToResumeHtml(md: string): string {
     } else {
       closeList();
       const trimmed = line.trim();
+      if (expectHeadlineOrContact) {
+        expectHeadlineOrContact = false;
+        if (looksLikeContactLine(trimmed)) {
+          html.push(contactLineHtml(trimmed));
+        } else {
+          html.push(`<p class="headline">${inline(trimmed)}</p>`);
+          expectContactLine = true;
+        }
+        continue;
+      }
       if (expectContactLine) {
         html.push(contactLineHtml(trimmed));
         expectContactLine = false;
@@ -1675,7 +2038,7 @@ const CONTACT_ICON = {
 
 function contactLineHtml(line: string): string {
   const parts = line
-    .split("|")
+    .split(/\s*[|•]\s*/)
     .map((p) => p.trim())
     .filter(Boolean);
   const items: string[] = [];
@@ -1721,18 +2084,18 @@ export function documentHtml(
 }
 
 const RESUME_FONT_LINK =
-  "https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;0,500;1,400&display=swap";
+  "https://fonts.googleapis.com/css2?family=Carlito:ital,wght@0,400;0,700;1,400;1,700&display=swap";
 
 const DOCUMENT_BASE_CSS = `
   @page { margin: 0.42in 0.5in 0.48in; size: letter; }
   * { box-sizing: border-box; }
   body {
-    font-family: Roboto, "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-family: Calibri, Carlito, "Segoe UI", sans-serif;
     color: #000000;
     line-height: 1.26;
     margin: 0;
     padding: 0;
-    font-size: 9pt;
+    font-size: 11pt;
     font-weight: 400;
     -webkit-font-smoothing: auto;
     -moz-osx-font-smoothing: auto;
@@ -1747,21 +2110,32 @@ const DOCUMENT_BASE_CSS = `
     text-decoration: underline;
     text-underline-offset: 1px;
     font-weight: inherit;
+    color: #000000;
   }
-  strong { font-weight: 700; }
+  strong { font-weight: 700; font-family: Carlito, Calibri, "Segoe UI", sans-serif; }
 `;
 
 const RESUME_PRINT_CSS = `
   ${DOCUMENT_BASE_CSS}
   h1 {
-    font-size: 18pt;
+    font-size: 20pt;
     font-weight: 700;
-    letter-spacing: 0.01em;
-    text-transform: none;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
     text-align: center;
-    margin: 0 0 4px;
+    margin: 0 0 2px;
     line-height: 1.15;
   }
+  p.headline {
+    text-align: center;
+    font-size: 12pt;
+    font-weight: 700;
+    font-family: Carlito, Calibri, "Segoe UI", sans-serif;
+    color: #000000;
+    margin: 0 0 6px;
+    letter-spacing: 0.01em;
+  }
+  p.headline, p.headline * { color: #000000; }
   p.contact-line {
     display: flex;
     flex-wrap: wrap;
@@ -1771,7 +2145,7 @@ const RESUME_PRINT_CSS = `
     margin: 0 0 12px;
     padding-bottom: 0;
     border-bottom: none;
-    font-size: 9pt;
+    font-size: 10.5pt;
     font-weight: 400;
     line-height: 1.35;
     text-align: center;
@@ -1786,38 +2160,41 @@ const RESUME_PRINT_CSS = `
   .contact-sep {
     display: inline-block;
     margin: 0 8px;
-    color: #666;
+    color: #000000;
   }
   .ci-icon {
-    width: 11px;
-    height: 11px;
+    width: 13px;
+    height: 13px;
     flex-shrink: 0;
     display: inline-block;
     vertical-align: -1px;
   }
   h2 {
-    font-size: 11pt;
+    font-size: 12pt;
     font-weight: 700;
-    text-transform: none;
-    letter-spacing: 0;
-    border-bottom: 1px solid #000000;
+    font-family: Carlito, Calibri, "Segoe UI", sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #000000;
+    border-bottom: 1.25px solid #000000;
     padding-bottom: 2px;
     margin: 12px 0 6px;
     break-after: avoid;
     page-break-after: avoid;
   }
+  h2, h2 * { color: #000000; }
   h2:first-of-type { margin-top: 4px; }
   h2 + p,
   h2 + ul { margin-top: 4px; }
-  h3 { font-size: 9pt; margin: 6px 0 2px; font-weight: 700; }
-  p { margin: 0; font-size: 9pt; }
+  h3 { font-size: 11pt; margin: 6px 0 2px; font-weight: 700; }
+  p { margin: 0; font-size: 11pt; }
   p.entry-row {
     display: flex;
     justify-content: space-between;
     align-items: baseline;
     gap: 12px;
     margin: 0;
-    font-size: 9pt;
+    font-size: 11pt;
     break-after: avoid;
     page-break-after: avoid;
   }
@@ -1833,7 +2210,7 @@ const RESUME_PRINT_CSS = `
   p.entry-project,
   p.entry {
     margin: 8px 0 0;
-    font-size: 9pt;
+    font-size: 11pt;
     font-weight: 700;
     break-after: avoid;
     page-break-after: avoid;
@@ -1859,7 +2236,7 @@ const RESUME_PRINT_CSS = `
   p.entry-role,
   p.entry-degree {
     margin: 0 0 2px;
-    font-size: 9pt;
+    font-size: 11pt;
     font-weight: 400;
     font-style: italic;
     break-after: avoid;
@@ -1889,7 +2266,7 @@ const RESUME_PRINT_CSS = `
     overflow: visible;
   }
   li {
-    font-size: 9pt;
+    font-size: 11pt;
     margin: 0 0 2px;
     padding-left: 0.25em;
     line-height: 1.35;

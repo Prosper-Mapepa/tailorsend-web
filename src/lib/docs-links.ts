@@ -16,9 +16,19 @@ export const DOC_LINKS = [
     description: "12-month projections",
   },
   {
+    href: "/docs/pitchmi-deck.html",
+    label: "PitchMI deck",
+    description: "AI & Software · 7-min competition",
+  },
+  {
     href: "/docs/pitch-deck.html",
     label: "Overview deck",
     description: "Visual business overview",
+  },
+  {
+    href: "/docs/files/PITCHMI_DECK.md",
+    label: "PitchMI notes",
+    description: "Speaker notes & Q&A prep",
   },
   {
     href: "/docs/one-pager.html",
