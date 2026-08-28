@@ -124,9 +124,9 @@ export function FormatResumePanel() {
   );
 
   return (
-    <div className="min-w-0 space-y-5">
+    <div className="space-y-5">
       {markdown ? (
-        <div className="min-w-0 space-y-4">
+        <div className="space-y-4">
           <FormattedDocEditor
             label="Formatted resume"
             showLabel={false}

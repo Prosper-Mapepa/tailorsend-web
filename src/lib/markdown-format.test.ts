@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import {
   canonicalizeResumeHeadings,
+  mdToHtml,
   normalizeResumeHeader,
   normalizeResumeMarkdown,
   prepareResumeMarkdown,
@@ -178,6 +179,16 @@ phone | email
 `);
   assert.match(out, /\*\*President, Cybersecurity Club \(CMU\)\*\*/);
   assert.match(out, /\*\*Developer, American Nuclear Society \(CMU Chapter\)\*\*/);
+}
+
+{
+  const flat =
+    "# PROSPER MAPEPA Security-focused Software Engineer 989-332-8050 | mapep1p@cmich.edu | LinkedIn ## PROFESSIONAL SUMMARY Security-focused Software Engineer with 7+ years. ## TECHNICAL SKILLS **Languages:** Python ## PROFESSIONAL EXPERIENCE **Secure CRM Engineer** | Central Michigan University | May 2025 - Present";
+  const html = mdToHtml(flat, { kind: "resume" });
+  assert.match(html, /<h1>PROSPER MAPEPA<\/h1>/);
+  assert.match(html, /<h2>PROFESSIONAL SUMMARY<\/h2>/);
+  assert.match(html, /<h2>TECHNICAL SKILLS<\/h2>/);
+  assert.match(html, /<p>Security-focused Software Engineer with 7\+ years\.<\/p>/);
 }
 
 console.log("markdown-format tests passed");

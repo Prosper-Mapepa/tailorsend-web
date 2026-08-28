@@ -839,7 +839,7 @@ export default function JobsPage() {
         )}
       </div>
 
-      <div className="min-w-0 overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm sm:p-5">
+      <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm sm:p-5">
         <button
           type="button"
           onClick={() => setResumeOpen((o) => !o)}
@@ -859,7 +859,7 @@ export default function JobsPage() {
           </span>
         </button>
         {resumeOpen && (
-          <div className="mt-4 min-w-0 overflow-x-hidden border-t border-slate-100 pt-4">
+          <div className="mt-4 border-t border-slate-100 pt-4">
             <FormatResumePanel />
           </div>
         )}

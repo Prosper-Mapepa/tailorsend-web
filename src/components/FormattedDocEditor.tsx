@@ -117,7 +117,7 @@ export function FormattedDocEditor({
   }
 
   return (
-    <div className="min-w-0 space-y-3">
+    <div className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         {showLabel ? (
           <h2 className="text-lg font-semibold">{label}</h2>
@@ -215,12 +215,12 @@ export function FormattedDocEditor({
         </div>
       ) : (
         <div
-          className={`w-full min-w-0 overflow-x-hidden rounded-md border border-slate-200 bg-white p-5 sm:p-6 ${
-            kind === "cover" ? "cover-letter-preview" : ""
+          className={`w-full rounded-md border border-slate-200 bg-white p-6 ${
+            kind === "cover" ? "cover-letter-preview" : "overflow-visible"
           }`}
         >
           <div
-            className="doc-preview w-full min-w-0"
+            className="doc-preview overflow-visible"
             dangerouslySetInnerHTML={{
               __html: mdToHtml(displayMd, { kind }),
             }}

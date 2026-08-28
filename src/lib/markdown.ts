@@ -442,7 +442,9 @@ function expandLinkLabelSegment(segment: string): string[] {
 
 function looksLikeContactLine(t: string): boolean {
   const s = t.trim();
-  if (!s || /^##\s/.test(s)) return false;
+  if (!s || /^##\s/.test(s) || s.includes("## ")) return false;
+  // A whole resume dumped on one line is not a contact bar.
+  if (s.length > 180) return false;
   return (
     /@/.test(s) ||
     /\(?\d{3}\)?[-.\s]?\d{3}/.test(s) ||
@@ -1841,9 +1843,34 @@ export function mdToCoverLetterHtml(md: string): string {
   return html.join("\n");
 }
 
+/**
+ * If a resume was saved without newlines, split headings back out so preview
+ * still stacks as a document instead of one contact row.
+ */
+function restoreResumeNewlines(md: string): string {
+  let out = md.replace(/\r/g, "");
+  const headingCount = (out.match(/^#{1,3}\s/gm) ?? []).length;
+  const newlineCount = (out.match(/\n/g) ?? []).length;
+  if (headingCount >= 3 && newlineCount >= headingCount + 3) return out;
+  if (!/#{1,3}\s/.test(out)) return out;
+
+  out = out.replace(/[ \t]+(#{1,3}\s+)/g, "\n$1");
+
+  const sectionTitle =
+    /^(#{1,3}\s+)(PROFESSIONAL SUMMARY|TECHNICAL SKILLS|CORE SKILLS|KEY SKILLS|SKILLS AND CERTIFICATIONS|CORE SECURITY COMPETENCIES|PROFESSIONAL EXPERIENCE(?:\s*\([^)]*\))?|WORK EXPERIENCE|EXPERIENCE|PROJECTS|SELECTED PROJECTS|LEADERSHIP(?:\s*&\s*AFFILIATIONS)?|EDUCATION)(?=\s+\S)/gim;
+  out = out.replace(sectionTitle, "$1$2\n");
+
+  out = out.replace(
+    /^(#\s+)([A-Z][A-Z.'-]+(?:\s+[A-Z][A-Z.'-]+){0,3})(?=\s+[A-Za-z0-9])/,
+    "$1$2\n",
+  );
+
+  return out;
+}
+
 /** Resume-specific Markdown → HTML (headings, lists, bold/italic, links). */
 function mdToResumeHtml(md: string): string {
-  const lines = md.replace(/\r/g, "").split("\n");
+  const lines = restoreResumeNewlines(md).replace(/\r/g, "").split("\n");
   const html: string[] = [];
   let inList = false;
   let listItems: string[] = [];
