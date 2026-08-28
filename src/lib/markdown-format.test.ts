@@ -223,6 +223,40 @@ Prosper Mapepa
 }
 
 {
+  const messy = mdToHtml(
+    `# PROSPER MAPEPA
+Security-focused Software Engineer
+Open to relocate | [LinkedIn](https://www.linkedin.com/in/prospermapepa) 989-332-8050 | mapep1p@cmich.edu | Mount Pleasant, MI | LinkedIn [https://www.linkedin.com/in/prospermapepa]
+
+August 28, 2026
+
+Hiring Team
+Solace
+Redwood City, CA
+
+Dear Solace Security Team,
+
+Hello.
+
+Sincerely,
+
+Prosper Mapepa
+`,
+    { kind: "cover" },
+  );
+  assert.match(messy, /<span class="contact-text">989-332-8050<\/span>/);
+  assert.match(messy, /<a href="https:\/\/www\.linkedin\.com\/in\/prospermapepa">LinkedIn<\/a>/);
+  assert.doesNotMatch(messy, /LinkedIn \[https/);
+  assert.match(messy, /<div class="cl-letterhead">/);
+  assert.match(messy, /<p class="cl-salutation">Dear Solace Security Team,<\/p>/);
+  const phoneItem = messy.match(
+    /<span class="contact-item">([\s\S]*?989-332-8050[\s\S]*?)<\/span><\/span>/,
+  )?.[1] ?? "";
+  assert.match(phoneItem, /M6\.6 10\.8/); // phone icon path
+  assert.doesNotMatch(phoneItem, /M6\.94 6\.5/); // not LinkedIn icon
+}
+
+{
   const formatted = normalizeResumeMarkdown(`# Name
 phone | email
 

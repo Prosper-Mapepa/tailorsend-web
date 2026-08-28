@@ -296,7 +296,15 @@ body {
   display: block;
 }
 .cover-letter-preview .cl-header {
-  margin-bottom: 14px;
+  margin-bottom: 0;
+}
+.cover-letter-preview .cl-letterhead {
+  margin: 14px 0 0;
+}
+.cover-letter-preview .cl-letterhead .cl-address-line:last-child,
+.cover-letter-preview .cl-letterhead .cl-date:last-child,
+.cover-letter-preview .cl-letterhead p:last-child {
+  margin-bottom: 0;
 }
 .cover-letter-preview .cl-sender-name {
   font-size: 20pt;
@@ -329,7 +337,7 @@ body {
   height: 10px;
 }
 .cover-letter-preview .cl-salutation {
-  margin: 0 0 12px;
+  margin: 1.35em 0 12px;
   color: #000000;
 }
 .cover-letter-preview .cl-bodies {

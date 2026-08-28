@@ -446,16 +446,17 @@ function expandLinkLabelSegment(segment: string): string[] {
 function looksLikeContactLine(t: string): boolean {
   const s = t.trim();
   if (!s || /^##\s/.test(s) || s.includes("## ")) return false;
-  // A whole resume dumped on one line is not a contact bar.
-  if (s.length > 180) return false;
-  return (
+  const hasToken =
     /@/.test(s) ||
     /\(?\d{3}\)?[-.\s]?\d{3}/.test(s) ||
     /linkedin|github|portfolio/i.test(s) ||
     /\|/.test(s) ||
     /•/.test(s) ||
-    /\[.+?\]\(.+?\)/.test(s)
-  );
+    /\[.+?\]\(.+?\)/.test(s);
+  if (!hasToken) return false;
+  // A flattened resume (many sections on one line) is not a contact bar.
+  if (s.length > 400) return false;
+  return true;
 }
 
 function looksLikeHeadline(t: string): boolean {
@@ -1864,14 +1865,21 @@ export function mdToCoverLetterHtml(md: string): string {
   if (identity.contact) {
     html.push(contactLineHtml(identity.contact));
   }
-  for (let i = 0; i < identity.rest.length; i++) {
-    const t = identity.rest[i]!.trim();
-    if (!t) {
-      html.push('<div class="cl-gap"></div>');
-      continue;
+  const letterhead = identity.rest.filter((l, idx, arr) => {
+    if (l.trim()) return true;
+    const prev = arr.slice(0, idx).some((x) => x.trim());
+    const next = arr.slice(idx + 1).some((x) => x.trim());
+    return prev && next;
+  });
+  if (letterhead.some((l) => l.trim())) {
+    html.push('<div class="cl-letterhead">');
+    for (let i = 0; i < letterhead.length; i++) {
+      const t = letterhead[i]!.trim();
+      if (!t) continue;
+      const cls = headerLineClass(t, i, letterhead);
+      html.push(`<p class="${cls}">${inline(t)}</p>`);
     }
-    const cls = headerLineClass(t, i, identity.rest);
-    html.push(`<p class="${cls}">${inline(t)}</p>`);
+    html.push("</div>");
   }
   html.push("</div>");
 
@@ -2128,23 +2136,103 @@ const CONTACT_ICON = {
     '<svg class="ci-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5z"/></svg>',
 } as const;
 
-function contactLineHtml(line: string): string {
-  const parts = line
-    .split(/\s*[|•]\s*/)
+function contactKind(
+  part: string,
+): "phone" | "email" | "linkedin" | "github" | "portfolio" | "location" {
+  const plain = part.replace(/\[([^\]]+)\]\([^)]+\)/g, "$1");
+  if (/@/.test(part)) return "email";
+  if (
+    /\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/.test(plain) &&
+    !/linkedin|github/i.test(plain)
+  ) {
+    return "phone";
+  }
+  if (/linkedin/i.test(part) || /linkedin\.com/i.test(part)) return "linkedin";
+  if (/github/i.test(part) || /github\.com/i.test(part)) return "github";
+  if (/portfolio|website/i.test(part)) return "portfolio";
+  return "location";
+}
+
+function normalizeContactPart(part: string): string {
+  const kind = contactKind(part);
+  if (kind === "linkedin") {
+    const url =
+      part.match(/https?:\/\/[^\s\])]+/i)?.[0] ??
+      part.match(/(?:www\.)?linkedin\.com\/[^\s\])]+/i)?.[0];
+    if (url) {
+      const href = /^https?:\/\//i.test(url) ? url : `https://${url}`;
+      return `[LinkedIn](${href.replace(/[.,;]+$/, "")})`;
+    }
+    if (/\[LinkedIn\]\(/i.test(part)) return part;
+    return "LinkedIn";
+  }
+  if (kind === "github") {
+    const url =
+      part.match(/https?:\/\/[^\s\])]+/i)?.[0] ??
+      part.match(/(?:www\.)?github\.com\/[^\s\])]+/i)?.[0];
+    if (url) {
+      const href = /^https?:\/\//i.test(url) ? url : `https://${url}`;
+      return `[GitHub](${href.replace(/[.,;]+$/, "")})`;
+    }
+    if (/\[GitHub\]\(/i.test(part)) return part;
+    return "GitHub";
+  }
+  return part.trim();
+}
+
+function splitContactParts(line: string): string[] {
+  const prepared = line
+    .replace(/·/g, "|")
+    .replace(/•/g, "|")
+    .replace(/LinkedIn\s*\[(https?:\/\/[^\]]+)\]/gi, "[LinkedIn]($1)")
+    .replace(/\[(https?:\/\/(?:www\.)?linkedin\.com[^\]]*)\]/gi, "[LinkedIn]($1)")
+    .replace(/(\]\([^)]+\))\s+(?=\(?\d{3})/g, "$1 | ");
+  return prepared
+    .split(/\s*[|]+\s*/)
     .map((p) => p.trim())
     .filter(Boolean);
+}
+
+function contactLineHtml(line: string): string {
+  const order = [
+    "phone",
+    "email",
+    "linkedin",
+    "github",
+    "portfolio",
+    "location",
+  ] as const;
+  const seen = new Set<string>();
+  const classified = splitContactParts(line)
+    .map((part) => {
+      const normalized = normalizeContactPart(part);
+      return { kind: contactKind(normalized), text: normalized };
+    })
+    .filter((item) => {
+      const key = `${item.kind}:${item.text.toLowerCase()}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
+  classified.sort(
+    (a, b) => order.indexOf(a.kind) - order.indexOf(b.kind),
+  );
+
   const items: string[] = [];
-  for (const part of parts) {
-    let icon = "";
-    let body = inline(part);
-    if (/linkedin/i.test(part)) icon = CONTACT_ICON.linkedin;
-    else if (/github/i.test(part)) icon = CONTACT_ICON.github;
-    else if (/portfolio|website/i.test(part)) icon = CONTACT_ICON.location;
-    else if (/@/.test(part)) icon = CONTACT_ICON.email;
-    else if (/\d{3}/.test(part) && !/\[/.test(part)) icon = CONTACT_ICON.phone;
-    else if (!/\[/.test(part)) icon = CONTACT_ICON.location;
+  for (const item of classified) {
+    const icon =
+      item.kind === "email"
+        ? CONTACT_ICON.email
+        : item.kind === "phone"
+          ? CONTACT_ICON.phone
+          : item.kind === "linkedin"
+            ? CONTACT_ICON.linkedin
+            : item.kind === "github"
+              ? CONTACT_ICON.github
+              : CONTACT_ICON.location;
     items.push(
-      `<span class="contact-item">${icon}<span class="contact-text">${body}</span></span>`,
+      `<span class="contact-item">${icon}<span class="contact-text">${inline(item.text)}</span></span>`,
     );
   }
   return `<p class="contact-line">${items.join('<span class="contact-sep" aria-hidden="true">·</span>')}</p>`;
@@ -2388,7 +2476,9 @@ const COVER_LETTER_CSS = `
     color: #000000;
   }
   .cl-page { display: block; }
-  .cl-header { margin-bottom: 14px; }
+  .cl-header { margin-bottom: 0; }
+  .cl-letterhead { margin: 14px 0 0; }
+  .cl-letterhead p:last-child { margin-bottom: 0; }
   h1 {
     font-size: 20pt;
     font-weight: 700;
@@ -2455,7 +2545,7 @@ const COVER_LETTER_CSS = `
   .cl-address-line { margin: 0 0 2px; color: #000000; }
   .cl-muted { margin: 0 0 2px; color: #000000; font-style: italic; }
   .cl-gap { height: 10px; }
-  .cl-salutation { margin: 0 0 12px; color: #000000; }
+  .cl-salutation { margin: 1.35em 0 12px; color: #000000; }
   .cl-bodies { display: block; }
   .cl-body {
     margin: 0 0 12px;
