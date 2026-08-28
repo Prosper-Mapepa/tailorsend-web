@@ -193,6 +193,36 @@ phone | email
 }
 
 {
+  const html = mdToHtml(
+    `# PROSPER MAPEPA
+Security-focused Software Engineer
+989-332-8050 | mapep1p@cmich.edu | [LinkedIn](https://linkedin.com) | Open to relocate
+
+August 28, 2026
+
+Hiring Team
+Acme
+
+Dear Hiring Team,
+
+I am writing about the role.
+
+Sincerely,
+
+Prosper Mapepa
+`,
+    { kind: "cover" },
+  );
+  assert.match(html, /<h1>PROSPER MAPEPA<\/h1>/);
+  assert.match(html, /<p class="headline">Security-focused Software Engineer<\/p>/);
+  assert.match(html, /<p class="contact-line">/);
+  assert.match(html, /class="ci-icon"/);
+  assert.match(html, /mapep1p@cmich.edu/);
+  assert.match(html, /Open to relocate/);
+  assert.match(html, /<p class="cl-salutation">Dear Hiring Team,<\/p>/);
+}
+
+{
   const formatted = normalizeResumeMarkdown(`# Name
 phone | email
 

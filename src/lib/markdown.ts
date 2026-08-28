@@ -1793,6 +1793,49 @@ function headerLineClass(line: string, index: number, lines: string[]): string {
   return "cl-address-line";
 }
 
+function stripHeaderDecor(s: string): string {
+  return s.replace(/^#+\s*/, "").replace(/\*\*/g, "").trim();
+}
+
+function takeCoverLetterIdentity(lines: string[]): {
+  name: string;
+  headline: string;
+  contact: string;
+  rest: string[];
+} {
+  let i = 0;
+  while (i < lines.length && !lines[i]!.trim()) i++;
+  const name = stripHeaderDecor(lines[i]?.trim() ?? "");
+  i++;
+  while (i < lines.length && !lines[i]!.trim()) i++;
+
+  let headline = "";
+  let contact = "";
+  const next = lines[i]?.trim() ?? "";
+  if (
+    next &&
+    !DATE_LINE_RE.test(next.replace(/[\[\]]/g, "")) &&
+    !/^hiring\s+team/i.test(next) &&
+    !/^dear\s+/i.test(next)
+  ) {
+    if (looksLikeContactLine(next)) {
+      contact = next;
+      i++;
+    } else if (looksLikeHeadline(next) || (!/@|\|/.test(next) && next.length <= 80)) {
+      headline = stripHeaderDecor(next);
+      i++;
+      while (i < lines.length && !lines[i]!.trim()) i++;
+      const after = lines[i]?.trim() ?? "";
+      if (after && looksLikeContactLine(after)) {
+        contact = after;
+        i++;
+      }
+    }
+  }
+
+  return { name, headline, contact, rest: lines.slice(i) };
+}
+
 /** Render a cover letter with semantic blocks for print-quality spacing. */
 export function mdToCoverLetterHtml(md: string): string {
   const lines = md.replace(/\r/g, "").split("\n");
@@ -1808,21 +1851,29 @@ export function mdToCoverLetterHtml(md: string): string {
   }
 
   const html: string[] = ['<div class="cl-page">'];
-
   const headerLines = lines.slice(0, dearIdx);
-  if (headerLines.some((l) => l.trim())) {
-    html.push('<div class="cl-header">');
-    for (let i = 0; i < headerLines.length; i++) {
-      const t = headerLines[i].trim();
-      if (!t) {
-        html.push('<div class="cl-gap"></div>');
-        continue;
-      }
-      const cls = headerLineClass(t, i, headerLines);
-      html.push(`<p class="${cls}">${inline(t)}</p>`);
-    }
-    html.push("</div>");
+  const identity = takeCoverLetterIdentity(headerLines);
+
+  html.push('<div class="cl-header">');
+  if (identity.name) {
+    html.push(`<h1>${inline(identity.name)}</h1>`);
   }
+  if (identity.headline) {
+    html.push(`<p class="headline">${inline(identity.headline)}</p>`);
+  }
+  if (identity.contact) {
+    html.push(contactLineHtml(identity.contact));
+  }
+  for (let i = 0; i < identity.rest.length; i++) {
+    const t = identity.rest[i]!.trim();
+    if (!t) {
+      html.push('<div class="cl-gap"></div>');
+      continue;
+    }
+    const cls = headerLineClass(t, i, identity.rest);
+    html.push(`<p class="${cls}">${inline(t)}</p>`);
+  }
+  html.push("</div>");
 
   html.push(
     `<p class="cl-salutation">${inline(lines[dearIdx].trim())}</p>`,
@@ -2331,40 +2382,96 @@ const RESUME_PRINT_CSS = `
 
 const COVER_LETTER_CSS = `
   ${DOCUMENT_BASE_CSS}
-  body.cover-letter { font-size: 11px; line-height: 1.45; }
-  .cl-page {
-    display: block;
+  body.cover-letter {
+    font-size: 11pt;
+    line-height: 1.35;
+    color: #000000;
   }
-  .cl-header { margin-bottom: 0.22in; }
-  .cl-sender-name {
-    font-size: 12px;
+  .cl-page { display: block; }
+  .cl-header { margin-bottom: 14px; }
+  h1 {
+    font-size: 20pt;
     font-weight: 700;
-    margin: 0 0 4px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    text-align: center;
+    margin: 0 0 2px;
+    line-height: 1.15;
+  }
+  p.headline {
+    text-align: center;
+    font-size: 12pt;
+    font-weight: 700;
+    font-family: Carlito, Calibri, "Segoe UI", sans-serif;
+    color: #000000;
+    margin: 0 0 6px;
+    letter-spacing: 0.01em;
+  }
+  p.headline, p.headline * { color: #000000; }
+  p.contact-line {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 2px 0;
+    margin: 0 0 12px;
+    padding-bottom: 0;
+    border-bottom: none;
+    font-size: 10.5pt;
+    font-weight: 400;
+    line-height: 1.35;
+    text-align: center;
+  }
+  p.contact-line a { text-decoration: underline; text-underline-offset: 1px; }
+  .contact-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+  }
+  .contact-sep { display: inline-block; margin: 0 8px; color: #000000; }
+  .ci-icon {
+    width: 13px;
+    height: 13px;
+    flex-shrink: 0;
+    display: inline-block;
+    vertical-align: -1px;
+  }
+  .cl-sender-name {
+    font-size: 20pt;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    text-align: center;
+    margin: 0 0 2px;
   }
   .cl-sender-contact {
-    font-size: 11px;
-    color: #333;
-    margin: 0 0 14px;
+    font-size: 10.5pt;
+    color: #000000;
+    margin: 0 0 12px;
+    text-align: center;
   }
-  .cl-date { margin: 0 0 12px; }
-  .cl-address-line { margin: 0 0 2px; }
-  .cl-muted { margin: 0 0 2px; color: #555; font-style: italic; }
+  .cl-date { margin: 0 0 12px; color: #000000; }
+  .cl-address-line { margin: 0 0 2px; color: #000000; }
+  .cl-muted { margin: 0 0 2px; color: #000000; font-style: italic; }
   .cl-gap { height: 10px; }
-  .cl-salutation { margin: 0 0 12px; }
+  .cl-salutation { margin: 0 0 12px; color: #000000; }
   .cl-bodies { display: block; }
   .cl-body {
     margin: 0 0 12px;
-    line-height: 1.45;
-    text-align: justify;
+    line-height: 1.35;
+    text-align: left;
+    font-size: 11pt;
+    color: #000000;
   }
-  .cl-footer { margin-top: 0.22in; padding-top: 0; }
-  .cl-closing { margin: 0 0 12px; }
-  .cl-signature { font-weight: 700; margin: 0; }
-  .cl-contact { margin: 3px 0 0; font-size: 11px; color: #333; }
+  .cl-footer { margin-top: 14px; padding-top: 0; }
+  .cl-closing { margin: 0 0 12px; color: #000000; }
+  .cl-signature { font-weight: 700; margin: 0; font-size: 11pt; color: #000000; }
+  .cl-contact { margin: 3px 0 0; font-size: 11pt; color: #000000; }
 `;
 
 export function coverLetterDocumentHtml(md: string, title: string): string {
-  return `<!doctype html><html><head><meta charset="utf-8"><base target="_blank"><title>${escapeHtml(
+  return `<!doctype html><html><head><meta charset="utf-8"><base target="_blank"><link rel="stylesheet" href="${RESUME_FONT_LINK}"><title>${escapeHtml(
     title,
   )}</title>
 <style>${COVER_LETTER_CSS}</style></head><body class="cover-letter">${mdToCoverLetterHtml(md)}</body></html>`;

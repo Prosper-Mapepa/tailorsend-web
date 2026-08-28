@@ -199,9 +199,10 @@ Work authorization:
 - Do NOT add a "Work Authorization" section or any visa/sponsorship line to the resume. Keep all visa/work-authorization considerations out of the resume itself; mention them only in matchNotes.
 
 Cover letter:
-- Use this exact Markdown structure (blank lines between blocks):
-  **Full Name**
-  email | phone | city, state | [LinkedIn](url) | [Portfolio](url)
+- Use this exact Markdown structure (blank lines between blocks). The letterhead MUST match the resume header:
+  # Full Name
+  Target-role headline (same one-line title as the resume, if present)
+  phone | email | [LinkedIn](url) | [GitHub](url) | [Portfolio](url) | location
 
   Month Day, Year
 
