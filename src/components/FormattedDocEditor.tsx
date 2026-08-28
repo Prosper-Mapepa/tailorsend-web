@@ -215,7 +215,7 @@ export function FormattedDocEditor({
         </div>
       ) : (
         <div
-          className={`w-full rounded-md border border-slate-200 bg-white p-6 ${
+          className={`mx-auto w-full max-w-[8.5in] rounded-md border border-slate-200 bg-white px-[0.5in] py-[0.42in] ${
             kind === "cover" ? "cover-letter-preview" : "overflow-visible"
           }`}
         >
