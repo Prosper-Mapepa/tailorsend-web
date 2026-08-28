@@ -8,6 +8,7 @@ import {
   reorderResumeSections,
   toSplitEntryLayout,
 } from "./markdown";
+import { restoreNarrativeFromBase } from "./resume-projects";
 
 {
   const md = `# Name
@@ -189,6 +190,65 @@ phone | email
   assert.match(html, /<h2>PROFESSIONAL SUMMARY<\/h2>/);
   assert.match(html, /<h2>TECHNICAL SKILLS<\/h2>/);
   assert.match(html, /<p>Security-focused Software Engineer with 7\+ years\.<\/p>/);
+}
+
+{
+  const formatted = normalizeResumeMarkdown(`# Name
+phone | email
+
+## PROJECTS
+SAST/DAST CI/CD Security Pipeline
+Implemented a security-first CI/CD pipeline using SonarQube, reducing critical vulnerabilities by 80%.
+Technologies Used: SonarQube, OWASP ZAP
+API Security Hardening + Pentesting
+Engineered a hardened API with JWT and RBAC, cutting unauthorized access attempts by 40%.
+
+## LEADERSHIP & AFFILIATIONS
+President, Cybersecurity Club (CMU) — Grew membership by 40%, led hands-on labs.
+LeaderShape Institute Graduate — Completed intensive leadership program.
+
+## EDUCATION
+**MBA, Cybersecurity** | Dec 2026 | Central Michigan University
+`);
+  assert.match(formatted, /\*\*SAST\/DAST CI\/CD Security Pipeline\*\*/);
+  assert.match(formatted, /- Implemented a security-first CI\/CD pipeline/);
+  assert.match(formatted, /- \*\*Technologies Used:\*\* SonarQube, OWASP ZAP/);
+  assert.match(formatted, /\*\*API Security Hardening \+ Pentesting\*\*/);
+  assert.match(formatted, /- Engineered a hardened API with JWT/);
+  assert.match(formatted, /\*\*President, Cybersecurity Club \(CMU\)\*\* — Grew membership/);
+  assert.match(formatted, /\*\*LeaderShape Institute Graduate\*\*/);
+}
+
+{
+  const tailored = `# Name
+phone | email
+
+## PROJECTS
+**SAST/DAST CI/CD Security Pipeline**
+- **Technologies Used:** SonarQube, OWASP ZAP
+
+## EDUCATION
+**MBA, Cybersecurity** | Dec 2026 | CMU
+`;
+  const base = `# Name
+phone | email
+
+## PROJECTS
+**SAST/DAST CI/CD Security Pipeline**
+- Implemented a security-first CI/CD pipeline using SonarQube, reducing critical vulnerabilities by **80%**.
+- **Technologies Used:** SonarQube, OWASP ZAP
+
+## LEADERSHIP & AFFILIATIONS
+- **President, Cybersecurity Club (CMU)** — Grew membership by **40%**.
+- **LeaderShape Institute Graduate** — Completed intensive leadership program.
+
+## EDUCATION
+**MBA, Cybersecurity** | Dec 2026 | CMU
+`;
+  const restored = restoreNarrativeFromBase(tailored, base);
+  assert.match(restored, /reducing critical vulnerabilities by \*\*80%\*\*/);
+  assert.match(restored, /## LEADERSHIP & AFFILIATIONS/);
+  assert.match(restored, /\*\*President, Cybersecurity Club \(CMU\)\*\*/);
 }
 
 console.log("markdown-format tests passed");

@@ -6,7 +6,10 @@ import {
 } from "@/lib/ai";
 import { prepareResumeMarkdown } from "@/lib/markdown";
 import { ensureCoverLetterDate } from "@/lib/cover-letter";
-import { ensureAllProfileProjects } from "@/lib/resume-projects";
+import {
+  ensureAllProfileProjects,
+  restoreNarrativeFromBase,
+} from "@/lib/resume-projects";
 import {
   extractJobRubric,
   extractWorkRoles,
@@ -87,6 +90,7 @@ export async function runTailorPipeline(
   }
 
   resume = sanitizePlaceholderLinks(resume);
+  resume = restoreNarrativeFromBase(resume, profile.baseResume);
   resume = ensureAllProfileProjects(resume, profile.projects ?? []);
   resume = prepareResumeMarkdown(resume, profile.projects ?? [], {
     fullName: profile.fullName,

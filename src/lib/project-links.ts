@@ -303,6 +303,24 @@ function extractHeaderDates(text: string): { name: string; dates: string } {
   return { name: t, dates: "" };
 }
 
+const PROJECT_DESC_START =
+  /^(implemented|engineered|built|conducted|identified|created|developed|designed|automated|reduced|led|integrated|delivered|produced|hardened|configured|deployed|remediated|improved|strengthened)\b/i;
+
+/** True for a project title line — not a description sentence or Technologies Used. */
+export function looksLikeProjectHeaderLine(line: string): boolean {
+  const trimmed = line.trim();
+  if (!trimmed || /^[-*]\s/.test(trimmed) || /^#{1,3}\s/.test(trimmed)) {
+    return false;
+  }
+  const plain = stripHeaderMarkdown(trimmed);
+  if (!plain) return false;
+  if (/^technologies used\b/i.test(plain)) return false;
+  if (plain.length > 85) return false;
+  if (PROJECT_DESC_START.test(plain)) return false;
+  if (/[.!?]["']?$/.test(plain) && plain.split(/\s+/).length > 8) return false;
+  return true;
+}
+
 /**
  * Normalize PROJECTS headers to Neha-style split rows:
  *   **Project Name** | [Github Link](url)
@@ -328,6 +346,7 @@ export function injectProjectLinks(
       if (!inProjects) return line;
       if (/^\s*[-*]\s/.test(trimmed)) return line;
       if (!trimmed || /^##/.test(trimmed)) return line;
+      if (!looksLikeProjectHeaderLine(line)) return line;
 
       const cleaned = stripStoreLinks(line);
       const { name } = extractHeaderDates(stripHeaderMarkdown(cleaned));

@@ -2,9 +2,10 @@
 // into clean printable documents.
 
 import type { Project } from "@/lib/types";
-import { injectProjectLinks } from "@/lib/project-links";
+import { injectProjectLinks, looksLikeProjectHeaderLine } from "@/lib/project-links";
 import {
   boldProjectHeaderLine,
+  bulletizeProjectBodies,
   consolidateProjectSections,
   normalizeProjectParagraphs,
 } from "@/lib/resume-projects";
@@ -349,12 +350,14 @@ export function normalizeResumeMarkdown(md: string): string {
             reorderExperienceEntries(
               mergeOrphanRoleDates(
                 normalizeProjectParagraphs(
-                  consolidateProjectSections(
-                    normalizeLeadershipEntries(
-                      normalizeSkillsLists(
-                        reorderResumeSections(
-                          canonicalizeResumeHeadings(
-                            collapseExcessBlankLines(cleaned.join("\n")),
+                  bulletizeProjectBodies(
+                    consolidateProjectSections(
+                      normalizeLeadershipEntries(
+                        normalizeSkillsLists(
+                          reorderResumeSections(
+                            canonicalizeResumeHeadings(
+                              collapseExcessBlankLines(cleaned.join("\n")),
+                            ),
                           ),
                         ),
                       ),
@@ -837,8 +840,8 @@ function normalizeProjectHeaders(md: string): string {
         return raw;
       }
       if (/^##\s+/.test(trimmed) && inProjects) inProjects = false;
-      // Require whitespace after -/* so bold **Title** is not treated as a bullet.
       if (!inProjects || !trimmed || /^[-*]\s/.test(trimmed)) return raw;
+      if (!looksLikeProjectHeaderLine(raw)) return raw;
       return ensureBoldProjectHeader(raw);
     })
     .join("\n");
@@ -874,7 +877,7 @@ function looksLikeJobTitle(line: string): boolean {
   );
 }
 
-/** Bold the role/org lead-in on leadership bullets. */
+/** Bold the role/org lead-in on leadership bullets; turn paragraphs into bullets. */
 function normalizeLeadershipEntries(md: string): string {
   const lines = md.replace(/\r/g, "").split("\n");
   let inLeadership = false;
@@ -887,14 +890,25 @@ function normalizeLeadershipEntries(md: string): string {
         );
         return raw;
       }
-      if (!inLeadership || !/^[-*]\s+/.test(trimmed)) return raw;
-      const item = trimmed.replace(/^[-*]\s+/, "");
-      if (/^\*\*/.test(item)) return raw;
+      if (!inLeadership || !trimmed) return raw;
+
+      let item = trimmed;
+      if (/^[-*]\s+/.test(trimmed)) {
+        item = trimmed.replace(/^[-*]\s+/, "");
+      }
+
+      if (/^\*\*/.test(item)) {
+        return /^[-*]\s+/.test(trimmed) ? raw : `- ${item}`;
+      }
       const m = item.match(/^(.+?)\s+[—–-]\s+(.+)$/);
-      if (!m) return raw;
-      const lead = m[1].trim();
-      if (!lead || lead.length > 90) return raw;
-      return `- **${lead}** — ${m[2].trim()}`;
+      if (m) {
+        const lead = m[1].trim();
+        if (lead && lead.length <= 90) {
+          return `- **${lead.replace(/^\*\*|\*\*$/g, "")}** — ${m[2].trim()}`;
+        }
+      }
+      if (/^[-*]\s+/.test(trimmed)) return raw;
+      return `- ${item}`;
     })
     .join("\n");
 }

@@ -2,6 +2,7 @@ import {
   applyKnownProjectLinks,
   DEFAULT_PROJECT_LINKS,
   lineMatchesProject,
+  looksLikeProjectHeaderLine,
 } from "@/lib/project-links";
 import type { Project } from "@/lib/types";
 
@@ -56,7 +57,7 @@ export function formatProfileProjectEntry(project: Project): string {
     bullets.push(`- ${merged.description.trim()}`);
   }
   if (merged.tech?.length) {
-    bullets.push(`- Built with ${merged.tech.join(", ")}.`);
+    bullets.push(`- **Technologies Used:** ${merged.tech.join(", ")}`);
   }
   if (!bullets.length) {
     bullets.push(`- ${merged.name}${merged.role ? ` — ${merged.role}` : ""}.`);
@@ -429,6 +430,182 @@ export function pruneUnsavedDefaultProjects(
   }
 
   return out.join("\n");
+}
+
+function isTechOnlyBullet(b: string): boolean {
+  return /^\s*[-*]\s+(\*\*)?(technologies used|built with)\b/i.test(b);
+}
+
+/** Turn project description paragraphs into bullets (PDF / unformatted source). */
+export function bulletizeProjectBodies(md: string): string {
+  const lines = md.replace(/\r/g, "").split("\n");
+  let inProjects = false;
+  const out: string[] = [];
+
+  for (const raw of lines) {
+    const trimmed = raw.trim();
+    if (/^##\s+PROJECTS/i.test(trimmed)) {
+      inProjects = true;
+      out.push(raw);
+      continue;
+    }
+    if (/^##\s+/.test(trimmed) && inProjects) {
+      inProjects = false;
+      out.push(raw);
+      continue;
+    }
+    if (!inProjects || !trimmed || /^[-*]\s/.test(trimmed)) {
+      out.push(raw);
+      continue;
+    }
+
+    const tech = stripProjectHeader(trimmed).match(
+      /^technologies used:?\s*(.+)$/i,
+    );
+    if (tech) {
+      out.push(`- **Technologies Used:** ${tech[1].trim()}`);
+      continue;
+    }
+
+    if (looksLikeProjectHeaderLine(raw)) {
+      out.push(raw);
+      continue;
+    }
+
+    const desc = trimmed.replace(/^\*\*|\*\*$/g, "").trim();
+    out.push(`- ${desc.endsWith(".") ? desc : `${desc}.`}`);
+  }
+
+  return out.join("\n");
+}
+
+function replaceProjectsSection(md: string, blocks: ProjectBlock[]): string {
+  const lines = md.replace(/\r/g, "").split("\n");
+  let start = -1;
+  let end = lines.length;
+  for (let i = 0; i < lines.length; i++) {
+    const t = lines[i].trim();
+    if (/^##\s+PROJECTS/i.test(t)) {
+      start = i;
+      continue;
+    }
+    if (start >= 0 && /^##\s+/.test(t)) {
+      end = i;
+      break;
+    }
+  }
+  if (start < 0) return md;
+  const heading = lines[start];
+  const body = blocks.map((b) => blockToMarkdown(b)).join("\n\n");
+  return [...lines.slice(0, start), heading, "", body, "", ...lines.slice(end)]
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n");
+}
+
+function restoreProjectBulletsFromBase(tailored: string, base: string): string {
+  const baseBlocks = extractProjectBlocks(base);
+  const tailoredBlocks = extractProjectBlocks(tailored);
+  if (!baseBlocks.length || !tailoredBlocks.length) return tailored;
+
+  let changed = false;
+  const merged = tailoredBlocks.map((tb) => {
+    const bb = baseBlocks.find((b) => blocksMatch(tb, b));
+    if (!bb) return tb;
+    const tailoredNarrative = tb.bullets.filter((b) => !isTechOnlyBullet(b));
+    const baseNarrative = bb.bullets.filter((b) => !isTechOnlyBullet(b));
+    if (tailoredNarrative.length >= Math.max(1, baseNarrative.length)) {
+      return tb;
+    }
+    if (!baseNarrative.length) return tb;
+    changed = true;
+    const tech =
+      tb.bullets.find(isTechOnlyBullet) ?? bb.bullets.find(isTechOnlyBullet);
+    return {
+      headerLine: tb.headerLine,
+      bullets: tech ? [...baseNarrative, tech] : baseNarrative,
+    };
+  });
+
+  return changed ? replaceProjectsSection(tailored, merged) : tailored;
+}
+
+function isLeadershipHeadingLine(line: string): boolean {
+  const title = line.replace(/^#+\s+/, "").trim();
+  return /^(LEADERSHIP|LEADERSHIP\s*&\s*AFFILIATIONS|AFFILIATIONS)$/i.test(
+    title,
+  );
+}
+
+function extractLeadershipBody(md: string): { heading: string; body: string } | null {
+  const lines = md.replace(/\r/g, "").split("\n");
+  let start = -1;
+  for (let i = 0; i < lines.length; i++) {
+    if (isLeadershipHeadingLine(lines[i].trim())) {
+      start = i;
+      break;
+    }
+  }
+  if (start < 0) return null;
+  let end = lines.length;
+  for (let i = start + 1; i < lines.length; i++) {
+    if (/^##\s+/.test(lines[i].trim())) {
+      end = i;
+      break;
+    }
+  }
+  const body = lines.slice(start + 1, end).join("\n").trim();
+  if (!body) return null;
+  return { heading: "## LEADERSHIP & AFFILIATIONS", body };
+}
+
+function restoreLeadershipFromBase(tailored: string, base: string): string {
+  const fromBase = extractLeadershipBody(base);
+  if (!fromBase) return tailored;
+  const existing = extractLeadershipBody(tailored);
+  if (existing && existing.body.split("\n").filter((l) => l.trim()).length >= 2) {
+    return tailored;
+  }
+
+  const lines = tailored.replace(/\r/g, "").split("\n");
+  const section = `${fromBase.heading}\n\n${fromBase.body}`;
+
+  if (existing) {
+    let start = -1;
+    let end = lines.length;
+    for (let i = 0; i < lines.length; i++) {
+      if (isLeadershipHeadingLine(lines[i].trim())) {
+        start = i;
+        continue;
+      }
+      if (start >= 0 && /^##\s+/.test(lines[i].trim())) {
+        end = i;
+        break;
+      }
+    }
+    if (start >= 0) {
+      return [...lines.slice(0, start), section, "", ...lines.slice(end)]
+        .join("\n")
+        .replace(/\n{3,}/g, "\n\n");
+    }
+  }
+
+  const eduIdx = lines.findIndex((l) => /^##\s+EDUCATION/i.test(l.trim()));
+  if (eduIdx >= 0) {
+    lines.splice(eduIdx, 0, section, "");
+    return lines.join("\n");
+  }
+  return `${tailored.trim()}\n\n${section}\n`;
+}
+
+/**
+ * After tailoring, copy project write-ups and leadership entries from the
+ * formatted base resume when the model dropped them.
+ */
+export function restoreNarrativeFromBase(tailored: string, base: string): string {
+  if (!tailored.trim() || !base.trim()) return tailored;
+  const normalizedBase = bulletizeProjectBodies(base);
+  const withProjects = restoreProjectBulletsFromBase(tailored, normalizedBase);
+  return restoreLeadershipFromBase(withProjects, normalizedBase);
 }
 
 /** Append any profile projects missing from the resume PROJECTS section. */

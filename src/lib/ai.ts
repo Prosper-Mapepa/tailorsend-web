@@ -139,7 +139,8 @@ Resume best practices to apply:
   ## PROJECTS
   ## LEADERSHIP & AFFILIATIONS (only if present in the source)
   ## EDUCATION
-  then Certifications/Achievements only if they exist. Do not invent a leadership section.
+  then Certifications/Achievements only if they exist.
+- If the base resume includes Leadership, Affiliations, clubs, or similar, you MUST keep ## LEADERSHIP & AFFILIATIONS (before Education). Copy every entry. Do not drop this section to save space.
 - Compute N from the candidate's work-history span (earliest start through Present), e.g. "## PROFESSIONAL EXPERIENCE (5+ YEARS)". If unknown, use "## PROFESSIONAL EXPERIENCE".
 - Use "## TECHNICAL SKILLS" with category lines (NOT a bullet list). Preserve category labels from the source when present. Otherwise use labels such as:
   **Programming Languages:** Python, TypeScript
@@ -159,23 +160,28 @@ ORDERING (critical):
 - Include dates for every role/project/degree when available.
 
 PROJECTS (critical):
-- Include EVERY project from the candidate's profile project list in the PROJECTS section — do NOT omit any. Order them most recent first (reverse-chronological by date). Tailor bullets and emphasis to the role, but every saved profile project must appear.
+- Include EVERY project from the candidate's profile project list AND from the base resume PROJECTS section — do NOT omit any. Order them most recent first (reverse-chronological by date). Tailor emphasis to the role, but keep the full write-up (what was built, tools, and measured impact).
+- NEVER replace a project with only a "Technologies Used" line. Keep the description bullets from the source; you may add **Technologies Used:** as the LAST bullet when a stack is listed.
 - NEVER drop existing projects to make room — compress bullets if needed to stay within two pages.
-- EVERY project MUST use this exact header pattern:
-  **Project Name** | Month Year – Month Year
-  or **Project Name** | [Github Link](url) when a verified project URL exists
-  - achievement bullet
-  - achievement bullet
-  Use the best available project URL labeled "Github Link" when it is a GitHub URL, otherwise "Link". If no URL exists, use **Project Name** | dates (or **Project Name** alone). NEVER link a project to the candidate's GitHub profile URL — only use the exact URLs from the verified list for that project. NEVER use paragraph blocks for project descriptions — always bullets. NEVER put the description or tech stack in the title line.
-- Include the tech stack and the impact/outcome in the bullets; bold key tech terms.
+- EVERY project MUST use this exact pattern:
+  **Project Name**
+  - achievement/description bullet(s) from the source (bold metrics like **80%** and key tools)
+  - **Technologies Used:** a, b, c
+  When a verified project URL exists, the header may be **Project Name** | [Github Link](url) or **Project Name** | [Link](url). NEVER link a project to the candidate's GitHub profile URL. NEVER use paragraph blocks — always bullets. NEVER put the description or tech stack in the title line.
+
+LEADERSHIP (critical):
+- If the base resume has a leadership/affiliations section, include it verbatim in structure:
+  ## LEADERSHIP & AFFILIATIONS
+  - **Role, Organization** — description (bold metrics)
+- Place it after PROJECTS and before EDUCATION.
 
 EDUCATION:
   **Degree, Field** | Month Year – Month Year | School
   Grade: X.XX   (only if a real GPA/grade exists)
 
 COMPLETENESS (goal: maximize interview odds within 2 pages):
-- Include every role and every profile project, but compress ruthlessly: tight phrasing, no duplicate facts, no repeated employer/location lines.
-- Bullet caps (hard): current/most relevant role up to 4 bullets; other roles up to 3; oldest roles up to 2. Each project up to 2 bullets (1 for minor/older projects). Education: school + degree + date only — coursework/honors only if one short bullet each.
+- Include every role, every project with its descriptions, and leadership entries from the source.
+- Bullet caps (hard): current/most relevant role up to 4 bullets; other roles up to 3; oldest roles up to 2. Each project: keep source description bullets (typically 1–2) plus Technologies Used. Education: school + degree + date only.
 - Make every bullet outcome-led (verb + scope + tool + result). Use real metrics only; otherwise one crisp qualitative result.
 - Cover the job's key requirements via skills + top bullets — not by adding prose blocks.
 
@@ -517,9 +523,11 @@ Contact line: phone | email | [LinkedIn](url) | [GitHub](url) | [Portfolio](url)
   - achievement bullets (never paragraph text; bold key tech/metrics)
   - **Technologies Used:** a, b, c   (only if tech is listed for that role)
 ## PROJECTS — each project MUST follow:
-  **Project Name** | Month Year – Month Year
-  - achievement bullets (never paragraph text; convert descriptions to bullets)
-## LEADERSHIP & AFFILIATIONS — only if present in the source (bullets)
+  **Project Name**
+  - achievement/description bullets from the source (never drop the write-up; never paragraph text)
+  - **Technologies Used:** a, b, c   (last bullet, only if present)
+## LEADERSHIP & AFFILIATIONS — required if present in the source:
+  - **Role, Organization** — description
 ## EDUCATION — each entry MUST follow:
   **Degree, Field** | Month Year – Month Year | School
   Grade: … (only if present)

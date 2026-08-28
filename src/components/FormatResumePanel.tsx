@@ -5,8 +5,7 @@ import { Button, UploadZone } from "@/components/ui";
 import { FormattedDocEditor } from "@/components/FormattedDocEditor";
 import { apiFetch } from "@/lib/auth-client";
 import { resumeSlug } from "@/lib/download";
-import { prepareResumeMarkdown, type ResumeContact } from "@/lib/markdown";
-import { ensureAllProfileProjects } from "@/lib/resume-projects";
+import type { ResumeContact } from "@/lib/markdown";
 import type { Project } from "@/lib/types";
 
 type ResumeContext = {
@@ -22,52 +21,31 @@ export function FormatResumePanel() {
   const [markdown, setMarkdown] = useState("");
   const [persisted, setPersisted] = useState("");
   const [saving, setSaving] = useState(false);
-  const [reapplyingLinks, setReapplyingLinks] = useState(false);
-  const [linksMsg, setLinksMsg] = useState<string | null>(null);
   const [resumeContext, setResumeContext] = useState<ResumeContext | null>(
     null,
   );
-
-  function contextFromProfile(data: {
-    projects?: Project[];
-    fullName?: string;
-    email?: string;
-    phone?: string;
-    location?: string;
-    linkedin?: string;
-    github?: string;
-    website?: string;
-  }): ResumeContext {
-    return {
-      projects: data.projects ?? [],
-      contact: {
-        fullName: data.fullName,
-        email: data.email,
-        phone: data.phone,
-        location: data.location,
-        linkedin: data.linkedin,
-        github: data.github,
-        website: data.website,
-      },
-    };
-  }
 
   useEffect(() => {
     apiFetch("/api/profile")
       .then((r) => r.json())
       .then((data) => {
         if (!data?.email) return;
-        const ctx = contextFromProfile(data);
-        setResumeContext(ctx);
+        setResumeContext({
+          projects: data.projects ?? [],
+          contact: {
+            fullName: data.fullName,
+            email: data.email,
+            phone: data.phone,
+            location: data.location,
+            linkedin: data.linkedin,
+            github: data.github,
+            website: data.website,
+          },
+        });
         const existing = typeof data.baseResume === "string" ? data.baseResume : "";
         if (existing.trim()) {
-          const prepared = prepareResumeMarkdown(
-            existing,
-            ctx.projects,
-            ctx.contact,
-          );
-          setMarkdown(prepared);
-          setPersisted(prepared);
+          setMarkdown(existing);
+          setPersisted(existing);
         }
       })
       .catch(() => {});
@@ -97,31 +75,6 @@ export function FormatResumePanel() {
     } finally {
       setLoading(false);
       if (fileRef.current) fileRef.current.value = "";
-    }
-  }
-
-  async function reapplyLinks() {
-    if (!markdown.trim()) return;
-    setReapplyingLinks(true);
-    setLinksMsg(null);
-    setError(null);
-    try {
-      const res = await apiFetch("/api/profile");
-      const profile = await res.json();
-      if (!res.ok) {
-        throw new Error(profile.error ?? "Could not load profile.");
-      }
-      const ctx = contextFromProfile(profile);
-      setResumeContext(ctx);
-      let updated = ensureAllProfileProjects(markdown, ctx.projects);
-      updated = prepareResumeMarkdown(updated, ctx.projects, ctx.contact);
-      setMarkdown(updated);
-      setLinksMsg("Contact and project links updated from your profile ✓");
-      setTimeout(() => setLinksMsg(null), 5000);
-    } catch (e) {
-      setLinksMsg((e as Error).message);
-    } finally {
-      setReapplyingLinks(false);
     }
   }
 
@@ -187,7 +140,7 @@ export function FormatResumePanel() {
             resumeContext={resumeContext ?? undefined}
             toolbarExtra={replaceControl}
           />
-          <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-slate-100 pt-4">
+          <div className="flex flex-wrap items-center gap-3 border-t border-slate-100 pt-4">
             <Button
               onClick={() => void saveEdits()}
               disabled={saving || !dirty}
@@ -195,33 +148,11 @@ export function FormatResumePanel() {
             >
               {saving ? "Saving…" : dirty ? "Save edits" : "Saved"}
             </Button>
-            {markdown.trim() && (
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => void reapplyLinks()}
-                disabled={reapplyingLinks || saving}
-                title="Refresh LinkedIn, GitHub, portfolio, and project links from your profile"
-              >
-                {reapplyingLinks ? "Updating links…" : "Re-apply links"}
-              </Button>
-            )}
-            {linksMsg && (
-              <span
-                className={`text-sm ${
-                  linksMsg.includes("✓") ? "text-emerald-600" : "text-red-600"
-                }`}
-              >
-                {linksMsg}
-              </span>
-            )}
-            {!linksMsg && (
-              <p className="text-xs text-slate-500">
-                {dirty
-                  ? "Save to update your profile resume used when tailoring a job."
-                  : "Preview, Copy, and Download PDF match this layout."}
-              </p>
-            )}
+            <p className="text-xs text-slate-500">
+              {dirty
+                ? "Save to update your profile resume used when tailoring a job."
+                : "Preview, Copy, and Download PDF match this layout."}
+            </p>
             {fileName && !loading && (
               <p className="text-xs text-slate-500">
                 Last file:{" "}
