@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui";
 import { apiFetch } from "@/lib/auth-client";
 import {
@@ -39,6 +39,7 @@ export function FormattedDocEditor({
   hideTextDownloads = false,
   showLabel = true,
   resumeContext,
+  toolbarExtra,
 }: {
   label: string;
   value: string;
@@ -51,6 +52,7 @@ export function FormattedDocEditor({
   showLabel?: boolean;
   /** When set, preview/PDF downloads use the same link injection as the server. */
   resumeContext?: ResumeContext;
+  toolbarExtra?: ReactNode;
 }) {
   const [editing, setEditing] = useState(false);
   const [pdfBusy, setPdfBusy] = useState(false);
@@ -115,7 +117,7 @@ export function FormattedDocEditor({
   }
 
   return (
-    <div className="space-y-3">
+    <div className="min-w-0 space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         {showLabel ? (
           <h2 className="text-lg font-semibold">{label}</h2>
@@ -147,6 +149,7 @@ export function FormattedDocEditor({
               Edit
             </button>
           </div>
+          {toolbarExtra}
           <Button variant="secondary" onClick={copyContent}>
             {copied ? "Copied ✓" : "Copy"}
           </Button>
@@ -212,12 +215,12 @@ export function FormattedDocEditor({
         </div>
       ) : (
         <div
-          className={`w-full rounded-md border border-slate-200 bg-white p-6 ${
-            kind === "cover" ? "cover-letter-preview" : "overflow-visible"
+          className={`w-full min-w-0 overflow-x-hidden rounded-md border border-slate-200 bg-white p-5 sm:p-6 ${
+            kind === "cover" ? "cover-letter-preview" : ""
           }`}
         >
           <div
-            className="doc-preview w-full overflow-visible"
+            className="doc-preview w-full min-w-0"
             dangerouslySetInnerHTML={{
               __html: mdToHtml(displayMd, { kind }),
             }}

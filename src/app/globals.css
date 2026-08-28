@@ -61,13 +61,18 @@ body {
 
 /* On-page rendered preview of tailored resume / cover letter (mirrors the PDF). */
 .doc-preview {
+  display: block;
+  box-sizing: border-box;
   color: #000000;
   font-family: var(--font-resume);
   font-size: 11pt;
   line-height: 1.35;
   width: 100%;
   max-width: 100%;
-  overflow: visible;
+  min-width: 0;
+  overflow-x: hidden;
+  overflow-wrap: anywhere;
+  word-wrap: break-word;
   -webkit-font-smoothing: auto;
   -moz-osx-font-smoothing: auto;
   text-rendering: geometricPrecision;
@@ -75,6 +80,17 @@ body {
 .doc-preview,
 .doc-preview * {
   color: #000000;
+  box-sizing: border-box;
+}
+.doc-preview h1,
+.doc-preview h2,
+.doc-preview h3,
+.doc-preview p,
+.doc-preview ul,
+.doc-preview li {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  white-space: normal;
 }
 .doc-preview h1 {
   font-size: 20pt;
@@ -113,6 +129,8 @@ body {
   font-weight: 400;
   line-height: 1.35;
   text-align: center;
+  width: 100%;
+  min-width: 0;
 }
 .doc-preview p.contact-line a,
 .doc-preview h1 + p.contact-line a,
@@ -125,6 +143,7 @@ body {
   align-items: center;
   gap: 4px;
   white-space: nowrap;
+  max-width: 100%;
 }
 .doc-preview .contact-sep {
   display: inline-block;
@@ -171,11 +190,14 @@ body {
 }
 .doc-preview p.entry-row {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: baseline;
   gap: 12px;
   margin: 0;
   font-size: 11pt;
+  width: 100%;
+  min-width: 0;
 }
 .doc-preview p.entry-row .entry-left {
   flex: 1 1 auto;

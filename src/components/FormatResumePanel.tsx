@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button, UploadZone } from "@/components/ui";
 import { FormattedDocEditor } from "@/components/FormattedDocEditor";
 import { apiFetch } from "@/lib/auth-client";
@@ -14,6 +14,7 @@ type ResumeContext = {
 };
 
 export function FormatResumePanel() {
+  const fileRef = useRef<HTMLInputElement>(null);
   const [fileName, setFileName] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -73,6 +74,7 @@ export function FormatResumePanel() {
       setError((e as Error).message);
     } finally {
       setLoading(false);
+      if (fileRef.current) fileRef.current.value = "";
     }
   }
 
@@ -97,10 +99,34 @@ export function FormatResumePanel() {
     }
   }
 
+  const replaceControl = (
+    <>
+      <input
+        ref={fileRef}
+        type="file"
+        accept=".pdf,.docx,.txt,.md"
+        className="hidden"
+        disabled={loading}
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) void formatFile(file);
+        }}
+      />
+      <Button
+        type="button"
+        variant="secondary"
+        disabled={loading}
+        onClick={() => fileRef.current?.click()}
+      >
+        {loading ? "Formatting…" : "Replace resume"}
+      </Button>
+    </>
+  );
+
   return (
-    <div className="space-y-5">
+    <div className="min-w-0 space-y-5">
       {markdown ? (
-        <div className="space-y-4">
+        <div className="min-w-0 space-y-4">
           <FormattedDocEditor
             label="Formatted resume"
             showLabel={false}
@@ -112,6 +138,7 @@ export function FormatResumePanel() {
             pdfTitle="Formatted resume"
             minHeight={480}
             resumeContext={resumeContext ?? undefined}
+            toolbarExtra={replaceControl}
           />
           <div className="flex flex-wrap items-center gap-3 border-t border-slate-100 pt-4">
             <Button
@@ -126,24 +153,8 @@ export function FormatResumePanel() {
                 ? "Save to update your profile resume used when tailoring a job."
                 : "Preview, Copy, and Download PDF match this layout."}
             </p>
-          </div>
-          <div className="border-t border-slate-100 pt-4">
-            <p className="mb-2 text-xs font-medium text-slate-500">
-              Replace with a new file
-            </p>
-            <UploadZone
-              accept=".pdf,.docx,.txt,.md"
-              loading={loading}
-              label={
-                loading
-                  ? "Formatting your resume…"
-                  : "Drop a resume here or click to browse"
-              }
-              hint="PDF, DOCX, TXT, or Markdown"
-              onFile={formatFile}
-            />
             {fileName && !loading && (
-              <p className="mt-2 text-xs text-slate-500">
+              <p className="text-xs text-slate-500">
                 Last file:{" "}
                 <span className="font-medium text-slate-700">{fileName}</span>
               </p>
