@@ -1,11 +1,11 @@
-#!/usr/bin/env bash
+#!/bin/sh
 # Railway web start: migrate then serve Next on 0.0.0.0:$PORT
-set -euo pipefail
+set -eu
 
 PORT="${PORT:-3000}"
 
 echo "[railway-start] node=$(node -v) port=${PORT}"
-if [[ -z "${DATABASE_URL:-}" ]]; then
+if [ -z "${DATABASE_URL:-}" ]; then
   echo "[railway-start] ERROR: DATABASE_URL is not set" >&2
   exit 1
 fi
