@@ -10,7 +10,7 @@ import {
   playwrightEnabled,
 } from "@/lib/playwright-env";
 
-const STORAGE = path.join(process.cwd(), "storage");
+const STORAGE = path.join(/* turbopackIgnore: true */ process.cwd(), "storage");
 
 async function ensureDir(dir: string): Promise<void> {
   await fs.mkdir(dir, { recursive: true });

@@ -1,5 +1,4 @@
 import fs from "node:fs";
-import path from "node:path";
 import { chromium, type Browser, type BrowserContext } from "playwright";
 import {
   PLAYWRIGHT_DISABLED_MESSAGE,
@@ -18,10 +17,6 @@ const STEALTH_ARGS = [
 
 const MAC_CHROME_PATHS = [
   "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
-  path.join(
-    process.env.HOME ?? "",
-    "Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
-  ),
 ];
 
 function findMacChrome(): string | null {

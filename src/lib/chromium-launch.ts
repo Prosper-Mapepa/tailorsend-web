@@ -1,7 +1,6 @@
 import "server-only";
 
 import fs from "node:fs";
-import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { chromium, type Browser, type LaunchOptions } from "playwright";
 import {
@@ -11,10 +10,6 @@ import {
 
 const MAC_CHROME_PATHS = [
   "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
-  path.join(
-    process.env.HOME ?? "",
-    "Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
-  ),
 ];
 
 const LINUX_CHROMIUM_PATHS = [
@@ -97,8 +92,9 @@ export async function launchHeadlessChromium(
     );
   }
 
-  const { args: extraArgs = [], ...rest } = extra;
+  const { args: extraArgs = [], executablePath: _ignored, ...rest } = extra;
   return chromium.launch({
+    ...rest,
     headless: true,
     executablePath,
     args: [
@@ -107,7 +103,5 @@ export async function launchHeadlessChromium(
         : []),
       ...extraArgs,
     ],
-    ...rest,
-    executablePath,
   });
 }
