@@ -67,7 +67,7 @@ OPENAI_MODEL=gpt-4o-mini
 ADMIN_EMAILS=you@example.com
 ```
 
-`BACKEND_URL` is required at **runtime** so `/api/auth/*` on the Web service can reach the API. Do not leave it as localhost — that is this container, not the API.
+`BACKEND_URL` is optional. In production it defaults to `https://tailorsend-api-production.up.railway.app`. Set it only if the API public URL changes.
 
 **Do not set `PORT` yourself** — Railway injects it. Overriding it (e.g. `PORT=8888`) is a common cause of 502s.
 

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { resolveBackendBase } from "@/lib/backend-url";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -17,10 +18,7 @@ const HOP_BY_HOP = new Set([
 ]);
 
 function backendBase(): string {
-  return (process.env.BACKEND_URL ?? "http://localhost:4000").replace(
-    /\/$/,
-    "",
-  );
+  return resolveBackendBase();
 }
 
 async function proxyAuth(
@@ -53,7 +51,7 @@ async function proxyAuth(
     console.error("[auth-proxy]", target, err);
     return NextResponse.json(
       {
-        error: `Auth API is unreachable at ${backendBase()}. Set BACKEND_URL on the Web service to your Railway API URL (e.g. https://….up.railway.app).`,
+        error: `Auth API is unreachable at ${backendBase()}.`,
       },
       { status: 502 },
     );

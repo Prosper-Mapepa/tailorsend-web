@@ -11,6 +11,15 @@ if [ -z "${DATABASE_URL:-}" ]; then
 fi
 echo "[railway-start] DATABASE_URL is set"
 
+case "${BACKEND_URL:-}" in
+  ""|http://localhost*|http://127.0.0.1*)
+    if [ -n "${RAILWAY_ENVIRONMENT:-}" ]; then
+      export BACKEND_URL="https://tailorsend-api-production.up.railway.app"
+      echo "[railway-start] BACKEND_URL=${BACKEND_URL}"
+    fi
+    ;;
+esac
+
 echo "[railway-start] prisma migrate deploy..."
 npx prisma migrate deploy
 
