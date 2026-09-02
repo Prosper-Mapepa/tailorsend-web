@@ -16,11 +16,24 @@ import {
 import { ensureCoverLetterDate } from "@/lib/cover-letter";
 import type { Project } from "@/lib/types";
 
-function needsEducationReorder(md: string): boolean {
-  const skills = md.search(/^##\s+(CORE SKILLS|SKILLS|TECHNICAL SKILLS|KEY SKILLS)\b/im);
-  const education = md.search(/^##\s+EDUCATION\b/im);
-  if (skills < 0 || education < 0) return false;
-  return education < skills;
+function needsSectionReorder(md: string): boolean {
+  const rank = (title: string): number => {
+    const t = title.toUpperCase().replace(/\s*\([^)]*\)\s*$/, "").trim();
+    if (/^(PROFESSIONAL SUMMARY|SUMMARY|OBJECTIVE|PROFILE)$/.test(t)) return 0;
+    if (/PROJECT/.test(t)) return 1;
+    if (/EXPERIENCE|EMPLOYMENT/.test(t)) return 2;
+    if (/SKILL|COMPETENC/.test(t)) return 3;
+    if (/LEADERSHIP|AFFILIATION|VOLUNTEER/.test(t)) return 4;
+    if (/^EDUCATION$/.test(t)) return 5;
+    return 40;
+  };
+  const ranks = [...md.matchAll(/^##\s+(.+)$/gm)]
+    .map((m) => rank(m[1]))
+    .filter((r) => r < 40);
+  for (let i = 1; i < ranks.length; i++) {
+    if (ranks[i] < ranks[i - 1]) return true;
+  }
+  return false;
 }
 
 type ResumeContext = {
@@ -103,7 +116,15 @@ export function FormattedDocEditor({
   // Persist fence cleanup + section reorder so the stored resume matches preview.
   useEffect(() => {
     if (kind !== "resume" || !activeContext) return;
-    if (!/```/.test(value) && !needsEducationReorder(value)) return;
+    if (!/```/.test(value) && !needsSectionReorder(value)) {
+      const storedHead = value.split("##")[0] ?? "";
+      const preparedHead = displayMd.split("##")[0] ?? "";
+      const missingLinks =
+        (/\[GitHub\]/i.test(preparedHead) && !/\[GitHub\]/i.test(storedHead)) ||
+        (/\[Portfolio\]/i.test(preparedHead) &&
+          !/\[Portfolio\]/i.test(storedHead));
+      if (!missingLinks) return;
+    }
     if (displayMd && displayMd !== value) onChange(displayMd);
   }, [kind, value, displayMd, activeContext, onChange]);
 

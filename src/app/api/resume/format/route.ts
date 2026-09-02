@@ -42,6 +42,7 @@ export async function POST(req: Request) {
     const raw = await formatUploadedResume(text, {
       projects: profile.projects,
       linkedin: profile.linkedin,
+      github: profile.github,
       website: profile.website,
     });
     const formatted = prepareResumeMarkdown(

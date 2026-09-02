@@ -1,0 +1,9 @@
+node_modules
+backend/node_modules
+.git
+.next
+.playwright-browsers
+storage
+coverage
+.env*
+public/docs

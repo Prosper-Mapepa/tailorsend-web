@@ -148,8 +148,8 @@ function looksLikePersonName(line: string): boolean {
 
 /**
  * Canonical section order:
- * Professional Summary → Technical Skills → Professional Experience →
- * Projects → Leadership & Affiliations → Education → rest.
+ * Professional Summary → Projects → Professional Experience →
+ * Technical Skills → Leadership & Affiliations → Education → rest.
  */
 export function reorderResumeSections(md: string): string {
   const lines = md.replace(/\r/g, "").split("\n");
@@ -179,9 +179,9 @@ export function reorderResumeSections(md: string): string {
   const rankOf = (title: string): number => {
     const t = title.toUpperCase();
     if (/^(PROFESSIONAL SUMMARY|SUMMARY|OBJECTIVE|PROFILE)$/.test(t)) return 0;
-    if (isSkillsTitle(t)) return 1;
+    if (isProjectsTitle(t)) return 1;
     if (isExperienceTitle(t)) return 2;
-    if (isProjectsTitle(t)) return 3;
+    if (isSkillsTitle(t)) return 3;
     if (isLeadershipTitle(t) || /^VOLUNTEERING$/i.test(t)) return 4;
     if (/^EDUCATION$/.test(t)) return 5;
     if (/^(ACHIEVEMENTS|AWARDS|CERTIFICATIONS|PUBLICATIONS)$/.test(t)) {
@@ -2132,6 +2132,8 @@ const CONTACT_ICON = {
     '<svg class="ci-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M6.94 6.5A1.94 1.94 0 1 1 5 4.56 1.94 1.94 0 0 1 6.94 6.5zM5.25 8.75h3.38V19H5.25zm5.63 0h3.24v1.4h.05a3.55 3.55 0 0 1 3.2-1.76c3.42 0 4.05 2.25 4.05 5.18V19h-3.38v-4.66c0-1.11 0-2.54-1.55-2.54s-1.78.1-1.78 2.48V19h-3.38z"/></svg>',
   github:
     '<svg class="ci-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2C6.48 2 2 6.58 2 12.26c0 4.52 2.87 8.35 6.84 9.71.5.1.68-.22.68-.49 0-.24-.01-.87-.01-1.71-2.78.62-3.37-1.37-3.37-1.37-.45-1.18-1.11-1.5-1.11-1.5-.91-.64.07-.63.07-.63 1 .07 1.53 1.06 1.53 1.06.89 1.56 2.34 1.11 2.91.85.09-.66.35-1.11.63-1.37-2.22-.26-4.56-1.14-4.56-5.07 0-1.12.39-2.03 1.03-2.75-.1-.26-.45-1.31.1-2.73 0 0 .84-.27 2.75 1.05A9.2 9.2 0 0 1 12 6.84c.85 0 1.71.12 2.51.35 1.9-1.32 2.74-1.05 2.74-1.05.55 1.42.21 2.47.1 2.73.64.72 1.03 1.63 1.03 2.75 0 3.94-2.34 4.8-4.57 5.06.36.32.68.94.68 1.9 0 1.37-.01 2.47-.01 2.81 0 .27.18.6.69.49A10.03 10.03 0 0 0 22 12.26C22 6.58 17.52 2 12 2z"/></svg>',
+  portfolio:
+    '<svg class="ci-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm7.4 9h-3.05a15.7 15.7 0 0 0-1.1-5.1A8.03 8.03 0 0 1 19.4 11zM12 4c.9 1.4 1.6 3.2 1.95 5H10.05C10.4 7.2 11.1 5.4 12 4zM4.6 13h3.05c.2 1.8.6 3.5 1.1 5.1A8.03 8.03 0 0 1 4.6 13zM7.65 11H4.6A8.03 8.03 0 0 1 8.75 5.9 15.7 15.7 0 0 0 7.65 11zM12 20c-.9-1.4-1.6-3.2-1.95-5h3.9c-.35 1.8-1.05 3.6-1.95 5zm3.25-1.9A15.7 15.7 0 0 0 16.35 13h3.05a8.03 8.03 0 0 1-4.15 5.1zM16.35 11a15.7 15.7 0 0 0-1.1-5.1A8.03 8.03 0 0 1 19.4 11h-3.05zM8.75 18.1A15.7 15.7 0 0 0 9.85 13H7.65a15.7 15.7 0 0 0 1.1 5.1z"/></svg>',
   location:
     '<svg class="ci-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5z"/></svg>',
 } as const;
@@ -2149,7 +2151,12 @@ function contactKind(
   }
   if (/linkedin/i.test(part) || /linkedin\.com/i.test(part)) return "linkedin";
   if (/github/i.test(part) || /github\.com/i.test(part)) return "github";
-  if (/portfolio|website/i.test(part)) return "portfolio";
+  if (
+    /portfolio|website/i.test(part) ||
+    /netlify\.app|vercel\.app|github\.io/i.test(part)
+  ) {
+    return "portfolio";
+  }
   return "location";
 }
 
@@ -2176,6 +2183,14 @@ function normalizeContactPart(part: string): string {
     }
     if (/\[GitHub\]\(/i.test(part)) return part;
     return "GitHub";
+  }
+  if (kind === "portfolio") {
+    const url = part.match(/https?:\/\/[^\s\])]+/i)?.[0];
+    if (url) {
+      return `[Portfolio](${url.replace(/[.,;]+$/, "")})`;
+    }
+    if (/\[Portfolio\]\(/i.test(part)) return part;
+    return "Portfolio";
   }
   return part.trim();
 }
@@ -2230,7 +2245,9 @@ function contactLineHtml(line: string): string {
             ? CONTACT_ICON.linkedin
             : item.kind === "github"
               ? CONTACT_ICON.github
-              : CONTACT_ICON.location;
+              : item.kind === "portfolio"
+                ? CONTACT_ICON.portfolio
+                : CONTACT_ICON.location;
     items.push(
       `<span class="contact-item">${icon}<span class="contact-text">${inline(item.text)}</span></span>`,
     );

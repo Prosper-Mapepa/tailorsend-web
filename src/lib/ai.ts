@@ -134,9 +134,9 @@ Resume best practices to apply:
 - Start with a compact header: candidate name as H1 (no markdown bold), optional one-line target-role headline if present in the source, then ONE contact line: phone | email | [LinkedIn](url) | [GitHub](url) | [Portfolio](url) | location when present. Always include LinkedIn/GitHub/portfolio links if provided.
 - Section order MUST be exactly:
   ## PROFESSIONAL SUMMARY
-  ## TECHNICAL SKILLS
-  ## PROFESSIONAL EXPERIENCE (N+ YEARS)
   ## PROJECTS
+  ## PROFESSIONAL EXPERIENCE (N+ YEARS)
+  ## TECHNICAL SKILLS
   ## LEADERSHIP & AFFILIATIONS (only if present in the source)
   ## EDUCATION
   then Certifications/Achievements only if they exist.
@@ -173,7 +173,7 @@ LEADERSHIP (critical):
 - If the base resume has a leadership/affiliations section, include it verbatim in structure:
   ## LEADERSHIP & AFFILIATIONS
   - **Role, Organization** — description (bold metrics)
-- Place it after PROJECTS and before EDUCATION.
+- Place it after TECHNICAL SKILLS and before EDUCATION.
 
 EDUCATION:
   **Degree, Field** | Month Year – Month Year | School
@@ -436,7 +436,7 @@ Produce a complete, ready-to-edit master resume in clean Markdown that would imp
 
 Rules:
 - Use ONLY facts the candidate provides. Where a detail is missing but important, insert a clearly bracketed placeholder like [Add metric: e.g. "reduced load time 40%"] so the user knows to fill it.
-- Structure: Header (name + optional headline + contact), ## PROFESSIONAL SUMMARY, ## TECHNICAL SKILLS, ## PROFESSIONAL EXPERIENCE (N+ YEARS), ## PROJECTS, ## LEADERSHIP & AFFILIATIONS (if present), ## EDUCATION. Do NOT include a Work Authorization or visa/sponsorship line.
+- Structure: Header (name + optional headline + contact), ## PROFESSIONAL SUMMARY, ## PROJECTS, ## PROFESSIONAL EXPERIENCE (N+ YEARS), ## TECHNICAL SKILLS, ## LEADERSHIP & AFFILIATIONS (if present), ## EDUCATION. Do NOT include a Work Authorization or visa/sponsorship line.
 - Experience headers: **Job Title** | **Company** | dates | Location
 - Skills: **Category:** comma-separated list (not bullets)
 - Make bullets quantified and outcome-driven; never fabricate real numbers (use placeholders instead).
@@ -492,6 +492,7 @@ export async function formatUploadedResume(
   context?: {
     projects?: Project[];
     linkedin?: string;
+    github?: string;
     website?: string;
   },
 ): Promise<string> {
@@ -515,18 +516,18 @@ Structure (use these exact section headings as ## headings):
 Optional headline (current or target title, only if present in the source)
 Contact line: phone | email | [LinkedIn](url) | [GitHub](url) | [Portfolio](url) | location when present
 ## PROFESSIONAL SUMMARY (only if the source has a summary)
-## TECHNICAL SKILLS — category lines (NOT bullets). Preserve source labels when present, e.g.:
-  **Application Security:** OWASP Top 10, SAST, DAST
-  **Programming Languages:** JavaScript, TypeScript, Python
-  (Omit any category with no real items from the source.)
-## PROFESSIONAL EXPERIENCE (N+ YEARS) — compute N from the work-history span (earliest start through Present). Each role MUST follow:
-  **Job Title** | **Company** | Month Year – Month Year | Location
-  - achievement bullets (never paragraph text; bold key tech/metrics)
-  - **Technologies Used:** a, b, c   (only if tech is listed for that role)
 ## PROJECTS — each project MUST follow:
   **Project Name**
   - achievement/description bullets from the source (never drop the write-up; never paragraph text)
   - **Technologies Used:** a, b, c   (last bullet, only if present)
+## PROFESSIONAL EXPERIENCE (N+ YEARS) — compute N from the work-history span (earliest start through Present). Each role MUST follow:
+  **Job Title** | **Company** | Month Year – Month Year | Location
+  - achievement bullets (never paragraph text; bold key tech/metrics)
+  - **Technologies Used:** a, b, c   (only if tech is listed for that role)
+## TECHNICAL SKILLS — category lines (NOT bullets). Preserve source labels when present, e.g.:
+  **Application Security:** OWASP Top 10, SAST, DAST
+  **Programming Languages:** JavaScript, TypeScript, Python
+  (Omit any category with no real items from the source.)
 ## LEADERSHIP & AFFILIATIONS — required if present in the source:
   - **Role, Organization** — description
 ## EDUCATION — each entry MUST follow:
@@ -540,8 +541,8 @@ Polish bullets for clarity but do not fabricate numbers. Keep the document tight
     : "";
 
   const contactHint =
-    context?.linkedin || context?.website
-      ? `\n\nVerified contact links:\nLinkedIn: ${context.linkedin ?? ""}\nPortfolio: ${context.website ?? ""}`
+    context?.linkedin || context?.github || context?.website
+      ? `\n\nVerified contact links:\nLinkedIn: ${context.linkedin ?? ""}\nGitHub: ${context.github ?? ""}\nPortfolio: ${context.website ?? ""}`
       : "";
 
   const user = `Source resume text (format this — do not add content that is not here):

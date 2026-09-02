@@ -42,9 +42,9 @@ Builder.
     .map((l) => l.replace(/^##\s+/, ""));
 
   assert.equal(headings[0], "PROFESSIONAL SUMMARY");
-  assert.equal(headings[1], "TECHNICAL SKILLS");
+  assert.equal(headings[1], "PROJECTS");
   assert.match(headings[2], /^PROFESSIONAL EXPERIENCE \(\d\+ YEARS\)$/);
-  assert.equal(headings[3], "PROJECTS");
+  assert.equal(headings[3], "TECHNICAL SKILLS");
   assert.equal(headings[4], "LEADERSHIP & AFFILIATIONS");
   assert.equal(headings[5], "EDUCATION");
 }
@@ -106,6 +106,23 @@ EDUCATION
   assert.match(out, /## PROJECTS/);
   assert.match(out, /## LEADERSHIP & AFFILIATIONS/);
   assert.match(out, /## EDUCATION/);
+  const headings = out
+    .split("\n")
+    .filter((l) => l.startsWith("## "))
+    .map((l) => l.replace(/^##\s+/, "").replace(/\s*\([^)]*\)\s*$/, ""));
+  assert.deepEqual(
+    headings.filter((h) =>
+      /SUMMARY|PROJECTS|EXPERIENCE|SKILLS|LEADERSHIP|EDUCATION/.test(h),
+    ),
+    [
+      "PROFESSIONAL SUMMARY",
+      "PROJECTS",
+      "PROFESSIONAL EXPERIENCE",
+      "TECHNICAL SKILLS",
+      "LEADERSHIP & AFFILIATIONS",
+      "EDUCATION",
+    ],
+  );
   assert.match(out, /\*\*Secure CRM Engineer\*\* \| \*\*Central Michigan University\*\*/);
   assert.doesNotMatch(out, /## Skills and Certifications/);
   assert.doesNotMatch(out, /## WORK EXPERIENCE/);
@@ -160,11 +177,32 @@ Builder.
       location: "Mount Pleasant, MI",
       linkedin: "https://linkedin.com/in/prosper",
       github: "https://github.com/prosper",
+      website: "https://mapepallc.netlify.app",
     },
   );
   const head = out.split("##")[0];
   assert.match(head, /# PROSPER MAPEPA\nSecurity-focused Software Engineer\n/);
+  assert.match(head, /\[GitHub\]\(https:\/\/github\.com\/prosper\)/);
+  assert.match(head, /\[Portfolio\]\(https:\/\/mapepallc\.netlify\.app\)/);
   assert.doesNotMatch(head, /# PROSPER MAPEPA\n[^\n]*@/);
+}
+
+{
+  const html = mdToHtml(
+    `# PROSPER MAPEPA
+Security-focused Software Engineer
+989-332-8050 | mapep@gmail.com | [LinkedIn](https://linkedin.com/in/prosper) | [GitHub](https://github.com/prosper) | [Portfolio](https://mapepallc.netlify.app) | Mount Pleasant, MI
+
+## PROFESSIONAL SUMMARY
+Builder.
+`,
+    { kind: "resume" },
+  );
+  assert.match(html, /<a href="https:\/\/github\.com\/prosper">GitHub<\/a>/);
+  assert.match(
+    html,
+    /<a href="https:\/\/mapepallc\.netlify\.app">Portfolio<\/a>/,
+  );
 }
 
 {
