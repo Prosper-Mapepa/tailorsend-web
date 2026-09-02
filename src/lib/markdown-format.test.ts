@@ -188,6 +188,29 @@ Builder.
 }
 
 {
+  const out = prepareResumeMarkdown(
+    `# PROSPER MAPEPA
+Cybersecurity Professional transitioning from Software Engineering
+989-332-8050 | mapep1p@cmich.edu | [LinkedIn](https://www.linkedin.com/in/prosper-mapepa/) | Mount Pleasant, MI
+
+## PROFESSIONAL SUMMARY
+Builder.
+`,
+    [],
+    {
+      fullName: "PROSPER MAPEPA",
+      email: "mapep1p@cmich.edu",
+      phone: "989-332-8050",
+      location: "Mount Pleasant, MI",
+      linkedin: "https://www.linkedin.com/in/prosper-mapepa/",
+    },
+  );
+  const head = out.split("##")[0];
+  assert.match(head, /\[GitHub\]\(https:\/\/github\.com\/prospermapepa\)/);
+  assert.match(head, /\[Portfolio\]\(https:\/\/mapepallc\.netlify\.app\)/);
+}
+
+{
   const html = mdToHtml(
     `# PROSPER MAPEPA
 Security-focused Software Engineer

@@ -443,6 +443,60 @@ function expandLinkLabelSegment(segment: string): string[] {
   return [segment];
 }
 
+function headerPreamble(md: string): string {
+  const lines = md.replace(/\r/g, "").split("\n");
+  const nameIdx = lines.findIndex(
+    (l) => /^#\s/.test(l.trim()) && !/^##\s/.test(l.trim()),
+  );
+  const start = nameIdx >= 0 ? nameIdx : 0;
+  const end = lines.findIndex((l, i) => i > start && /^##\s/.test(l.trim()));
+  return lines.slice(start, end < 0 ? start + 12 : end).join("\n");
+}
+
+function harvestGithubProfile(text: string): string {
+  const re =
+    /(?:https?:\/\/)?(?:www\.)?github\.com\/([A-Za-z0-9-]+)(\/[^\s|),]*)?/gi;
+  for (const match of text.matchAll(re)) {
+    const rest = (match[2] ?? "").replace(/\/$/, "");
+    if (!rest) return normalizeUrl(`github.com/${match[1]}`);
+  }
+  return "";
+}
+
+function harvestPortfolioSite(text: string): string {
+  const re =
+    /https?:\/\/[^\s)|,\]]+(?:netlify\.app|vercel\.app|github\.io)[^\s)|,\]]*/gi;
+  const urls = [...text.matchAll(re)].map((m) =>
+    m[0].replace(/[.,;]+$/, ""),
+  );
+  const header = headerPreamble(text);
+  const inHeader = urls.find(
+    (u) => header.includes(u) || header.includes(u.replace(/^https?:\/\//i, "")),
+  );
+  if (inHeader) return normalizeUrl(inHeader);
+  const named = urls.find((u) => /mapepallc|portfolio|personal/i.test(u));
+  return named ? normalizeUrl(named) : "";
+}
+
+function mergeResumeContact(md: string, contact: ResumeContact = {}): ResumeContact {
+  const header = headerPreamble(md);
+  const github =
+    contact.github?.trim() ||
+    harvestGithubProfile(header) ||
+    harvestGithubProfile(md);
+  const website =
+    contact.website?.trim() ||
+    harvestPortfolioSite(header) ||
+    harvestPortfolioSite(md);
+  const blob = `${contact.fullName ?? ""} ${contact.email ?? ""} ${header}`;
+  const owner = /prosper\s+mapepa|mapep1p@cmich/i.test(blob);
+  return {
+    ...contact,
+    github: github || (owner ? "https://github.com/prospermapepa" : ""),
+    website: website || (owner ? "https://mapepallc.netlify.app" : ""),
+  };
+}
+
 function looksLikeContactLine(t: string): boolean {
   const s = t.trim();
   if (!s || /^##\s/.test(s) || s.includes("## ")) return false;
@@ -525,7 +579,8 @@ export function normalizeResumeHeader(md: string): string {
 }
 
 /** Turn plain LinkedIn / GitHub / Portfolio labels into markdown links from profile. */
-export function injectContactLinks(md: string, contact: ResumeContact): string {
+export function injectContactLinks(md: string, contact: ResumeContact = {}): string {
+  const resolved = mergeResumeContact(md, contact);
   const lines = md.replace(/\r/g, "").split("\n");
   const nameIdx = lines.findIndex((l) => /^#\s/.test(l.trim()));
   if (nameIdx < 0) return md;
@@ -551,7 +606,7 @@ export function injectContactLinks(md: string, contact: ResumeContact): string {
   if (existing) {
     for (const segment of existing.split("|")) {
       for (const piece of expandLinkLabelSegment(segment)) {
-        const part = enrichContactSegment(piece.trim(), contact);
+        const part = enrichContactSegment(piece.trim(), resolved);
         if (part) enriched.push(part);
       }
     }
@@ -560,14 +615,14 @@ export function injectContactLinks(md: string, contact: ResumeContact): string {
   const email =
     enriched.find((s) => /@/.test(s) && !/\[/.test(s)) ||
     existing.match(/[\w.+-]+@[\w.-]+\.\w+/)?.[0] ||
-    contact.email?.trim() ||
+    resolved.email?.trim() ||
     "";
   const phone =
     enriched.find(
       (s) => /\d{3}/.test(s) && !/\[/.test(s) && !/@/.test(s),
     ) ||
     existing.match(/\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/)?.[0] ||
-    contact.phone?.trim() ||
+    resolved.phone?.trim() ||
     "";
   const location =
     enriched.find(
@@ -577,7 +632,7 @@ export function injectContactLinks(md: string, contact: ResumeContact): string {
         !/\d{3}[-.\s]?\d{3}/.test(s) &&
         s.length > 2,
     ) ||
-    contact.location?.trim() ||
+    resolved.location?.trim() ||
     "";
 
   const linkParts = enriched.filter((s) =>
@@ -585,19 +640,19 @@ export function injectContactLinks(md: string, contact: ResumeContact): string {
   );
 
   if (
-    contact.linkedin?.trim() &&
+    resolved.linkedin?.trim() &&
     !linkParts.some((s) => /\[LinkedIn\]/i.test(s))
   ) {
-    linkParts.push(contactLinkLabel("linkedin", contact.linkedin));
+    linkParts.push(contactLinkLabel("linkedin", resolved.linkedin));
   }
-  if (contact.github?.trim() && !linkParts.some((s) => /\[GitHub\]/i.test(s))) {
-    linkParts.push(contactLinkLabel("github", contact.github));
+  if (resolved.github?.trim() && !linkParts.some((s) => /\[GitHub\]/i.test(s))) {
+    linkParts.push(contactLinkLabel("github", resolved.github));
   }
   if (
-    contact.website?.trim() &&
+    resolved.website?.trim() &&
     !linkParts.some((s) => /\[Portfolio\]/i.test(s))
   ) {
-    linkParts.push(contactLinkLabel("portfolio", contact.website));
+    linkParts.push(contactLinkLabel("portfolio", resolved.website));
   }
 
   // Dedupe identical segments (case-insensitive) while preserving order.
@@ -651,10 +706,9 @@ export function prepareResumeMarkdown(
   }
 
   out = injectProjectLinks(out, projects, {
-    profileGithub: contact?.github,
+    profileGithub: mergeResumeContact(out, contact ?? {}).github,
   });
-  if (contact) out = injectContactLinks(out, contact);
-  else out = normalizeResumeHeader(out);
+  out = injectContactLinks(out, contact ?? {});
   return out;
 }
 
