@@ -73,7 +73,7 @@ async function parseAuthResponse(res: Response): Promise<Record<string, unknown>
     throw new Error(
       res.ok
         ? "Auth API returned an invalid response."
-        : "Auth API is unreachable. Set NEXT_PUBLIC_API_URL on Netlify to your Railway API URL (e.g. https://….up.railway.app).",
+        : "Auth API is unreachable. Set BACKEND_URL on the Web service to your Railway API URL.",
     );
   }
 }

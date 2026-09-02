@@ -1,9 +1,5 @@
 "use client";
 
-const GOOGLE_ENABLED = Boolean(
-  process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID?.trim(),
-);
-
 function googleAuthStartUrl(): string {
   const base = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ?? "";
   return base ? `${base}/api/auth/google` : "/api/auth/google";
@@ -46,8 +42,6 @@ export function AuthDivider() {
 }
 
 export function GoogleAuthButton({ label }: { label: string }) {
-  if (!GOOGLE_ENABLED) return null;
-
   return (
     <button
       type="button"
@@ -63,5 +57,5 @@ export function GoogleAuthButton({ label }: { label: string }) {
 }
 
 export function isGoogleAuthEnabled(): boolean {
-  return GOOGLE_ENABLED;
+  return true;
 }

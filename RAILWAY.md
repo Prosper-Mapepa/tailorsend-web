@@ -60,11 +60,14 @@ Generate a public domain: **Settings → Networking → Generate Domain**.
 ```
 DATABASE_URL=<same Postgres reference>
 SESSION_SECRET=<same as API>
+BACKEND_URL=https://<your-api-service>.up.railway.app
 NEXT_PUBLIC_API_URL=https://<your-api-service>.up.railway.app
 OPENAI_API_KEY=<your-key>
 OPENAI_MODEL=gpt-4o-mini
 ADMIN_EMAILS=you@example.com
 ```
+
+`BACKEND_URL` is required at **runtime** so `/api/auth/*` on the Web service can reach the API. Do not leave it as localhost — that is this container, not the API.
 
 **Do not set `PORT` yourself** — Railway injects it. Overriding it (e.g. `PORT=8888`) is a common cause of 502s.
 
@@ -76,7 +79,7 @@ GREENHOUSE_BOARDS=
 LEVER_BOARDS=
 ```
 
-Google sign-in (Web service):
+Google sign-in (Web service, optional — the Google button is always shown; the API must have `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`):
 
 ```
 NEXT_PUBLIC_GOOGLE_CLIENT_ID=<from Google Cloud OAuth client>
