@@ -20,6 +20,19 @@ case "${BACKEND_URL:-}" in
     ;;
 esac
 
+if [ -z "${PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH:-}" ]; then
+  for bin in chromium chromium-browser google-chrome-stable google-chrome; do
+    found=$(command -v "$bin" 2>/dev/null || true)
+    if [ -n "$found" ]; then
+      export PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH="$found"
+      break
+    fi
+  done
+fi
+if [ -n "${PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH:-}" ]; then
+  echo "[railway-start] chromium=${PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH}"
+fi
+
 echo "[railway-start] prisma migrate deploy..."
 npx prisma migrate deploy
 

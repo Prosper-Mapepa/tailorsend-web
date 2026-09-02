@@ -17,6 +17,14 @@ const MAC_CHROME_PATHS = [
   ),
 ];
 
+const LINUX_CHROMIUM_PATHS = [
+  "/usr/bin/chromium",
+  "/usr/bin/chromium-browser",
+  "/usr/bin/google-chrome-stable",
+  "/usr/bin/google-chrome",
+  "/usr/bin/chrome",
+];
+
 const LINUX_CHROMIUM_NAMES = [
   "chromium",
   "chromium-browser",
@@ -35,28 +43,43 @@ function which(cmd: string): string | null {
   }
 }
 
+function exists(file: string): boolean {
+  try {
+    return fs.existsSync(file);
+  } catch {
+    return false;
+  }
+}
+
 /**
- * Prefer a system Chromium/Chrome (Railway Nixpacks, Mac Chrome) so we don't
- * need `playwright install` during the image build.
+ * Prefer a system Chromium/Chrome (Railway Nixpacks, Debian image, Mac Chrome)
+ * so we don't need `playwright install` during the image build.
  */
 export function resolveChromiumExecutable(): string | undefined {
   const fromEnv = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH?.trim();
-  if (fromEnv && fs.existsSync(fromEnv)) return fromEnv;
+  if (fromEnv && exists(fromEnv)) return fromEnv;
 
   for (const p of MAC_CHROME_PATHS) {
-    try {
-      if (fs.existsSync(p)) return p;
-    } catch {
-      /* ignore */
-    }
+    if (exists(p)) return p;
+  }
+
+  for (const p of LINUX_CHROMIUM_PATHS) {
+    if (exists(p)) return p;
   }
 
   for (const name of LINUX_CHROMIUM_NAMES) {
     const found = which(name);
-    if (found && fs.existsSync(found)) return found;
+    if (found && exists(found)) return found;
   }
 
   return undefined;
+}
+
+function dockerLike(): boolean {
+  return (
+    exists("/.dockerenv") ||
+    Boolean(process.env.RAILWAY_ENVIRONMENT || process.env.RAILWAY_PROJECT_ID)
+  );
 }
 
 /** Headless Chromium for PDF / screenshots — system binary when available. */
@@ -68,9 +91,23 @@ export async function launchHeadlessChromium(
   }
 
   const executablePath = resolveChromiumExecutable();
+  if (!executablePath) {
+    throw new Error(
+      "Chromium is not installed on this server. PDF download needs system Chromium (not Playwright’s bundled browser).",
+    );
+  }
+
+  const { args: extraArgs = [], ...rest } = extra;
   return chromium.launch({
     headless: true,
-    ...(executablePath ? { executablePath } : {}),
-    ...extra,
+    executablePath,
+    args: [
+      ...(dockerLike()
+        ? ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"]
+        : []),
+      ...extraArgs,
+    ],
+    ...rest,
+    executablePath,
   });
 }
