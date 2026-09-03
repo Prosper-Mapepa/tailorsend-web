@@ -179,9 +179,9 @@ export function reorderResumeSections(md: string): string {
   const rankOf = (title: string): number => {
     const t = title.toUpperCase();
     if (/^(PROFESSIONAL SUMMARY|SUMMARY|OBJECTIVE|PROFILE)$/.test(t)) return 0;
-    if (isProjectsTitle(t)) return 1;
+    if (isSkillsTitle(t)) return 1;
     if (isExperienceTitle(t)) return 2;
-    if (isSkillsTitle(t)) return 3;
+    if (isProjectsTitle(t)) return 3;
     if (isLeadershipTitle(t) || /^VOLUNTEERING$/i.test(t)) return 4;
     if (/^EDUCATION$/.test(t)) return 5;
     if (/^(ACHIEVEMENTS|AWARDS|CERTIFICATIONS|PUBLICATIONS)$/.test(t)) {
@@ -2290,20 +2290,8 @@ function contactLineHtml(line: string): string {
 
   const items: string[] = [];
   for (const item of classified) {
-    const icon =
-      item.kind === "email"
-        ? CONTACT_ICON.email
-        : item.kind === "phone"
-          ? CONTACT_ICON.phone
-          : item.kind === "linkedin"
-            ? CONTACT_ICON.linkedin
-            : item.kind === "github"
-              ? CONTACT_ICON.github
-              : item.kind === "portfolio"
-                ? CONTACT_ICON.portfolio
-                : CONTACT_ICON.location;
     items.push(
-      `<span class="contact-item">${icon}<span class="contact-text">${inline(item.text)}</span></span>`,
+      `<span class="contact-item"><span class="contact-text">${inline(item.text)}</span></span>`,
     );
   }
   return `<p class="contact-line">${items.join('<span class="contact-sep" aria-hidden="true">·</span>')}</p>`;
